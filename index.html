@@ -28,7 +28,7 @@
     </div>
 
     {/* --- Écran de chargement AR.js --- */}
-    <div class="arjs-loader">
+    <div class="arjs-loader" id="arjs-loader-div"> {/* <-- ID AJOUTÉ ICI */}
         <div>Loading AR Experience...</div>
     </div>
 
@@ -169,10 +169,25 @@
             console.log("Markerless content stack generated.");
         }
 
-        // --- Attendre chargement scène (reste pareil) ---
+        // --- Attendre chargement scène ---
         const sceneEl = document.querySelector('a-scene');
         if (sceneEl.hasLoaded) { setupContentStack(); }
         else { sceneEl.addEventListener('loaded', setupContentStack); }
+
+        // --- Cacher le loader manuellement une fois la scène prête ---
+        sceneEl.addEventListener('loaded', () => {
+            console.log("A-Frame scene loaded event fired.");
+            const loader = document.getElementById('arjs-loader-div');
+            if (loader) {
+                console.log("Hiding AR.js loader.");
+                // Utiliser un petit délai pour s'assurer que AR.js a eu une chance
+                setTimeout(() => {
+                     loader.style.display = 'none';
+                }, 500); // Délai de 500ms, ajustable si besoin
+            } else {
+                console.warn("Could not find loader element to hide.");
+            }
+        });
     </script>
 
 </body>
