@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>AURALIS AR Experience</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="description" content="AURALIS AR Experience: Step Into Sound and Light. By Wang Meng and Yu Miao.">
+    <style>
+        body { margin: 0; padding: 0; font-family: sans-serif; overflow: hidden; /* Background handled by AR */ }
+        #vr-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        #loading-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: #000; color: #fff; display: flex; justify-content: center; align-items: center; font-size: 1.5em; z-index: 100; transition: opacity 1s ease-out; }
+        #loading-screen.fade-out { opacity: 0; pointer-events: none; }
+        canvas { display: block; }
+        /* Style for AR Button (from embedded code) */
+        button, a {
+            position: absolute;
+            bottom: 20px;
+            padding: 12px 6px;
+            border: 1px solid #fff;
+            border-radius: 4px;
+            background: rgba(0,0,0,0.1);
+            color: #fff;
+            font: normal 13px sans-serif;
+            text-align: center;
+            opacity: 0.5;
+            outline: none;
+            z-index: 999;
+            text-decoration: none;
+        }
+        button:hover, a:hover { opacity: 1.0; }
+        #ar-button { left: calc(50% - 50px); width: 100px; cursor: pointer; }
+        #ar-message { left: calc(50% - 90px); width: 180px; cursor: default; }
+
+    </style>
+    <!-- Three.js Core (using r144 as per previous setup) -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.144.0/build/three.min.js"></script>
+    {/* VRButton script is removed, we embed modified AR logic below */}
+
+</head>
+<body>
+    {/* IMPORTANT: Message for WeChat users */}
+    <div style="position: absolute; top: 10px; left: 10px; right: 10px; padding: 10px; background: rgba(0,0,0,0.7); color: white; z-index: 101; font-size: 14px; text-align: center; border-radius: 5px;"
+         onclick="this.style.display='none';"> {/* Click to dismiss */}
+        <b>Note WeChat:</b> Pour l'expérience AR, cliquez sur '...' puis 'Ouvrir dans le navigateur'.
+    </div>
+
+    <div id="loading-screen">Loading AURALIS Experience...</div>
+    <div id="vr-container"></div> {/* Container remains */}
+
+    {/* --- MODIFIED AR Button Logic (Embedded) --- */}
+    <script>
+        // Based on VRButton, modified for AR
+        var ARButton = {
+            createButton: function ( renderer, sessionInit = {} ) {
+
+                const button = document.createElement( 'button' );
+                button.id = 'ar-button'; // Changed ID
+                button.style.display = 'none'; // Hide initially
+
+                const message = document.createElement( 'a' );
+                message.id = 'ar-message'; // Changed ID
+                message.href = 'https://immersiveweb.dev/';
+
+                function showStartAR( /*device*/ ) {
+                    let currentSession = null;
+
+                    // Add required features for AR if not already present
+                    sessionInit.requiredFeatures = sessionInit.requiredFeatures || [];
+                    if (!sessionInit.requiredFeatures.includes('dom-overlay')) {
+                         sessionInit.requiredFeatures.push('dom-overlay');
+                    }
+                     // Configure the DOM overlay root
+                     if ( sessionInit.domOverlay === undefined ) {
+                        const overlayElement = document.createElement( 'div' );
+                        // You might want to style this overlay or add UI elements to it later
+                        overlayElement.style.display = 'none';
+                        document.body.appendChild( overlayElement );
+                         sessionInit.domOverlay = { root: overlayElement };
+                    }
+
+
+                    function onSessionStarted( session ) {
+                        session.addEventListener( 'end', onSessionEnded );
+                        renderer.xr.setSession( session ).then( () => {
+                           // DOM overlay root needs to be explicitly set AFTER session starts too (sometimes)
+                           renderer.xr.domOverlayState = session.domOverlayState;
+                           button.textContent = 'EXIT AR';
+                           currentSession = session;
+                           console.log("AR Session Started");
+                        }).catch((err) => {
+                            console.error("Error setting AR session on renderer:", err);
+                            button.textContent = 'ERROR';
+                            currentSession = null; // Ensure session is null on error
+                        });
+                    }
+
+                    function onSessionEnded( /*event*/ ) {
+                        if (currentSession) { // Check if session exists before removing listener
+                           currentSession.removeEventListener( 'end', onSessionEnded );
+                           currentSession = null;
+                        }
+                        button.textContent = 'START AR';
+                        console.log("AR Session Ended");
+                    }
+
+                    // --- Button Behavior ---
+                    button.style.display = '';
+                    button.textContent = 'START AR';
+                    button.onclick = function () {
+                        if ( currentSession === null ) {
+                            console.log("Requesting AR session with init:", sessionInit);
+                            navigator.xr.requestSession( 'immersive-ar', sessionInit ).then( onSessionStarted ).catch((err) => {
+                                 console.error("Failed to request AR session:", err);
+                                 button.textContent = 'AR FAILED'; // Give user feedback
+                                 // Optionally display a more specific error message
+                            });
+                        } else {
+                            currentSession.end();
+                        }
+                    };
+                }
+
+                function showARNotSupported() {
+                    button.style.display = 'none'; // Hide the button
+                    message.style.display = ''; // Show the message link
+                    message.textContent = 'AR NOT SUPPORTED';
+                    console.warn("AR Check: immersive-ar not supported.");
+                }
+
+                 function showXRNotAvailable() {
+                    button.style.display = 'none';
+                    message.style.display = '';
+                    if ( window.isSecureContext === false ) {
+                        message.textContent = 'WEBXR NEEDS HTTPS';
+                        message.href = document.location.href.replace( /^http:/, 'https:' );
+                    } else {
+                        message.textContent = 'WEBXR NOT AVAILABLE';
+                        message.href = 'https://immersiveweb.dev/';
+                    }
+                     console.warn("AR Check: navigator.xr not found or not secure.");
+                }
+
+
+                // --- Check Support ---
+                if ( 'xr' in navigator ) {
+                    navigator.xr.isSessionSupported( 'immersive-ar' )
+                        .then( function ( supported ) {
+                            if (supported) {
+                                console.log("AR Check: immersive-ar is supported.");
+                                showStartAR();
+                            } else {
+                                showARNotSupported();
+                            }
+                        })
+                        .catch( (err) => {
+                            console.error("Error checking AR support:", err);
+                             showARNotSupported(); // Assume not supported on error
+                        });
+                     return button; // Return the button element
+
+                } else {
+                    showXRNotAvailable();
+                    return message; // Return the message element
+                }
+            }
+        };
+        console.log("ARButton code embedded.");
+    </script>
+
+    {/* --- Main Application Script --- */}
+    <script>
+        // --- Configuration (Adjusted for AR) ---
+        const TEXT_COLOR = '#FFFFFF';
+        const PANEL_COLOR = '#222244'; // Slightly lighter background for visibility
+        const PANEL_OPACITY = 0.9;
+        const TEXT_SIZE = 0.025;       // Smaller text for AR
+        const PANEL_WIDTH = 0.8;        // Smaller panels
+        const PANEL_STACK_HEIGHT = 0.5; // Default height for text panels
+        const IMAGE_MAX_WIDTH = 1.0;    // Max width for images
+        const PANEL_DEPTH = -2;         // Initial distance in front of camera
+        const PANEL_SPACING = 0.1;      // Vertical space between panels
+        // Interaction scale remains the same
+        const INTERACTION_SCALE = 1.05;
+
+        // --- Image Assets --- (Paths remain the same)
+        console.log("Defining image paths...");
+        const imagePath_Logo = 'images/logo.jpg';
+        const imagePath_WangMeng = 'images/wang_meng.jpg';
+        const imagePath_YuMiao = 'images/yu_miao.jpg';
+        const imagePath_DJBack = 'images/dj_back.jpg';
+        const imagePath_StageWide = 'images/stage_wide.jpg';
+        const imagePath_StageDuoBlue = 'images/stage_duo_blue.jpg';
+        const imagePath_StageDuoDark = 'images/stage_duo_dark.jpg';
+        console.log("Image paths defined.");
+
+        // --- Text Content --- (Content remains the same)
+        const content = [ { type: 'title', text: "AURALIS" }, { type: 'image', src: imagePath_Logo, width: 2, height: 2 }, { type: 'text', text: "Step Into Sound and Light:\nA Journey Beyond Music." }, { type: 'text', text: "Imagine a space where sound moves like liquid, where music swirls around you, weaving vibration and light. Here, past and future collide, ancient strings resonate against modern frequencies, and visuals pulse in harmony. Welcome to AURALIS!" }, { type: 'header', text: "The Architects of the Experience" }, { type: 'text', text: "Wang Meng and Yu Miao dissolve boundaries between past/present, acoustic/digital, East/West. An exploration between the organic and synthetic, tradition and the unknown." }, { type: 'image', src: imagePath_WangMeng, width: 1, height: 1.2 }, { type: 'text', text: "• Wang Meng: Visionary audio-visual artist, founder of Atomic Visual Studio, pioneer of stage multimedia. Sculpts light like a painter, breathing life into sound." }, { type: 'image', src: imagePath_YuMiao, width: 1.5, height: 1 }, { type: 'text', text: "• Yu Miao: Guzheng virtuoso pushing the ancient zither beyond limits, blending delicate timbre with modern sound design. An emotional current from tradition to the unknown." }, { type: 'header', text: "A World of Sound, A Canvas of Light" }, { type: 'image', src: imagePath_StageWide, width: 2, height: 1.1 }, { type: 'text', text: "Air alive with dazzling visuals extending the sonic experience. Light and movement become instruments, responding to every vibration.\n• Projected visuals morph and evolve, reacting to music.\n• Space transforms as music and light dance, bending perception." }, { type: 'image', src: imagePath_DJBack, width: 1.8, height: 1 }, { type: 'text', text: "Manels Favre shapes the experience using SPAT Revolution, freeing sound to move, breathe, and surround you in 3D. Notes appear behind, above, beside you." }, { type: 'header', text: "A New Way to Experience Music" }, { type: 'image', src: imagePath_StageDuoBlue, width: 1.8, height: 1.1 }, { type: 'text', text: "Close your eyes, feel the music flow through you. Open them, you are inside a world where sound and light fuse into a living presence." }, { type: 'image', src: imagePath_StageDuoDark, width: 1.8, height: 1.1 }, { type: 'text', text: "A journey into sound, space, and emotion.\nA place where the familiar dissolves.\nA moment that will never happen again." }, { type: 'cta', text: "Step inside.\nLet yourself be carried away.\n\nComing soon!" } ];
+
+        // --- Global Variables ---
+        let scene, camera, renderer;
+        let INTERSECTED;
+        let raycaster;
+        let arButton; // Renamed variable
+        let loadingManager;
+        let contentGroup; // Group to hold all panels
+        let interactiveObjects = [];
+        let clock;
+        let currentARSession = null; // To track the AR session state
+
+        // --- Initialization ---
+        function init() {
+            if (typeof THREE === 'undefined') { console.error("THREE object is undefined. Check script loading."); return; }
+            console.log("Initializing scene (AR Mode)...");
+
+            clock = new THREE.Clock();
+            setupLoadingManager();
+
+            scene = new THREE.Scene();
+            // NO virtual background in AR
+
+            camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 100); // Near/far planes adjusted for AR
+            // Camera position is controlled by AR session, no need to set it here
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); // alpha:true for transparency
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.xr.enabled = true; // Enable WebXR
+            renderer.outputEncoding = THREE.sRGBEncoding;
+            document.getElementById('vr-container').appendChild(renderer.domElement);
+
+            // Setup AR Button
+            if (typeof ARButton === 'undefined') {
+                console.error("ARButton logic is missing!");
+                document.getElementById('loading-screen').textContent = "Error: AR components failed to load.";
+            } else {
+                 console.log("ARButton is defined. Creating button...");
+                 // Pass session init options if needed, e.g., for DOM overlay
+                 const sessionInit = {
+                      requiredFeatures: [ 'dom-overlay' ],
+                      domOverlay: { root: document.body } // Simple overlay on body
+                  };
+                 try {
+                    arButton = ARButton.createButton(renderer, sessionInit );
+                    document.body.appendChild(arButton);
+                    console.log("AR Button created and added.");
+                 } catch (error) {
+                     console.error("Error creating AR Button:", error);
+                 }
+            }
+
+            // Basic lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
+            directionalLight.position.set(1, 1, 0.5).normalize();
+            scene.add(directionalLight);
+
+            raycaster = new THREE.Raycaster();
+            contentGroup = new THREE.Group();
+             // Position the whole group initially in front
+             contentGroup.position.set(0, 0, PANEL_DEPTH);
+            scene.add(contentGroup);
+
+            // Setup listener for session start/end to show/hide content
+            renderer.xr.addEventListener('sessionstart', onSessionStart);
+            renderer.xr.addEventListener('sessionend', onSessionEnd);
+
+
+            loadAssets(); // Load images
+
+            window.addEventListener('resize', onWindowResize, false);
+            renderer.setAnimationLoop(render); // Start render loop
+            console.log("Initialization complete. Waiting for assets/session.");
+        }
+
+        // --- Session Handling ---
+        function onSessionStart() {
+            console.log("AR Session started event received.");
+            contentGroup.visible = true; // Show content when AR starts
+             currentARSession = renderer.xr.getSession(); // Store session reference
+             // Optional: Set reference space after session start if needed
+             // renderer.xr.setReferenceSpaceType( 'local' ); // or 'viewer'
+        }
+
+        function onSessionEnd() {
+            console.log("AR Session ended event received.");
+            contentGroup.visible = false; // Hide content when AR ends
+            // Reset intersected object if any
+             if (INTERSECTED) {
+                 if (INTERSECTED.userData.originalScale) INTERSECTED.scale.copy(INTERSECTED.userData.originalScale);
+                 else INTERSECTED.scale.set(1, 1, 1);
+                 INTERSECTED = null;
+             }
+             currentARSession = null;
+        }
+
+
+        // --- Loading ---
+        function setupLoadingManager() {
+            console.log("Setting up LoadingManager...");
+             if (typeof THREE === 'undefined') { console.error("Cannot setup LoadingManager, THREE is undefined."); return; }
+            loadingManager = new THREE.LoadingManager();
+            const loadingScreen = document.getElementById('loading-screen');
+            loadingManager.onLoad = function () {
+                console.log('LoadingManager: Loading complete!');
+                 // Arrange content immediately after loading, even if AR hasn't started
+                 // It will be hidden until session start
+                if(typeof arrangeContent === 'function') {
+                    arrangeContent();
+                } else {
+                     console.error("arrangeContent function not found when onLoad triggered!");
+                }
+                loadingScreen.classList.add('fade-out'); // Fade out loading screen
+            };
+            // Keep other loading manager handlers (onStart, onError, onProgress)
+             loadingManager.onStart = function ( url, itemsLoaded, itemsTotal ) { console.log( 'LoadingManager: Started loading file: ' + url + ' (' + itemsLoaded + '/' + itemsTotal + ')' ); };
+             loadingManager.onError = function (url) { console.error('LoadingManager: Error loading asset: ' + url); /* loadingScreen msg maybe updated */ };
+             loadingManager.onProgress = function ( url, itemsLoaded, itemsTotal ) { loadingScreen.textContent = `Loading: ${itemsLoaded} / ${itemsTotal}`; };
+             console.log("LoadingManager setup complete.");
+        }
+
+        // --- Asset Loading ---
+        function loadAssets() {
+             // ... (Asset loading logic remains largely the same) ...
+             if (!loadingManager || typeof THREE === 'undefined') { console.error("Cannot load assets, LoadingManager or THREE missing."); return; }
+             const textureLoader = new THREE.TextureLoader(loadingManager);
+             console.log("Starting asset loading process..."); let imageLoadRequests = 0;
+             content.forEach((item, index) => { if (item.type === 'image') { if (typeof item.src === 'string' && item.src) { imageLoadRequests++; item.texture = textureLoader.load( item.src, function(texture) { console.log(`[${index}] Successfully loaded texture: ${item.src}`); texture.encoding = THREE.sRGBEncoding; item.texture = texture; }, undefined, function(err) { console.error(`[${index}] Error loading texture: ${item.src}`, err); item.texture = null; } ); } else { item.texture = null; } } });
+             console.log(`Requested loading for ${imageLoadRequests} images.`);
+             if (imageLoadRequests === 0 && loadingManager) { console.log("No images to load, triggering onLoad manually."); setTimeout(() => { if (!loadingManager.isLoading) { loadingManager.onLoad(); } }, 50); } else if (imageLoadRequests > 0) { console.log("Waiting for LoadingManager to complete..."); }
+        }
+
+
+        // --- Scene Setup ---
+        // No setupBackground needed for AR
+
+        // --- Content Creation (Adjusted for AR scale) ---
+        function createTextCanvas(text, panelWidthPixels, panelHeightPixels, isHeader = false, isCTA = false) {
+             // Same logic, but TEXT_SIZE config variable makes text smaller overall
+             const canvas = document.createElement('canvas'); const context = canvas.getContext('2d'); const resolutionFactor = 4; // Higher res for potentially closer view
+             canvas.width = panelWidthPixels * resolutionFactor; canvas.height = panelHeightPixels * resolutionFactor;
+             context.fillStyle = `rgba(${parseInt(PANEL_COLOR.slice(1, 3), 16)}, ${parseInt(PANEL_COLOR.slice(3, 5), 16)}, ${parseInt(PANEL_COLOR.slice(5, 7), 16)}, ${PANEL_OPACITY})`; context.fillRect(0, 0, canvas.width, canvas.height);
+             context.fillStyle = TEXT_COLOR; context.textAlign = 'center'; context.textBaseline = 'middle';
+             let fontSize = TEXT_SIZE * 150 * resolutionFactor; // Base size adjusted relative to TEXT_SIZE
+             if (isHeader) fontSize *= 1.3; if (isCTA) fontSize *= 1.1; context.font = `bold ${fontSize}px Arial`;
+             const lines = text.split('\n'); const x = canvas.width / 2; let y = canvas.height / 2 - (lines.length - 1) * fontSize * 0.6;
+             lines.forEach(line => { context.fillText(line, x, y); y += fontSize * 1.2; }); return canvas;
+        }
+
+        function createContentPanel(item, yPosition) { // Takes Y position instead of angle
+             if (typeof THREE === 'undefined') { return null; }
+            let mesh;
+            let panelWidth = PANEL_WIDTH; // Use configured width for text
+            let panelHeight = PANEL_STACK_HEIGHT; // Default height for text
+
+            const panelWidthPixels = 512; // Texture resolution
+
+            if (item.type === 'text' || item.type === 'header' || item.type === 'cta' || item.type === 'title') {
+                 if (item.type === 'title') panelHeight *= 0.6; // Smaller title panel
+                const textCanvas = createTextCanvas(item.text, panelWidthPixels, panelWidthPixels * (panelHeight / panelWidth), item.type === 'header', item.type === 'cta');
+                const texture = new THREE.CanvasTexture(textCanvas); texture.needsUpdate = true;
+                const geometry = new THREE.PlaneGeometry(panelWidth, panelHeight);
+                const material = new THREE.MeshBasicMaterial({ map: texture, transparent: true, opacity: 1.0, side: THREE.DoubleSide });
+                mesh = new THREE.Mesh(geometry, material);
+                mesh.userData = { type: 'textPanel', isInteractive: true };
+
+            } else if (item.type === 'image') {
+                 if (item.texture && item.texture.image && item.texture.image.naturalWidth > 0) {
+                     const imgAspect = item.texture.image.naturalWidth / item.texture.image.naturalHeight;
+                     // Scale image to fit max width, adjust height proportionally
+                     panelWidth = Math.min(PANEL_WIDTH, IMAGE_MAX_WIDTH); // Use smaller of default or max
+                     panelHeight = panelWidth / imgAspect;
+
+                     const geometry = new THREE.PlaneGeometry(panelWidth, panelHeight);
+                     const material = new THREE.MeshBasicMaterial({ map: item.texture, color: 0xffffff, transparent: true, opacity: 1.0, side: THREE.DoubleSide });
+                     mesh = new THREE.Mesh(geometry, material);
+                     // Simple background/border
+                     const bgGeom = new THREE.PlaneGeometry(panelWidth * 1.05, panelHeight * 1.05);
+                     const bgMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(PANEL_COLOR), transparent: true, opacity: PANEL_OPACITY * 0.9, side: THREE.DoubleSide }); // Slightly more transparent bg
+                     const bgMesh = new THREE.Mesh(bgGeom, bgMat); bgMesh.position.z = -0.005; // Closer bg
+                     mesh.add(bgMesh);
+                     mesh.userData = { type: 'imagePanel', originalScale: mesh.scale.clone(), isInteractive: true };
+                 } else {
+                    // Skip panel if image failed
+                 }
+            }
+
+            if (mesh) {
+                // Position is now relative to the contentGroup's origin (in front of camera)
+                mesh.position.set(0, yPosition, 0); // Centered horizontally, stacked vertically
+                 // No lookAt needed as group itself faces camera initially
+
+                if (contentGroup) contentGroup.add(mesh);
+                if (mesh.userData.isInteractive && interactiveObjects) {
+                     interactiveObjects.push(mesh);
+                }
+                 // Return the height of the created panel + spacing for stacking
+                 return panelHeight + PANEL_SPACING;
+            }
+             return 0; // Return 0 height if no panel created
+        }
+
+        // --- Arrange Content (Stacking Vertically) ---
+        function arrangeContent() {
+            console.log("Arranging content panels vertically...");
+            if (!contentGroup || !interactiveObjects) { return; }
+            interactiveObjects = [];
+            while(contentGroup.children.length > 0){ contentGroup.remove(contentGroup.children[0]); }
+
+            const totalItems = content.length;
+            if (totalItems === 0) { return; }
+
+            let currentY = 0; // Start stacking from the top (relative to group center)
+
+            // Calculate total height first to center the stack vertically
+            let totalHeight = 0;
+            content.forEach(item => {
+                 let itemHeight = PANEL_STACK_HEIGHT; // Default estimate
+                 if (item.type === 'image' && item.texture && item.texture.image && item.texture.image.naturalWidth > 0) {
+                     const imgAspect = item.texture.image.naturalWidth / item.texture.image.naturalHeight;
+                     const w = Math.min(PANEL_WIDTH, IMAGE_MAX_WIDTH);
+                     itemHeight = w / imgAspect;
+                 } else if (item.type === 'title') {
+                     itemHeight *= 0.6;
+                 }
+                 totalHeight += itemHeight + PANEL_SPACING;
+            });
+
+             currentY = totalHeight / 2.0; // Start slightly above center
+
+            content.forEach((item, index) => {
+                 // Only create panel if texture exists (for images)
+                 if (item.type !== 'image' || (item.type === 'image' && item.texture)) {
+                    const panelHeightWithSpacing = createContentPanel(item, currentY - (PANEL_SPACING/2) ); // Pass current Y
+                     currentY -= panelHeightWithSpacing; // Move down for the next panel
+                 }
+            });
+             console.log(`AR Content arrangement complete. ${interactiveObjects.length} interactive objects added.`);
+             contentGroup.visible = false; // Start hidden until AR session begins
+        }
+
+
+        // --- Interaction (Gaze/Touch) ---
+        // Raycaster needs to originate from camera center in AR
+        function handleInteractions() {
+             if (!camera || !raycaster || !interactiveObjects || interactiveObjects.length === 0 || !currentARSession) return; // Only interact during AR session
+
+             // Use camera directly for raycasting origin/direction
+             raycaster.setFromCamera({ x: 0, y: 0 }, camera); // Ray from center of view
+
+             const intersects = raycaster.intersectObjects(interactiveObjects, true);
+
+             let hitObject = null;
+             if (intersects.length > 0) {
+                 let firstIntersect = intersects[0].object;
+                 while (firstIntersect.parent && firstIntersect !== contentGroup) {
+                      if (firstIntersect.userData && firstIntersect.userData.isInteractive) { hitObject = firstIntersect; break; }
+                      if (firstIntersect.parent === scene) break;
+                     firstIntersect = firstIntersect.parent;
+                 }
+             }
+
+             // Handle highlighting / interaction feedback
+             if (hitObject && INTERSECTED != hitObject) {
+                 if (INTERSECTED) { if (INTERSECTED.userData.originalScale) INTERSECTED.scale.copy(INTERSECTED.userData.originalScale); else INTERSECTED.scale.set(1, 1, 1); }
+                 INTERSECTED = hitObject;
+                 if (INTERSECTED.userData.originalScale) INTERSECTED.scale.copy(INTERSECTED.userData.originalScale).multiplyScalar(INTERACTION_SCALE); else INTERSECTED.scale.set(INTERACTION_SCALE, INTERACTION_SCALE, INTERACTION_SCALE);
+             } else if (!hitObject && INTERSECTED) {
+                 if (INTERSECTED.userData.originalScale) INTERSECTED.scale.copy(INTERSECTED.userData.originalScale); else INTERSECTED.scale.set(1, 1, 1);
+                 INTERSECTED = null;
+             }
+        }
+
+        // --- Animation & Rendering ---
+        // No background animation
+        function render(timestamp, frame) { // render loop now receives timestamp and frame in XR
+            if (!renderer || !scene || !camera || !clock) return;
+
+             handleInteractions(); // Handle interactions within the loop
+
+             // The renderer.render call is handled automatically by setAnimationLoop when in an XR session
+             // We don't need to call it explicitly IF an XR session is active.
+             // However, calling it outside a session is needed for non-XR view (though we don't have one here)
+             // For simplicity with setAnimationLoop, just let it handle rendering during the session.
+             // If needed, add specific non-XR rendering logic here based on renderer.xr.isPresenting
+             if (!renderer.xr.isPresenting) {
+                 // Optionally render something if not in AR (e.g., a static view or message)
+                 // renderer.render(scene, camera); // But scene might be empty/unintended outside AR
+             }
+        }
+
+        // --- Event Handlers ---
+        function onWindowResize() {
+             if (!camera || !renderer) return;
+             // Use window dimensions for camera aspect
+             camera.aspect = window.innerWidth / window.innerHeight;
+             camera.updateProjectionMatrix();
+             renderer.setSize(window.innerWidth, window.innerHeight); // Adjust renderer size
+        }
+
+        // --- Start ---
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            console.log("DOM already loaded, calling init directly.");
+            init();
+        }
+
+    </script>
+
+</body>
+</html>
