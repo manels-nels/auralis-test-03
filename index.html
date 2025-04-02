@@ -106,7 +106,7 @@
             { type: 'cta', text: "Step inside.\nLet yourself be carried away.\n\nComing soon!" }
         ];
 
-        // --- Fonction setupContentStack (reste la même logique de génération) ---
+                // --- Fonction setupContentStack (corrigée) ---
         function setupContentStack() {
             const stack = document.getElementById('content-stack');
             if (!stack) { console.error("Could not find #content-stack entity."); return; }
@@ -123,7 +123,7 @@
                  }
                 totalHeight += itemHeight + PANEL_SPACING;
             });
-            currentY = totalHeight / 2; // Centre verticalement
+            currentY = totalHeight / 2;
 
             // 2. Créer et positionner
             contentData.forEach((item, index) => {
@@ -136,56 +136,43 @@
                 entity.setAttribute('data-interactive', '');
 
                 if (item.type === 'text' || item.type === 'header' || item.type === 'cta' || item.type === 'title') {
-                     if (item.type === 'title') { panelHeight *= 0.7; }
+                    // ... (code texte reste pareil) ...
+                    if (item.type === 'title') { panelHeight *= 0.7; }
                     let textScale = 1.0;
                     if (item.type === 'header') textScale = HEADER_SCALE; if (item.type === 'cta') textScale = CTA_SCALE;
-
-                     const bgPlane = document.createElement('a-plane');
-                     bgPlane.setAttribute('width', panelWidth); bgPlane.setAttribute('height', panelHeight);
-                     bgPlane.setAttribute('material', `color: ${PANEL_COLOR}; opacity: ${PANEL_OPACITY}; shader: flat;`);
-                     entity.appendChild(bgPlane);
-
-                     const textEntity = document.createElement('a-text');
-                     textEntity.setAttribute('value', item.text); textEntity.setAttribute('color', '#FFF');
-                     textEntity.setAttribute('align', 'center'); textEntity.setAttribute('baseline', 'center');
-                     textEntity.setAttribute('wrap-count', 35 * (panelWidth / TEXT_WIDTH));
-                     textEntity.setAttribute('width', TEXT_WIDTH * textScale);
-                     textEntity.setAttribute('position', `0 0 0.01`);
-                     entity.appendChild(textEntity);
-                     actualHeight = panelHeight;
+                    const bgPlane = document.createElement('a-plane'); bgPlane.setAttribute('width', panelWidth); bgPlane.setAttribute('height', panelHeight); bgPlane.setAttribute('material', `color: ${PANEL_COLOR}; opacity: ${PANEL_OPACITY}; shader: flat;`); entity.appendChild(bgPlane);
+                    const textEntity = document.createElement('a-text'); textEntity.setAttribute('value', item.text); textEntity.setAttribute('color', '#FFF'); textEntity.setAttribute('align', 'center'); textEntity.setAttribute('baseline', 'center'); textEntity.setAttribute('wrap-count', 35 * (panelWidth / TEXT_WIDTH)); textEntity.setAttribute('width', TEXT_WIDTH * textScale); textEntity.setAttribute('position', `0 0 0.01`); entity.appendChild(textEntity);
+                    actualHeight = panelHeight;
 
                 } else if (item.type === 'image' && item.srcId) {
                     const imgElement = document.getElementById(item.srcId);
                     if (imgElement && item.originalWidth && item.originalHeight) {
-                         const aspect = item.originalWidth / item.originalHeight;
-                         panelWidth = PANEL_BASE_WIDTH; panelHeight = panelWidth / aspect;
-
-                         const imgBgPlane = document.createElement('a-plane');
-                         imgBgPlane.setAttribute('width', panelWidth * 1.05); imgBgPlane.setAttribute('height', panelHeight * 1.05);
-                         imgBgPlane.setAttribute('material', `color: ${PANEL_COLOR}; opacity: ${PANEL_OPACITY}; shader: flat;`);
-                         imgBgPlane.setAttribute('position', '0 0 -0.005');
-                         entity.appendChild(imgBgPlane);
-
-                         const imgPlane = document.createElement('a-plane');
-                         imgPlane.setAttribute('width', panelWidth); imgPlane.setAttribute('height', panelHeight);
-                         imgPlane.setAttribute('material', `src: #${item.srcId}; shader: flat; transparent: true;`);
-                         entity.appendChild(imgPlane);
-                         actualHeight = panelHeight;
-                     } else { continue; }
+                        // ... (code image reste pareil) ...
+                        const aspect = item.originalWidth / item.originalHeight; panelWidth = PANEL_BASE_WIDTH; panelHeight = panelWidth / aspect;
+                        const imgBgPlane = document.createElement('a-plane'); imgBgPlane.setAttribute('width', panelWidth * 1.05); imgBgPlane.setAttribute('height', panelHeight * 1.05); imgBgPlane.setAttribute('material', `color: ${PANEL_COLOR}; opacity: ${PANEL_OPACITY}; shader: flat;`); imgBgPlane.setAttribute('position', '0 0 -0.005'); entity.appendChild(imgBgPlane);
+                        const imgPlane = document.createElement('a-plane'); imgPlane.setAttribute('width', panelWidth); imgPlane.setAttribute('height', panelHeight); imgPlane.setAttribute('material', `src: #${item.srcId}; shader: flat; transparent: true;`); entity.appendChild(imgPlane);
+                        actualHeight = panelHeight;
+                    } else {
+                         console.warn(`Image asset not found or dimensions missing for ${item.srcId}`);
+                         return; // <-- CORRECTION : Utiliser return ici !
+                    }
                 }
 
-                entity.setAttribute('position', `0 ${currentY - actualHeight / 2} 0`);
-                stack.appendChild(entity);
-                currentY -= (actualHeight + PANEL_SPACING);
+                // Ne positionner et ajouter que si un panneau a été créé
+                 if (actualHeight > 0) {
+                     entity.setAttribute('position', `0 ${currentY - actualHeight / 2} 0`);
+                     stack.appendChild(entity);
+                     currentY -= (actualHeight + PANEL_SPACING);
+                 }
+
             });
             console.log("Markerless content stack generated.");
         }
 
-        // --- Attendre chargement scène ---
+        // --- Attendre chargement scène (reste pareil) ---
         const sceneEl = document.querySelector('a-scene');
         if (sceneEl.hasLoaded) { setupContentStack(); }
         else { sceneEl.addEventListener('loaded', setupContentStack); }
-
     </script>
 
 </body>
