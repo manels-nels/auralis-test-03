@@ -12,11 +12,20 @@
         #loading-screen.fade-out { opacity: 0; pointer-events: none; }
         canvas { display: block; }
     </style>
-    <!-- Three.js Core -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
-    <!-- VR Button (Version Spécifique via unpkg) -->
-    <script src="https://unpkg.com/three@0.128.0/examples/js/webxr/VRButton.js" defer></script>
+ <!-- Three.js Core  add GPT -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.144.0/build/three.min.js"></script>
 
+    <!-- VR Button (import propre en tant que module) -->
+    <script type="module">
+        import { VRButton } from 'https://cdn.jsdelivr.net/npm/three@0.144.0/examples/jsm/webxr/VRButton.js';
+        window.VRButton = VRButton;
+    </script>
+    <!-- Three.js Core 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
+    <!-- VR Button (Version Spécifique via unpkg) 
+    <script src="https://unpkg.com/three@0.128.0/examples/js/webxr/VRButton.js" defer></script>
+-->
+   
 </head>
 <body>
     <div id="loading-screen">Loading AURALIS Experience...</div>
