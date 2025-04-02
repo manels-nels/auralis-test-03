@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>AURALIS VR Experience (Simple)</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="description" content="AURALIS: Step Into Sound and Light. An immersive VR music and video performance.">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: sans-serif;
+            overflow: hidden; /* Prevent scrollbars */
+            background-color: #000;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        #vr-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        #loading-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5em;
+            z-index: 100;
+            transition: opacity 1s ease-out;
+        }
+        #loading-screen.fade-out {
+            opacity: 0;
+        }
+        canvas { display: block; }
+    </style>
+    <!-- Three.js Core -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- VR Button -->
+    <script src="https://cdn.jsdelivr.net/npm/three/examples/js/webxr/VRButton.js"></script>
+    <!-- GLTF Loader is NOT needed anymore -->
+</head>
+<body>
+    <div id="loading-screen">Loading AURALIS Experience...</div>
+    <div id="vr-container"></div>
+
+    <script>
+        // --- Configuration ---
+        const TEXT_COLOR = '#FFFFFF';
+        const PANEL_COLOR = '#111133'; // Dark blue/purple
+        const PANEL_HIGHLIGHT_COLOR = '#222255';
+        const PANEL_OPACITY = 0.85;
+        const TEXT_SIZE = 0.05; // Relative size in VR world units
+        const PANEL_WIDTH = 2.5;
+        const PANEL_HEIGHT = 1.8;
+        const PANEL_RADIUS = 5; // Distance from center
+        const GAZE_TIMEOUT = 50; // Milliseconds between gaze checks
+        const INTERACTION_SCALE = 1.05; // How much panels scale up on gaze
+
+        // --- Base64 Assets ---
+        // IMPORTANT: Replace placeholder with your actual Base64 Data URI!
+        const imageBase64_Logo = 'data:image/jpeg;base64,PASTE_YOUR_AURALIS_LOGO_BASE64_DATA_URI_HERE'; // Replace!
+
+        // --- Text Content (Simplified) ---
+        const content = [
+            { type: 'title', text: "AURALIS" },
+            { type: 'image', src: imageBase64_Logo, width: 2, height: 2 }, // The single logo image
+            { type: 'text', text: "Step Into Sound and Light:\nA Journey Beyond Music." },
+            { type: 'text', text: "Imagine a space where sound moves like liquid, swirling around you.\nWelcome to AURALIS!" },
+            { type: 'header', text: "The Experience" },
+            { type: 'text', text: "A unique collaboration dissolving boundaries\nbetween past & present, acoustic & digital." },
+            { type: 'text', text: "Featuring visionary artists Wang Meng and Yu Miao,\nwith 3D sound shaping by Manels Favre." },
+            { type: 'header', text: "Immerse Yourself" },
+            { type: 'text', text: "Feel the music flow through you.\nWitness a world where sound and light fuse." },
+            { type: 'cta', text: "Step inside.\nLet yourself be carried away.\n\nComing soon!" }
+        ];
+
+        // --- Global Variables ---
+        let scene, camera, renderer, controls;
+        let INTERSECTED;
+        let raycaster;
+        let vrButton;
+        let loadingManager;
+        let contentGroup; // To hold all panels
+        let interactiveObjects = []; // Objects that react to gaze
+        let clock;
+        // No model variables needed
+
+        // --- Initialization ---
+        function init() {
+            clock = new THREE.Clock();
+            setupLoadingManager();
+
+            scene = new THREE.Scene();
+            setupBackground(); // Setup background first
+
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 1.6, 0); // Typical eye-height
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.xr.enabled = true;
+            renderer.outputEncoding = THREE.sRGBEncoding; // Correct color space
+            document.getElementById('vr-container').appendChild(renderer.domElement);
+
+            // VR Button
+            vrButton = VRButton.createButton(renderer);
+            document.body.appendChild(vrButton);
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xCCCCCC, 0.4); // Soft ambient light
+            scene.add(ambientLight);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
+            directionalLight.position.set(1, 1, 1);
+            scene.add(directionalLight);
+
+            // Raycaster for interaction
+            raycaster = new THREE.Raycaster();
+
+            // Content Group
+            contentGroup = new THREE.Group();
+            scene.add(contentGroup);
+
+            // Load assets (just the one image now)
+            loadAssets();
+
+            // Event Listeners
+            window.addEventListener('resize', onWindowResize, false);
+
+            // Start rendering loop
+            renderer.setAnimationLoop(render);
+        }
+
+        // --- Loading ---
+        function setupLoadingManager() {
+            loadingManager = new THREE.LoadingManager();
+            const loadingScreen = document.getElementById('loading-screen');
+
+            loadingManager.onStart = function (url, itemsLoaded, itemsTotal) {
+                console.log('Started loading: ' + url);
+            };
+
+            loadingManager.onLoad = function () {
+                console.log('Loading complete!');
+                loadingScreen.classList.add('fade-out');
+                setTimeout(() => {
+                    loadingScreen.style.display = 'none';
+                }, 1000);
+                arrangeContent(); // Arrange content after loading
+                // No need to call loadModels()
+            };
+
+            loadingManager.onError = function (url) {
+                console.error('Error loading: ' + url);
+                loadingScreen.textContent = 'Error loading assets. Please refresh.';
+            };
+        }
+
+        // --- Asset Loading (Simplified) ---
+        function loadAssets() {
+            const textureLoader = new THREE.TextureLoader(loadingManager);
+            content.forEach(item => {
+                if (item.type === 'image') {
+                    try {
+                        // Only load if src is a valid string (prevents errors if placeholder isn't replaced)
+                        if (typeof item.src === 'string' && item.src.startsWith('data:image')) {
+                             item.texture = textureLoader.load(item.src);
+                             item.texture.encoding = THREE.sRGBEncoding;
+                        } else if (typeof item.src === 'string') {
+                             console.warn("Image source does not look like a Data URI:", item.src.substring(0,30));
+                        }
+                    } catch (e) {
+                        console.error("Error loading image data URI:", e);
+                    }
+                }
+            });
+             // If there are no images, we still need to signal loading is done
+             // Manually trigger onLoad if no items were managed (or use manager correctly)
+             // A simple way: always manage at least one item conceptually
+             loadingManager.itemStart('contentProcessing');
+             // Simulate finishing after a tiny delay to ensure setup continues
+             setTimeout(() => loadingManager.itemEnd('contentProcessing'), 0);
+        }
+
+        // --- Scene Setup ---
+        function setupBackground() {
+            // Procedural Shader Background (Starry Nebula) - Kept from previous version
+            const vertexShader = `
+                varying vec2 vUv;
+                void main() {
+                    vUv = uv;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `;
+            const fragmentShader = `
+                varying vec2 vUv;
+                uniform float time;
+                float random(vec2 st) { return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123); }
+                float noise(vec2 st) { vec2 i = floor(st); vec2 f = fract(st); float a = random(i); float b = random(i + vec2(1.0, 0.0)); float c = random(i + vec2(0.0, 1.0)); float d = random(i + vec2(1.0, 1.0)); vec2 u = f * f * (3.0 - 2.0 * f); return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y; }
+                float fbm(vec2 st) { float value = 0.0; float amplitude = 0.5; float frequency = 0.0; for (int i = 0; i < 6; i++) { value += amplitude * noise(st); st *= 2.0; amplitude *= 0.5; } return value; }
+
+                void main() {
+                    vec2 st = vUv * vec2(4.0, 2.0);
+                    vec3 color = vec3(0.01, 0.01, 0.05); // Base dark blue/purple
+                    float n = fbm(st + vec2(time * 0.05, time * 0.02));
+                    color += vec3(n * 0.2, n * 0.1, n * 0.3); // Nebula tint
+                    float starDensity = 0.995; float starValue = random(vUv * 1000.0 + sin(time*0.1));
+                    if (starValue > starDensity) { float sparkle = sin(time * 5.0 + vUv.x * 100.0) * 0.5 + 0.5; color += vec3(smoothstep(starDensity, 1.0, starValue)) * (0.8 + sparkle * 0.4); }
+                    gl_FragColor = vec4(color, 1.0);
+                }
+            `;
+            const bgGeometry = new THREE.SphereGeometry(500, 60, 40);
+            bgGeometry.scale(-1, 1, 1); // Invert normals
+            const bgMaterial = new THREE.ShaderMaterial({
+                vertexShader: vertexShader, fragmentShader: fragmentShader,
+                uniforms: { time: { value: 0.0 } }, side: THREE.BackSide
+            });
+            const backgroundSphere = new THREE.Mesh(bgGeometry, bgMaterial);
+            scene.add(backgroundSphere);
+        }
+
+        // --- Content Creation ---
+         function createTextCanvas(text, panelWidthPixels, panelHeightPixels, isHeader = false, isCTA = false) {
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            const resolutionFactor = 3;
+            canvas.width = panelWidthPixels * resolutionFactor;
+            canvas.height = panelHeightPixels * resolutionFactor;
+
+            context.fillStyle = `rgba(${parseInt(PANEL_COLOR.slice(1, 3), 16)}, ${parseInt(PANEL_COLOR.slice(3, 5), 16)}, ${parseInt(PANEL_COLOR.slice(5, 7), 16)}, ${PANEL_OPACITY})`;
+            context.fillRect(0, 0, canvas.width, canvas.height);
+
+            context.fillStyle = TEXT_COLOR;
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+
+            let fontSize = TEXT_SIZE * 100 * resolutionFactor;
+            if (isHeader) fontSize *= 1.4;
+            if (isCTA) fontSize *= 1.2;
+            context.font = `bold ${fontSize}px Arial`;
+
+            const lines = text.split('\n');
+            const x = canvas.width / 2;
+            let y = canvas.height / 2 - (lines.length - 1) * fontSize * 0.6;
+
+            lines.forEach(line => {
+                context.fillText(line, x, y);
+                y += fontSize * 1.2;
+            });
+            return canvas;
+        }
+
+
+        function createContentPanel(item, angle, index) {
+            let mesh;
+            const panelWidthPixels = 512;
+            let panelHeight = PANEL_HEIGHT;
+
+            if (item.type === 'text' || item.type === 'header' || item.type === 'cta' || item.type === 'title') {
+                if (item.type === 'title') panelHeight *= 0.5;
+                const textCanvas = createTextCanvas(item.text, panelWidthPixels, panelWidthPixels * (panelHeight / PANEL_WIDTH), item.type === 'header', item.type === 'cta');
+                const texture = new THREE.CanvasTexture(textCanvas);
+                texture.needsUpdate = true;
+                const geometry = new THREE.PlaneGeometry(PANEL_WIDTH, panelHeight);
+                const material = new THREE.MeshBasicMaterial({ map: texture, transparent: true, opacity: 1.0, side: THREE.DoubleSide });
+                mesh = new THREE.Mesh(geometry, material);
+                 mesh.userData = { type: 'textPanel', originalColor: new THREE.Color(PANEL_COLOR), isInteractive: true };
+
+
+            } else if (item.type === 'image' && item.texture) { // Check if texture loaded successfully
+                 panelHeight = PANEL_WIDTH * (item.height / item.width);
+                 const geometry = new THREE.PlaneGeometry(PANEL_WIDTH, panelHeight);
+                 const material = new THREE.MeshBasicMaterial({ map: item.texture, color: 0xffffff, transparent: true, opacity: 1.0, side: THREE.DoubleSide });
+                 mesh = new THREE.Mesh(geometry, material);
+
+                 // Optional: Add background plane
+                 const bgGeom = new THREE.PlaneGeometry(PANEL_WIDTH * 1.05, panelHeight * 1.05);
+                 const bgMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(PANEL_COLOR), transparent: true, opacity: PANEL_OPACITY, side: THREE.DoubleSide });
+                 const bgMesh = new THREE.Mesh(bgGeom, bgMat);
+                 bgMesh.position.z = -0.01;
+                 mesh.add(bgMesh);
+
+                 mesh.userData = { type: 'imagePanel', originalScale: mesh.scale.clone(), isInteractive: true };
+             } else if (item.type === 'image') {
+                 console.warn("Skipping image panel creation, texture not loaded for:", item.src?.substring(0, 30));
+             }
+
+
+            if (mesh) {
+                const x = Math.sin(angle) * PANEL_RADIUS;
+                const z = Math.cos(angle) * PANEL_RADIUS;
+                const y = 1.6 + (index % 3 - 1) * 0.3; // Base height + small vertical variation
+                mesh.position.set(x, y, z);
+                mesh.lookAt(camera.position);
+                contentGroup.add(mesh);
+                interactiveObjects.push(mesh);
+            }
+        }
+
+
+         function arrangeContent() {
+            const totalItems = content.length;
+             if (totalItems === 0) return; // Nothing to arrange
+            const angleStep = (Math.PI * 1.8) / totalItems; // Distribute over ~1.8 Pi radians (less than full circle)
+            let currentAngle = - (angleStep * (totalItems -1) / 2) ; // Center the content roughly in front
+
+            content.forEach((item, index) => {
+                 createContentPanel(item, currentAngle, index);
+                 currentAngle += angleStep;
+            });
+         }
+
+        // --- Interaction ---
+        function handleInteractions() {
+             const cameraDirection = new THREE.Vector3();
+             camera.getWorldDirection(cameraDirection);
+            raycaster.set(camera.position, cameraDirection);
+            const intersects = raycaster.intersectObjects(interactiveObjects, true); // Check recursively for image backgrounds
+
+            let hitObject = null;
+            if (intersects.length > 0) {
+                 // Find the top-level interactive object (panel mesh)
+                 let firstIntersect = intersects[0].object;
+                 while (firstIntersect.parent && firstIntersect.parent !== contentGroup) {
+                      if (firstIntersect.userData && firstIntersect.userData.isInteractive) {
+                          break; // Found the interactive parent mesh
+                      }
+                     firstIntersect = firstIntersect.parent;
+                 }
+                 // Check if we successfully found an interactive object
+                  if (firstIntersect.userData && firstIntersect.userData.isInteractive) {
+                     hitObject = firstIntersect;
+                 }
+            }
+
+
+            if (hitObject && INTERSECTED != hitObject) {
+                 // Gaze entered a new object
+                 // Reset the previously intersected object (if any)
+                 if (INTERSECTED) {
+                     if (INTERSECTED.userData.originalScale) INTERSECTED.scale.copy(INTERSECTED.userData.originalScale);
+                     else INTERSECTED.scale.set(1, 1, 1);
+                 }
+
+                 INTERSECTED = hitObject;
+
+                 // Scale up the newly intersected object
+                 if (INTERSECTED.userData.originalScale) INTERSECTED.scale.copy(INTERSECTED.userData.originalScale).multiplyScalar(INTERACTION_SCALE);
+                 else INTERSECTED.scale.set(INTERACTION_SCALE, INTERACTION_SCALE, INTERACTION_SCALE);
+
+            } else if (!hitObject && INTERSECTED) {
+                 // Gaze left the previously intersected object
+                 if (INTERSECTED.userData.originalScale) INTERSECTED.scale.copy(INTERSECTED.userData.originalScale);
+                 else INTERSECTED.scale.set(1, 1, 1);
+                 INTERSECTED = null;
+            }
+        }
+
+
+        // --- Animation & Rendering ---
+        function animateBackground(deltaTime) {
+             // Animate background shader time
+             const bg = scene.children.find(obj => obj.material && obj.material.type === 'ShaderMaterial');
+             if (bg) {
+                 bg.material.uniforms.time.value = clock.getElapsedTime();
+             }
+        }
+
+        function render() {
+            const deltaTime = clock.getDelta();
+
+            handleInteractions();
+            animateBackground(deltaTime); // Animate only the background now
+
+            renderer.render(scene, camera);
+        }
+
+        // --- Event Handlers ---
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // --- Start ---
+        init();
+
+    </script>
+</body>
+</html>
