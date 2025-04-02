@@ -6,10 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="description" content="AURALIS AR Experience using A-Frame and AR.js Markerless Tracking.">
 
-    {/* <!-- A-Frame Core --> */}
+     <!-- A-Frame Core --> 
     <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
 
-    {/* <!-- AR.js for A-Frame --> */}
+     <!-- AR.js for A-Frame --> 
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.0/aframe/build/aframe-ar.min.js"></script>
 
     <style>
@@ -22,27 +22,27 @@
 
 <body style='margin : 0px; overflow: hidden;'>
 
-    {/* --- Message pour WeChat --- */}
+    <!-- Message pour WeChat -->
     <div id="wechat-notice" onclick="this.style.display='none';">
         <b>Note WeChat:</b> Pour l'expérience AR, cliquez sur '...' puis 'Ouvrir dans le navigateur'.
     </div>
 
-    {/* --- Écran de chargement AR.js --- */}
+    <!-- Écran de chargement AR.js -->
     <div class="arjs-loader" id="arjs-loader-div"> {/* <-- ID AJOUTÉ ICI */}
         <div>Loading AR Experience...</div>
     </div>
 
-    {/* --- Scène A-Frame AR (Markerless) ---
+   <!-- Scène A-Frame AR (Markerless) ---
           trackingMethod: best; -> Tente WebXR puis AR.js sans marqueur.
           type: artoolkit -> Peut être omis ou gardé, 'best' essaie de choisir.
-    */}
+    -->
     <a-scene
         embedded
         arjs='sourceType: webcam; trackingMethod: best; debugUIEnabled: false;'
         renderer='logarithmicDepthBuffer: true; colorManagement: true;' {/* Ajout colorManagement */}
         vr-mode-ui='enabled: false'>
 
-        {/* --- Assets --- */}
+      <!-- Assets -->
         <a-assets timeout="60000">
              <img id="logoImg" src="images/logo.jpg" crossOrigin="anonymous"> {/* Ajout crossOrigin si nécessaire */}
              <img id="wangMengImg" src="images/wang_meng.jpg" crossOrigin="anonymous">
@@ -53,23 +53,23 @@
              <img id="stageDuoDarkImg" src="images/stage_duo_dark.jpg" crossOrigin="anonymous">
         </a-assets>
 
-        {/* --- Conteneur pour les panneaux (directement dans la scène) ---
+     <!-- Conteneur pour les panneaux (directement dans la scène) ---
               Positionné devant la caméra au démarrage (z=-2).
               Ajustez Y si nécessaire pour la hauteur initiale.
               L'échelle peut être ajustée ici aussi.
-        */}
+       -->
         <a-entity id="content-stack" position="0 1.5 -2" rotation="0 0 0" scale="0.8 0.8 0.8">
              {/* Le contenu sera généré ici par JavaScript */}
         </a-entity>
 
-        {/* --- Caméra ---
+        <!-- Caméra ---
              Ajout du curseur pour l'interaction
-        */}
+        -->
         <a-camera cursor="rayOrigin: mouse; fuse: false;" raycaster="objects: [data-interactive]"></a-camera>
 
     </a-scene>
 
-    {/* --- Script pour générer le contenu dynamiquement --- */}
+   <!-- Script pour générer le contenu dynamiquement -->
     <script>
         // --- Configuration (Ajustée pour Markerless) ---
         const PANEL_BASE_WIDTH = 1.6;      // Légèrement plus petit peut-être
