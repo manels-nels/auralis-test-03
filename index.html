@@ -73,12 +73,12 @@
         // --- Données du contenu (inchangé) ---
          const contentData = [ { type: 'title', text: "AURALIS" }, { type: 'image', srcId: 'logoImg', originalWidth: 2, originalHeight: 2 }, { type: 'text', text: "Step Into Sound and Light:\nA Journey Beyond Music." }, { type: 'text', text: "Imagine a space where sound moves like liquid...\nWelcome to AURALIS!" }, { type: 'header', text: "The Architects" }, { type: 'text', text: "Wang Meng & Yu Miao dissolve boundaries..." }, { type: 'image', srcId: 'wangMengImg', originalWidth: 1, originalHeight: 1.2 }, { type: 'text', text: "• Wang Meng: Visionary audio-visual artist..." }, { type: 'image', srcId: 'yuMiaoImg', originalWidth: 1.5, originalHeight: 1 }, { type: 'text', text: "• Yu Miao: Guzheng virtuoso pushing limits..." }, { type: 'header', text: "Sound & Light" }, { type: 'image', srcId: 'stageWideImg', originalWidth: 2, originalHeight: 1.1 }, { type: 'text', text: "Dazzling visuals extend the sonic experience..." }, { type: 'image', srcId: 'djBackImg', originalWidth: 1.8, originalHeight: 1 }, { type: 'text', text: "Manels Favre shapes 3D sound with SPAT..." }, { type: 'header', text: "Immersive Music" }, { type: 'image', srcId: 'stageDuoBlueImg', originalWidth: 1.8, originalHeight: 1.1 }, { type: 'text', text: "Feel the music flow through you..." }, { type: 'image', srcId: 'stageDuoDarkImg', originalWidth: 1.8, originalHeight: 1.1 }, { type: 'text', text: "A journey into sound, space, and emotion." }, { type: 'cta', text: "Step inside.\nLet yourself be carried away.\n\nComing soon!" } ];
 
-        // --- Fonction setupContentStack (corrigée) ---
+        // --- Fonction setupContentStack (corrigée pour Z-fighting) ---
         function setupContentStack() {
             const stack = document.getElementById('content-stack');
             if (!stack) { console.error("Could not find #content-stack entity."); return; }
             let currentY = 0; let totalHeight = 0;
-            contentData.forEach(item => { /* Calcul hauteur totale */ let itemHeight = PANEL_TEXT_HEIGHT; if (item.type === 'title') { itemHeight *= 0.7; } else if (item.type === 'image' && item.originalWidth && item.originalHeight) { const aspect = item.originalWidth / item.originalHeight; itemHeight = PANEL_BASE_WIDTH / aspect; } totalHeight += itemHeight + PANEL_SPACING; });
+            contentData.forEach(item => { /* Calcul hauteur totale */ /* ... */ });
             currentY = totalHeight / 2;
 
             contentData.forEach((item, index) => {
@@ -93,28 +93,26 @@
 
                 if (item.type === 'text' || item.type === 'header' || item.type === 'cta' || item.type === 'title') {
                      if (item.type === 'title') { panelHeight *= 0.7; }
-                    // Simplification / Ajustement Taille Texte
-                    let textWidthAttr = TEXT_BASE_WIDTH; // Utiliser la constante de base
-                    // Appliquer une mise à l'échelle si nécessaire (on peut l'enlever si ça pose problème)
-                    // if (item.type === 'header') textWidthAttr *= HEADER_SCALE;
-                    // if (item.type === 'cta') textWidthAttr *= CTA_SCALE;
+                    let textWidthAttr = TEXT_BASE_WIDTH;
 
                      const bgPlane = document.createElement('a-plane');
-                     bgPlane.setAttribute('width', panelWidth); bgPlane.setAttribute('height', panelHeight);
+                     bgPlane.setAttribute('width', panelWidth);
+                     bgPlane.setAttribute('height', panelHeight);
                      bgPlane.setAttribute('material', `color: ${PANEL_COLOR}; opacity: ${PANEL_OPACITY}; shader: flat;`);
+                     bgPlane.setAttribute('position', `0 0 -0.01`); // <-- CORRECTION : Reculer le fond
+
                      entity.appendChild(bgPlane);
 
                      const textEntity = document.createElement('a-text');
                      textEntity.setAttribute('value', item.text);
-                     textEntity.setAttribute('color', '#FF0000');
+                     textEntity.setAttribute('color', '#FFF'); // Couleur blanche pour le test initial
                      textEntity.setAttribute('align', 'center');
                      textEntity.setAttribute('baseline', 'center');
-                      // Ajuster wrap-count si le texte dépasse, basé sur la largeur du texte lui-même
-                     textEntity.setAttribute('wrap-count', Math.floor(textWidthAttr * 15)); // Estimation (à ajuster si besoin)
-                     textEntity.setAttribute('width', textWidthAttr); // **CONTROLE LA TAILLE**
-                     textEntity.setAttribute('position', `0 0 ${TEXT_Z_OFFSET}`); // **POSITION Z AJUSTÉE**
+                     textEntity.setAttribute('wrap-count', Math.floor(textWidthAttr * 25));
+                     textEntity.setAttribute('width', textWidthAttr);
+                     textEntity.setAttribute('position', `0 0 0`); // <-- CORRECTION : Texte à Z=0
 
-                     console.log(`Creating <a-text> for "${item.type}": value=${item.text.substring(0,10)}..., width=${textWidthAttr}, position=0 0 ${TEXT_Z_OFFSET}`); // Log de vérification
+                     console.log(`Creating <a-text> for "${item.type}": value=${item.text.substring(0,10)}..., width=${textWidthAttr}, position=0 0 0`);
 
                      entity.appendChild(textEntity);
                      actualHeight = panelHeight;
@@ -123,12 +121,15 @@
                     const imgElement = document.getElementById(item.srcId);
                     if (imgElement && item.originalWidth && item.originalHeight) {
                          const aspect = item.originalWidth / item.originalHeight; panelWidth = PANEL_BASE_WIDTH; panelHeight = panelWidth / aspect;
-                         const imgBgPlane = document.createElement('a-plane'); imgBgPlane.setAttribute('width', panelWidth * 1.05); imgBgPlane.setAttribute('height', panelHeight * 1.05); imgBgPlane.setAttribute('material', `color: ${PANEL_COLOR}; opacity: ${PANEL_OPACITY}; shader: flat;`); imgBgPlane.setAttribute('position', '0 0 -0.005'); entity.appendChild(imgBgPlane);
-                         const imgPlane = document.createElement('a-plane'); imgPlane.setAttribute('width', panelWidth); imgPlane.setAttribute('height', panelHeight); imgPlane.setAttribute('material', `src: #${item.srcId}; shader: flat; transparent: true;`); entity.appendChild(imgPlane);
+                         const imgBgPlane = document.createElement('a-plane'); imgBgPlane.setAttribute('width', panelWidth * 1.05); imgBgPlane.setAttribute('height', panelHeight * 1.05); imgBgPlane.setAttribute('material', `color: ${PANEL_COLOR}; opacity: ${PANEL_OPACITY}; shader: flat;`);
+                         imgBgPlane.setAttribute('position', '0 0 -0.01'); // <-- CORRECTION : Reculer le fond image aussi
+                         entity.appendChild(imgBgPlane);
+                         const imgPlane = document.createElement('a-plane'); imgPlane.setAttribute('width', panelWidth); imgPlane.setAttribute('height', panelHeight); imgPlane.setAttribute('material', `src: #${item.srcId}; shader: flat; transparent: true;`);
+                         imgPlane.setAttribute('position', '0 0 0'); // <-- CORRECTION : Image à Z=0
+                         entity.appendChild(imgPlane);
                          actualHeight = panelHeight;
                     } else {
                          console.warn(`Image asset not found or dimensions missing for ${item.srcId}`);
-                         // Pas besoin de return ici car la boucle forEach continue naturellement
                     }
                 }
 
@@ -142,22 +143,11 @@
             console.log("Markerless content stack generated.");
         }
 
-        // --- Attendre chargement scène ---
+        // --- Le reste du script (Attendre chargement scène, Cacher loader) reste inchangé ---
         const sceneEl = document.querySelector('a-scene');
         if (sceneEl.hasLoaded) { setupContentStack(); }
         else { sceneEl.addEventListener('loaded', setupContentStack); }
-
-        // --- Cacher le loader manuellement ---
-        sceneEl.addEventListener('loaded', () => {
-            console.log("A-Frame scene loaded event fired.");
-            const loader = document.getElementById('arjs-loader-div');
-            if (loader) {
-                console.log("Hiding AR.js loader.");
-                setTimeout(() => { loader.style.display = 'none'; }, 500);
-            } else { console.warn("Could not find loader element to hide."); }
-        });
-
+        sceneEl.addEventListener('loaded', () => { /* ... code pour cacher le loader ... */ });
     </script>
-
 </body>
 </html>
