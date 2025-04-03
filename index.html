@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>AURALIS AR Experience (AR.js Fix + Count)</title> <!-- Titre mis à jour -->
+    <title>AURALIS AR Experience (Force Texture Update)</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta name="description" content="AURALIS AR Experience with AR.js fix and asset counter.">
+    <meta name="description" content="AURALIS AR Experience with forced texture update for pre-loaded images.">
     <!-- Scripts A-Frame / AR.js -->
     <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.0/aframe/build/aframe-ar.min.js"></script>
@@ -28,49 +28,100 @@
         <div id="progress-counter">0/9</div>
     </div>
 
-    <!-- Scène A-Frame AR (Modifié ici) -->
+    <!-- Scène A-Frame AR -->
     <a-scene
         id="ar-scene"
         embedded
-        
-        arjs='sourceType: webcam; debugUIEnabled: false;'
+        arjs='sourceType: webcam; debugUIEnabled: false;' <!-- TrackingMethod supprimé -->
         renderer='logarithmicDepthBuffer: true; colorManagement: true;'
         vr-mode-ui='enabled: false'>
 
-        <!-- Assets (Inchangés) -->
+        <!-- Assets -->
         <a-assets timeout="120000">
-             <img id="logoImg" src="images/logo.jpg" crossOrigin="anonymous">
-             <img id="wangMengImg" src="images/wang_meng.jpg" crossOrigin="anonymous">
-             <img id="yuMiaoImg" src="images/yu_miao.jpg" crossOrigin="anonymous">
-             <img id="djBackImg" src="images/dj_back.jpg" crossOrigin="anonymous">
-             <img id="stageWideImg" src="images/stage_wide.jpg" crossOrigin="anonymous">
-             <img id="stageDuoBlueImg" src="images/stage_duo_blue.jpg" crossOrigin="anonymous">
-             <img id="stageDuoDarkImg" src="images/stage_duo_dark.jpg" crossOrigin="anonymous">
-             <audio id="logoSound" src="audio/your_sound.mp3" preload="auto" crossOrigin="anonymous"></audio>
-             <a-asset-item id="jellyfishModel" src="models/meduse.glb" crossOrigin="anonymous"></a-asset-item>
+            <img id="logoImg" src="images/logo.jpg" crossOrigin="anonymous">
+            <img id="wangMengImg" src="images/wang_meng.jpg" crossOrigin="anonymous">
+            <img id="yuMiaoImg" src="images/yu_miao.jpg" crossOrigin="anonymous">
+            <img id="djBackImg" src="images/dj_back.jpg" crossOrigin="anonymous">
+            <img id="stageWideImg" src="images/stage_wide.jpg" crossOrigin="anonymous">
+            <img id="stageDuoBlueImg" src="images/stage_duo_blue.jpg" crossOrigin="anonymous">
+            <img id="stageDuoDarkImg" src="images/stage_duo_dark.jpg" crossOrigin="anonymous">
+            <audio id="logoSound" src="audio/your_sound.mp3" preload="auto" crossOrigin="anonymous"></audio>
+            <a-asset-item id="jellyfishModel" src="models/meduse.glb" crossOrigin="anonymous"></a-asset-item>
         </a-assets>
 
-        <!-- Contenu (Inchangé) -->
+        <!-- Contenu -->
         <a-entity id="content-container" position="0 1.5 -4.0" rotation="0 0 0" scale="1 1 1"></a-entity>
         <a-gltf-model id="jellyfish" src="#jellyfishModel" position="-1 2 -2" scale="0.3 0.3 0.3" rotation="0 0 0"
-                      animation__pos="..." animation__rot="..." animation-mixer="..."></a-gltf-model>
-        <a-camera cursor="..." raycaster="..."></a-camera>
+                      animation__pos="property: position; from: -1 2 -2; to: 1 1.2 -1.5; dir: alternate; dur: 12000; easing: easeInOutSine; loop: true;"
+                      animation__rot="property: rotation; to: 0 360 0; dur: 20000; easing: linear; loop: true;"
+                      animation-mixer="clip: *; loop: repeat"></a-gltf-model>
+        <a-camera cursor="rayOrigin: mouse; fuse: false;" raycaster="objects: [data-interactive]"></a-camera>
     </a-scene>
 
-    <!-- Script (Utilisation de la version précédente qui comptait bien, SANS la partie 'force update texture' pour l'instant) -->
+    <!-- Script -->
     <script>
         // --- Configuration ---
         const PANEL_BASE_WIDTH = 1.8; const PANEL_COLOR = '#1a1a3a'; const PANEL_OPACITY = 0.85;
         const BG_Z_OFFSET = -0.01; const IMAGE_Z_OFFSET = 0;
-        const imagePositions = { /* ... */ }; const contentData = [ /* ... */ ];
+        const imagePositions = {
+             'logoImg':         { x: 0,    y: 0,    z: 0.1 }, 'wangMengImg':     { x: -2.2, y: 2,  z: -0.1 },
+             'yuMiaoImg':       { x: 2.2,  y: 0.4,  z: -0.1 }, 'stageWideImg':    { x: 0,    y: 2,  z: -0.3 },
+             'djBackImg':       { x: 0,    y: -2, z: -0.2 }, 'stageDuoBlueImg': { x: -2.5, y: -0.8, z: 0.2 },
+             'stageDuoDarkImg': { x: 2.5,  y: -0.8, z: 0.2 },
+        };
+        const contentData = [
+             { type: 'image', srcId: 'logoImg', originalWidth: 2, originalHeight: 2 }, { type: 'image', srcId: 'wangMengImg', originalWidth: 1, originalHeight: 1.2 },
+             { type: 'image', srcId: 'yuMiaoImg', originalWidth: 1.5, originalHeight: 1 }, { type: 'image', srcId: 'stageWideImg', originalWidth: 2, originalHeight: 1.1 },
+             { type: 'image', srcId: 'djBackImg', originalWidth: 1, originalHeight: 1.25 }, { type: 'image', srcId: 'stageDuoBlueImg', originalWidth: 1.8, originalHeight: 1.1 },
+             { type: 'image', srcId: 'stageDuoDarkImg', originalWidth: 1.8, originalHeight: 1.1 }
+        ];
 
-        // --- Fonction createImagePanel (Version simple sans force update) ---
+
+        // --- Variables Globales Loader ---
+        const TOTAL_ASSET_COUNT_TARGET = 9;
+        const loadedAssetIdsRegistry = new Set();
+        let loaderIsHidden = false;
+        let sceneIsLoaded = false;
+
+        const progressCounterElement = document.getElementById('progress-counter');
+        const loaderDivElement = document.getElementById('arjs-loader-div');
+        const sceneElement = document.querySelector('a-scene');
+        const assetsElement = document.querySelector('a-assets');
+
+        // --- Fonctions Loader (inchangées) ---
+        function hideLoaderAfterCompletion() {
+             if (loaderIsHidden) return;
+             loaderIsHidden = true;
+             console.log(`All ${TOTAL_ASSET_COUNT_TARGET} assets loaded. Hiding loader.`);
+             progressCounterElement.textContent = `${TOTAL_ASSET_COUNT_TARGET}/${TOTAL_ASSET_COUNT_TARGET}`;
+             setTimeout(() => {
+                 loaderDivElement.style.opacity = '0';
+                 setTimeout(() => { loaderDivElement.style.display = 'none'; }, 500);
+             }, 300);
+         }
+
+        function registerAssetLoad(assetId) {
+             if (loaderIsHidden || loadedAssetIdsRegistry.has(assetId)) return;
+             loadedAssetIdsRegistry.add(assetId);
+             const currentCount = loadedAssetIdsRegistry.size;
+             console.log(`Asset loaded: ${assetId} (${currentCount}/${TOTAL_ASSET_COUNT_TARGET})`);
+             progressCounterElement.textContent = `${currentCount}/${TOTAL_ASSET_COUNT_TARGET}`;
+             if (currentCount >= TOTAL_ASSET_COUNT_TARGET) {
+                 if (sceneIsLoaded) { hideLoaderAfterCompletion(); }
+                  else { console.log("All assets loaded, waiting for scene load event to hide loader..."); }
+             }
+         }
+
+        // --- ** MODIFIÉ : createImagePanel (Réintroduction Force Update) ** ---
         function createImagePanel(itemData, position) {
             const container = document.getElementById('content-container');
             if (!container || !itemData || itemData.type !== 'image' || !itemData.srcId) return null;
+
             const imgElement = document.getElementById(itemData.srcId);
-            const originalWidth = itemData.originalWidth || 1;
-            const originalHeight = itemData.originalHeight || 1;
+            const originalWidth = itemData.originalWidth || imgElement?.naturalWidth || 1;
+            const originalHeight = itemData.originalHeight || imgElement?.naturalHeight || 1;
+
+            if (!imgElement) { console.warn(`Image element #${itemData.srcId} not found.`); }
 
             const entity = document.createElement('a-entity');
             const aspect = originalWidth / originalHeight;
@@ -93,9 +144,39 @@
             imgPlane.setAttribute('position', `0 0 ${IMAGE_Z_OFFSET}`);
             entity.appendChild(imgPlane);
 
+            // **** DEBUT : Forcer la mise à jour de la texture ****
+            // Si l'image source était déjà 'complete' lorsque ce panneau est créé
+            if (imgElement && imgElement.complete) {
+                 console.log(`Image ${itemData.srcId} was already complete. Scheduling texture update for its plane.`);
+                 // Utiliser requestAnimationFrame pour s'assurer que le composant material est prêt
+                 requestAnimationFrame(() => {
+                     // Double vérification : l'entité existe toujours et a le composant ?
+                     if (entity.parentNode && imgPlane.components.material) {
+                         const material = imgPlane.components.material.material;
+                         if (material && material.map) {
+                             console.log(` -> Forcing texture update for ${itemData.srcId}`);
+                             material.map.needsUpdate = true;
+                         } else {
+                              console.warn(` -> Material map not ready for ${itemData.srcId} even after rAF.`);
+                              // Tentative de dernier recours avec un délai plus long
+                              setTimeout(() => {
+                                   if(entity.parentNode && imgPlane.components.material && imgPlane.components.material.material && imgPlane.components.material.material.map) {
+                                       console.log(` -> Retrying texture update for ${itemData.srcId}`);
+                                       imgPlane.components.material.material.map.needsUpdate = true;
+                                   } else {
+                                        console.error(` -> FINAL ATTEMPT FAILED for texture update ${itemData.srcId}`);
+                                   }
+                              }, 250); // Délai un peu plus long
+                         }
+                     } else {
+                          console.warn(` -> Entity or material component not found for ${itemData.srcId} during texture update.`);
+                     }
+                 });
+            }
+            // **** FIN : Forcer la mise à jour de la texture ****
+
             if (itemData.srcId === 'logoImg') {
                 entity.setAttribute('sound', { src: '#logoSound', autoplay: true, loop: true, volume: 0.8, positional: true, distanceModel: 'inverse', refDistance: 1, rolloffFactor: 1 });
-                // console.log(`Attempting sound component for logoImg.`); // Log optionnel
             }
 
             entity.setAttribute('position', `${position.x} ${position.y} ${position.z}`);
@@ -105,76 +186,89 @@
 
         // --- Fonction setupManualLayout (Inchangée) ---
         function setupManualLayout() {
-            console.log("Setting up manual layout...");
-            const container = document.getElementById('content-container');
-            if (!container) { console.error("Could not find #content-container entity."); return; }
-            while (container.firstChild) { container.removeChild(container.firstChild); }
+             console.log("Setting up manual layout...");
+             const container = document.getElementById('content-container');
+             if (!container) { console.error("Could not find #content-container entity."); return; }
+             while (container.firstChild) { container.removeChild(container.firstChild); }
 
-            contentData.forEach(item => {
-                if (item.type === 'image' && item.srcId && imagePositions[item.srcId]) {
-                    createImagePanel(item, imagePositions[item.srcId]);
-                } else if (item.type === 'image' && item.srcId) {
-                    console.warn(`Position not defined for ${item.srcId}.`);
-                }
-            });
-            console.log("Manual image layout setup finished.");
-        }
+             contentData.forEach(item => {
+                 if (item.type === 'image' && item.srcId && imagePositions[item.srcId]) {
+                     createImagePanel(item, imagePositions[item.srcId]);
+                 } else if (item.type === 'image' && item.srcId) {
+                     console.warn(`Position not defined for ${item.srcId}.`);
+                 }
+             });
+             console.log("Manual image layout setup finished.");
+         }
 
-        // --- LOGIQUE DE COMPTAGE D'ASSETS (Identique à la version précédente) ---
-        const TOTAL_ASSET_COUNT_TARGET = 9;
-        const loadedAssetIdsRegistry = new Set();
-        let loaderIsHidden = false;
-        let sceneIsLoaded = false;
 
-        const progressCounterElement = document.getElementById('progress-counter');
-        const loaderDivElement = document.getElementById('arjs-loader-div');
-        const sceneElement = document.querySelector('a-scene');
-        const assetsElement = document.querySelector('a-assets');
-
-        function hideLoaderAfterCompletion() {
-            if (loaderIsHidden) return;
-            loaderIsHidden = true;
-            console.log(`All ${TOTAL_ASSET_COUNT_TARGET} assets loaded. Hiding loader.`);
-            progressCounterElement.textContent = `${TOTAL_ASSET_COUNT_TARGET}/${TOTAL_ASSET_COUNT_TARGET}`;
-            setTimeout(() => {
-                loaderDivElement.style.opacity = '0';
-                setTimeout(() => { loaderDivElement.style.display = 'none'; }, 500);
-            }, 300);
-        }
-
-        function registerAssetLoad(assetId) {
-            if (loaderIsHidden || loadedAssetIdsRegistry.has(assetId)) return;
-            loadedAssetIdsRegistry.add(assetId);
-            const currentCount = loadedAssetIdsRegistry.size;
-            console.log(`Asset loaded: ${assetId} (${currentCount}/${TOTAL_ASSET_COUNT_TARGET})`);
-            progressCounterElement.textContent = `${currentCount}/${TOTAL_ASSET_COUNT_TARGET}`;
-            if (currentCount >= TOTAL_ASSET_COUNT_TARGET) {
-                if (sceneIsLoaded) { hideLoaderAfterCompletion(); }
-                 else { console.log("All assets loaded, waiting for scene load event to hide loader..."); }
-            }
-        }
-
+        // --- Logique d'écouteurs et d'initialisation ---
         document.addEventListener('DOMContentLoaded', () => {
             console.log("DOM Loaded. Attaching asset listeners...");
 
             // Images
             const imageIds = ['logoImg', 'wangMengImg', 'yuMiaoImg', 'djBackImg', 'stageWideImg', 'stageDuoBlueImg', 'stageDuoDarkImg'];
-            imageIds.forEach(id => { /* ... attachement listeners ... */ });
+            imageIds.forEach(id => {
+                const img = document.getElementById(id);
+                if (img) {
+                    if (img.complete) { registerAssetLoad(id); }
+                    else {
+                        img.addEventListener('load', () => registerAssetLoad(id), { once: true });
+                        img.addEventListener('error', () => { console.error(`Failed image: ${id}`); registerAssetLoad(id + '_error'); }, { once: true }); // Compter même en cas d'erreur pour ne pas bloquer
+                    }
+                } else { console.warn(`Initial check: Image ${id} not found.`); registerAssetLoad(id + '_error');} // Compter si non trouvé
+            });
 
             // Audio
             const audioId = 'logoSound';
             const audio = document.getElementById(audioId);
-            if (audio) { /* ... attachement listener ... */ } else { /* ... */ }
+            if (audio) {
+                if (audio.readyState >= 4) { registerAssetLoad(audioId); }
+                else {
+                    audio.addEventListener('canplaythrough', () => registerAssetLoad(audioId), { once: true });
+                    audio.addEventListener('error', () => { console.error(`Failed audio: ${audioId}`); registerAssetLoad(audioId + '_error'); }, { once: true });
+                }
+            } else { console.warn(`Initial check: Audio ${audioId} not found.`); registerAssetLoad(audioId + '_error');}
 
             // Modèle GLTF
             const modelEntityId = 'jellyfish';
             let modelListenerAttached = false;
-            function attachModelListener() { /* ... */ }
-            setTimeout(attachModelListener, 150);
+            function attachModelListener() {
+                if (modelListenerAttached) return;
+                const modelEntity = document.getElementById(modelEntityId);
+                if (modelEntity) {
+                     console.log(`Attaching 'model-loaded' listener to #${modelEntityId}`);
+                     // Vérifier si le modèle n'est pas DÉJÀ chargé (peut arriver avec cache rapide)
+                     if (modelEntity.getObject3D('mesh')) {
+                         console.log(`Model ${modelEntityId} seems already loaded, registering.`);
+                         registerAssetLoad(modelEntityId);
+                         modelListenerAttached = true;
+                     } else {
+                         modelEntity.addEventListener('model-loaded', () => registerAssetLoad(modelEntityId), { once: true });
+                         modelListenerAttached = true;
+                     }
+                } else {
+                     console.warn(`attachModelListener: Entity #${modelEntityId} not found yet.`);
+                }
+            }
+            setTimeout(attachModelListener, 150); // Essayer tôt
+
 
              // Timeout
              let timeoutHasOccurred = false;
-             assetsElement?.addEventListener('timeout', () => { /* ... */ }, { once: true });
+             assetsElement?.addEventListener('timeout', () => {
+                 if (timeoutHasOccurred || loaderIsHidden) return;
+                 timeoutHasOccurred = true;
+                 console.error(`!!!!! Assets loading timed out !!!!!`);
+                 progressCounterElement.textContent = `Timeout (${loadedAssetIdsRegistry.size}/${TOTAL_ASSET_COUNT_TARGET})`;
+                 // Essayer de quand même cacher le loader après un délai si certains assets manquent
+                  if (!loaderIsHidden && loadedAssetIdsRegistry.size < TOTAL_ASSET_COUNT_TARGET) {
+                       console.warn("Hiding loader after timeout despite missing assets...");
+                       setTimeout(hideLoaderAfterCompletion, 1000); // Donner 1s
+                  }
+
+             }, { once: true });
+
 
              // Scene Loaded
              sceneElement.addEventListener('loaded', () => {
@@ -205,6 +299,5 @@
         }); // Fin DOMContentLoaded
 
     </script>
-
 </body>
 </html>
