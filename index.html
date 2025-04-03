@@ -54,6 +54,12 @@
         <!-- NOUVEAU : Audio Asset -->
              {/* Remplacez "audio/your_sound.mp3" par le chemin réel vers votre fichier son */}
              <audio id="logoSound" src="audio/your_sound.mp3" preload="auto" crossOrigin="anonymous"></audio>
+
+
+            <!-- NOUVEAU : Modèle 3D -->
+             {/* Remplacez "models/meduse.glb" par le chemin réel vers votre modèle */}
+             <a-asset-item id="jellyfishModel" src="models/meduse.glb" crossOrigin="anonymous"></a-asset-item>
+            
         </a-assets>
 
         <!-- --- Conteneur pour les panneaux (Ancre globale) --- -->
@@ -61,6 +67,37 @@
         <a-entity id="content-container" position="0 1.5 -4.0" rotation="0 0 0" scale="1 1 1">
             <!-- Les panneaux image seront ajoutés ici selon les positions définies en JS -->
         </a-entity>
+
+
+
+        <!-- --- NOUVEAU : Méduse 3D Animée --- -->
+        <a-gltf-model id="jellyfish"
+                      src="#jellyfishModel"
+                      position="-1 2 -2"           Rotation initiale -->
+                      scale="0.3 0.3 0.3"         <!-- Échelle initiale (ajustez !) -->
+                      rotation="0 0 0"            <!-- Rotation initiale -->
+
+                      {/* Animation de Flottement (Position) */}
+                      animation__pos="property: position;
+                                    from: -1 2 -2;      {/* Point de départ */}
+                                    to: 1 1.2 -1.5;     {/* Point d'arrivée */}
+                                    dir: alternate;     {/* Aller-retour */}
+                                    dur: 12000;         {/* Durée d'un aller (12s) */}
+                                    easing: easeInOutSine; {/* Mouvement doux */}
+                                    loop: true;"        {/* Répéter indéfiniment */}
+
+                      {/* Animation de Rotation Lente */}
+                      animation__rot="property: rotation;
+                                    to: 0 360 0;       {/* Tour complet sur l'axe Y */}
+                                    dur: 20000;         {/* Durée (20s) */}
+                                    easing: linear;     {/* Vitesse constante */}
+                                    loop: true;"
+
+                      {/* Optionnel: Si votre modèle GLB a des animations internes */}
+                      animation-mixer="clip: *; loop: repeat"
+                      >
+        </a-gltf-model>
+        
 
         <!-- --- Caméra --- -->
         <a-camera cursor="rayOrigin: mouse; fuse: false;" raycaster="objects: [data-interactive]"></a-camera>
