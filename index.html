@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <title>AURALIS AR Experience (A-Frame Markerless)</title>
     <meta charset="utf-8">
@@ -20,117 +20,143 @@
     </style>
 </head>
 
-<body>
+<body style='margin : 0px; overflow: hidden;'>
 
-    <!-- Message pour WeChat -->
+    <!-- --- Message pour WeChat (Syntaxe HTML corrigée) --- -->
     <div id="wechat-notice" onclick="this.style.display='none';">
         <b>Note WeChat:</b> Pour l'expérience AR, cliquez sur '...' puis 'Ouvrir dans le navigateur'.
     </div>
 
-    <!-- Écran de chargement AR.js -->
+    <!-- --- Écran de chargement AR.js (Syntaxe HTML corrigée) --- -->
     <div class="arjs-loader" id="arjs-loader-div">
         <div>Loading AR Experience...</div>
     </div>
 
-    <!-- Scène A-Frame AR -->
+    <!-- --- Scène A-Frame AR (Markerless) --- -->
     <a-scene
         embedded
-        arjs="sourceType: webcam; trackingMethod: best; debugUIEnabled: false;"
-        renderer="logarithmicDepthBuffer: true; colorManagement: true;"
-        vr-mode-ui="enabled: false">
+        arjs='sourceType: webcam; trackingMethod: best; debugUIEnabled: false;'
+        renderer='logarithmicDepthBuffer: true; colorManagement: true;'
+        vr-mode-ui='enabled: false'>
 
-        <!-- Assets -->
+        <!-- --- Assets --- -->
         <a-assets timeout="60000">
-            < img id="logoImg" src="images/logo.jpg" crossorigin="anonymous">
-            < img id="wangMengImg" src="images/wang_meng.jpg" crossorigin="anonymous">
-            < img id="yuMiaoImg" src="images/yu_miao.jpg" crossorigin="anonymous">
-            < img id="djBackImg" src="images/dj_back.jpg" crossorigin="anonymous">
-            < img id="stageWideImg" src="images/stage_wide.jpg" crossorigin="anonymous">
-            < img id="stageDuoBlueImg" src="images/stage_duo_blue.jpg" crossorigin="anonymous">
-            < img id="stageDuoDarkImg" src="images/stage_duo_dark.jpg" crossorigin="anonymous">
+             <img id="logoImg" src="images/logo.jpg" crossOrigin="anonymous">
+             <img id="wangMengImg" src="images/wang_meng.jpg" crossOrigin="anonymous">
+             <img id="yuMiaoImg" src="images/yu_miao.jpg" crossOrigin="anonymous">
+             <img id="djBackImg" src="images/dj_back.jpg" crossOrigin="anonymous">
+             <img id="stageWideImg" src="images/stage_wide.jpg" crossOrigin="anonymous">
+             <img id="stageDuoBlueImg" src="images/stage_duo_blue.jpg" crossOrigin="anonymous">
+             <img id="stageDuoDarkImg" src="images/stage_duo_dark.jpg" crossOrigin="anonymous">
         </a-assets>
 
-        <!-- Conteneur pour les panneaux -->
-        <a-entity id="content-stack" position="0 1.5 -2" rotation="0 0 0" scale="0.8 0.8 0.8"></a-entity>
+        <!-- --- Conteneur pour les panneaux --- -->
+        <a-entity id="content-stack" position="0 1.5 -2" rotation="0 0 0" scale="0.8 0.8 0.8">
+             <!-- Le contenu sera généré ici par JavaScript -->
+        </a-entity>
 
-        <!-- Caméra -->
+        <!-- --- Caméra --- -->
         <a-camera cursor="rayOrigin: mouse; fuse: false;" raycaster="objects: [data-interactive]"></a-camera>
 
     </a-scene>
 
+    <!-- --- Script pour générer le contenu dynamiquement --- -->
     <script>
         // --- Configuration ---
-        const PANEL_BASE_WIDTH = 1.6;
-        const PANEL_TEXT_HEIGHT = 0.35;
-        const PANEL_SPACING = 0.05;
-        const TEXT_BASE_WIDTH = 5.5;
-        const PANEL_COLOR = '#1a1a3a';
-        const PANEL_OPACITY = 0.85;
-        const TEXT_Z_OFFSET = 0.015;
+        const PANEL_BASE_WIDTH = 1.6; const PANEL_TEXT_HEIGHT = 0.35; const PANEL_SPACING = 0.05;
+        const TEXT_BASE_WIDTH = 5.5; // Largeur de référence pour a-text (légèrement < PANEL_BASE_WIDTH)
+        const PANEL_COLOR = '#1a1a3a'; const PANEL_OPACITY = 0.85;
+        const HEADER_SCALE = 1.0; // Simplifié pour le test
+        const CTA_SCALE = 1.0;    // Simplifié pour le test
+        const TEXT_Z_OFFSET = 0.015; // Position Z du texte devant son fond
 
-        // --- Données du contenu ---
-        const contentData = [
-            { type: 'title', text: "AURALIS" },
-            { type: 'image', srcId: 'logoImg', originalWidth: 2, originalHeight: 2 },
-            { type: 'text', text: "Step Into Sound and Light:\nA Journey Beyond Music." },
-            { type: 'text', text: "Imagine a space where sound moves like liquid...\nWelcome to AURALIS!" },
-            { type: 'header', text: "The Architects" },
-            { type: 'text', text: "Wang Meng & Yu Miao dissolve boundaries..." },
-            { type: 'image', srcId: 'wangMengImg', originalWidth: 1, originalHeight: 1.2 },
-            { type: 'text', text: "• Wang Meng: Visionary audio-visual artist..." },
-            { type: 'image', srcId: 'yuMiaoImg', originalWidth: 1.5, originalHeight: 1 },
-            { type: 'text', text: "• Yu Miao: Guzheng virtuoso pushing limits..." },
-            { type: 'header', text: "Sound & Light" },
-            { type: 'image', srcId: 'stageWideImg', originalWidth: 2, originalHeight: 1.1 },
-            { type: 'text', text: "Dazzling visuals extend the sonic experience..." },
-            { type: 'image', srcId: 'djBackImg', originalWidth: 1.8, originalHeight: 1 },
-            { type: 'text', text: "Manels Favre shapes 3D sound with SPAT..." },
-            { type: 'header', text: "Immersive Music" },
-            { type: 'image', srcId: 'stageDuoBlueImg', originalWidth: 1.8, originalHeight: 1.1 },
-            { type: 'text', text: "Feel the music flow through you..." },
-            { type: 'image', srcId: 'stageDuoDarkImg', originalWidth: 1.8, originalHeight: 1.1 },
-            { type: 'cta', text: "Step inside.\nLet yourself be carried away.\n\nComing soon!" }
-        ];
+        // --- Données du contenu (inchangé) ---
+         const contentData = [ { type: 'title', text: "AURALIS" }, { type: 'image', srcId: 'logoImg', originalWidth: 2, originalHeight: 2 }, { type: 'text', text: "Step Into Sound and Light:\nA Journey Beyond Music." }, { type: 'text', text: "Imagine a space where sound moves like liquid...\nWelcome to AURALIS!" }, { type: 'header', text: "The Architects" }, { type: 'text', text: "Wang Meng & Yu Miao dissolve boundaries..." }, { type: 'image', srcId: 'wangMengImg', originalWidth: 1, originalHeight: 1.2 }, { type: 'text', text: "• Wang Meng: Visionary audio-visual artist..." }, { type: 'image', srcId: 'yuMiaoImg', originalWidth: 1.5, originalHeight: 1 }, { type: 'text', text: "• Yu Miao: Guzheng virtuoso pushing limits..." }, { type: 'header', text: "Sound & Light" }, { type: 'image', srcId: 'stageWideImg', originalWidth: 2, originalHeight: 1.1 }, { type: 'text', text: "Dazzling visuals extend the sonic experience..." }, { type: 'image', srcId: 'djBackImg', originalWidth: 1.8, originalHeight: 1 }, { type: 'text', text: "Manels Favre shapes 3D sound with SPAT..." }, { type: 'header', text: "Immersive Music" }, { type: 'image', srcId: 'stageDuoBlueImg', originalWidth: 1.8, originalHeight: 1.1 }, { type: 'text', text: "Feel the music flow through you..." }, { type: 'image', srcId: 'stageDuoDarkImg', originalWidth: 1.8, originalHeight: 1.1 }, { type: 'text', text: "A journey into sound, space, and emotion." }, { type: 'cta', text: "Step inside.\nLet yourself be carried away.\n\nComing soon!" } ];
 
-        // --- Fonction pour générer les éléments dynamiquement ---
+        // --- Fonction setupContentStack (corrigée) ---
         function setupContentStack() {
             const stack = document.getElementById('content-stack');
-            if (!stack) return console.error("Could not find #content-stack entity.");
+            if (!stack) { console.error("Could not find #content-stack entity."); return; }
+            let currentY = 0; let totalHeight = 0;
+            contentData.forEach(item => { /* Calcul hauteur totale */ let itemHeight = PANEL_TEXT_HEIGHT; if (item.type === 'title') { itemHeight *= 0.7; } else if (item.type === 'image' && item.originalWidth && item.originalHeight) { const aspect = item.originalWidth / item.originalHeight; itemHeight = PANEL_BASE_WIDTH / aspect; } totalHeight += itemHeight + PANEL_SPACING; });
+            currentY = totalHeight / 2;
 
-            let currentY = 0;
-            contentData.forEach((item) => {
+            contentData.forEach((item, index) => {
                 const entity = document.createElement('a-entity');
-                let panelHeight = PANEL_TEXT_HEIGHT;
+                let panelHeight = PANEL_TEXT_HEIGHT; let panelWidth = PANEL_BASE_WIDTH;
                 let actualHeight = 0;
 
-                if (item.type === 'image' && item.srcId) {
-                    panelHeight = PANEL_BASE_WIDTH / (item.originalWidth / item.originalHeight);
-                    const imgPlane = document.createElement('a-plane');
-                    imgPlane.setAttribute('width', PANEL_BASE_WIDTH);
-                    imgPlane.setAttribute('height', panelHeight);
-                    imgPlane.setAttribute('material', `src: #${item.srcId}; shader: flat; transparent: true;`);
-                    entity.appendChild(imgPlane);
-                    actualHeight = panelHeight;
-                } else if (item.text) {
-                    const textEntity = document.createElement('a-text');
-                    textEntity.setAttribute('value', item.text);
-                    textEntity.setAttribute('color', '#FFF');
-                    textEntity.setAttribute('align', 'center');
-                    textEntity.setAttribute('width', TEXT_BASE_WIDTH);
-                    textEntity.setAttribute('position', `0 0 ${TEXT_Z_OFFSET}`);
-                    entity.appendChild(textEntity);
-                    actualHeight = PANEL_TEXT_HEIGHT;
+                // Interaction (inchangée)
+                entity.setAttribute('animation__scaleup', `property: scale; to: 1.1 1.1 1.1; startEvents: mouseenter; dur: 200; easing: easeOutQuad;`);
+                entity.setAttribute('animation__scaledown', `property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200; easing: easeInQuad;`);
+                entity.setAttribute('data-interactive', '');
+
+                if (item.type === 'text' || item.type === 'header' || item.type === 'cta' || item.type === 'title') {
+                     if (item.type === 'title') { panelHeight *= 0.7; }
+                    // Simplification / Ajustement Taille Texte
+                    let textWidthAttr = TEXT_BASE_WIDTH; // Utiliser la constante de base
+                    // Appliquer une mise à l'échelle si nécessaire (on peut l'enlever si ça pose problème)
+                    // if (item.type === 'header') textWidthAttr *= HEADER_SCALE;
+                    // if (item.type === 'cta') textWidthAttr *= CTA_SCALE;
+
+                     const bgPlane = document.createElement('a-plane');
+                     bgPlane.setAttribute('width', panelWidth); bgPlane.setAttribute('height', panelHeight);
+                     bgPlane.setAttribute('material', `color: ${PANEL_COLOR}; opacity: ${PANEL_OPACITY}; shader: flat;`);
+                     entity.appendChild(bgPlane);
+
+                     const textEntity = document.createElement('a-text');
+                     textEntity.setAttribute('value', item.text);
+                     textEntity.setAttribute('color', '#FF0000');
+                     textEntity.setAttribute('align', 'center');
+                     textEntity.setAttribute('baseline', 'center');
+                      // Ajuster wrap-count si le texte dépasse, basé sur la largeur du texte lui-même
+                     textEntity.setAttribute('wrap-count', Math.floor(textWidthAttr * 15)); // Estimation (à ajuster si besoin)
+                     textEntity.setAttribute('width', textWidthAttr); // **CONTROLE LA TAILLE**
+                     textEntity.setAttribute('position', `0 0 ${TEXT_Z_OFFSET}`); // **POSITION Z AJUSTÉE**
+
+                     console.log(`Creating <a-text> for "${item.type}": value=${item.text.substring(0,10)}..., width=${textWidthAttr}, position=0 0 ${TEXT_Z_OFFSET}`); // Log de vérification
+
+                     entity.appendChild(textEntity);
+                     actualHeight = panelHeight;
+
+                } else if (item.type === 'image' && item.srcId) {
+                    const imgElement = document.getElementById(item.srcId);
+                    if (imgElement && item.originalWidth && item.originalHeight) {
+                         const aspect = item.originalWidth / item.originalHeight; panelWidth = PANEL_BASE_WIDTH; panelHeight = panelWidth / aspect;
+                         const imgBgPlane = document.createElement('a-plane'); imgBgPlane.setAttribute('width', panelWidth * 1.05); imgBgPlane.setAttribute('height', panelHeight * 1.05); imgBgPlane.setAttribute('material', `color: ${PANEL_COLOR}; opacity: ${PANEL_OPACITY}; shader: flat;`); imgBgPlane.setAttribute('position', '0 0 -0.005'); entity.appendChild(imgBgPlane);
+                         const imgPlane = document.createElement('a-plane'); imgPlane.setAttribute('width', panelWidth); imgPlane.setAttribute('height', panelHeight); imgPlane.setAttribute('material', `src: #${item.srcId}; shader: flat; transparent: true;`); entity.appendChild(imgPlane);
+                         actualHeight = panelHeight;
+                    } else {
+                         console.warn(`Image asset not found or dimensions missing for ${item.srcId}`);
+                         // Pas besoin de return ici car la boucle forEach continue naturellement
+                    }
                 }
 
                 if (actualHeight > 0) {
-                    entity.setAttribute('position', `0 ${currentY - actualHeight / 2} 0`);
-                    stack.appendChild(entity);
-                    currentY -= (actualHeight + PANEL_SPACING);
-                }
+                     entity.setAttribute('position', `0 ${currentY - actualHeight / 2} 0`);
+                     stack.appendChild(entity);
+                     currentY -= (actualHeight + PANEL_SPACING);
+                 }
+
             });
+            console.log("Markerless content stack generated.");
         }
 
-        document.querySelector('a-scene').addEventListener('loaded', setupContentStack);
+        // --- Attendre chargement scène ---
+        const sceneEl = document.querySelector('a-scene');
+        if (sceneEl.hasLoaded) { setupContentStack(); }
+        else { sceneEl.addEventListener('loaded', setupContentStack); }
+
+        // --- Cacher le loader manuellement ---
+        sceneEl.addEventListener('loaded', () => {
+            console.log("A-Frame scene loaded event fired.");
+            const loader = document.getElementById('arjs-loader-div');
+            if (loader) {
+                console.log("Hiding AR.js loader.");
+                setTimeout(() => { loader.style.display = 'none'; }, 500);
+            } else { console.warn("Could not find loader element to hide."); }
+        });
+
     </script>
 
 </body>
