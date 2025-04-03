@@ -242,6 +242,11 @@ function updateProgress() {
 }
 
 // Afficher la barre au début du chargement
+
+        let element = document.getElementById("id-de-ton-element");
+if (element) {
+    element.style.display = "none"; // ou une autre action
+}
 progressContainer.style.display = 'block';
 
 // Vérifier le chargement des images
