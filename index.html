@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>AURALIS AR Experience (A-Frame Random Layout)</title>
+    <title>AURALIS AR Experience (A-Frame Non-Overlapping Layout)</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta name="description" content="AURALIS AR Experience using A-Frame and AR.js Markerless Tracking with random layout.">
+    <meta name="description" content="AURALIS AR Experience using A-Frame and AR.js with non-overlapping random layout.">
 
     <!-- A-Frame Core -->
     <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
@@ -52,8 +52,8 @@
         </a-assets>
 
         <!-- --- Conteneur pour les panneaux (Ancre globale) --- -->
-        <a-entity id="content-stack" position="0 1.5 -2.5" rotation="0 0 0" scale="0.7 0.7 0.7">
-            <!-- Les panneaux seront ajoutés ici avec des positions relatives aléatoires -->
+        <a-entity id="content-stack" position="0 1.5 -3.0" rotation="0 0 0" scale="0.6 0.6 0.6"> {/* Légèrement plus loin et plus petit */}
+            <!-- Les panneaux seront ajoutés ici avec des positions relatives aléatoires non superposées -->
         </a-entity>
 
         <!-- --- Caméra --- -->
@@ -61,92 +61,139 @@
 
     </a-scene>
 
-    <!-- --- Script pour générer le contenu et gérer le drag --- -->
+    <!-- --- Script pour générer le contenu et gérer le layout --- -->
     <script>
         // --- Configuration ---
-        const PANEL_BASE_WIDTH = 1.4;   // Panneaux un peu plus petits
-        const PANEL_TEXT_HEIGHT = 0.3;  // Hauteur texte réduite
-        const TEXT_BASE_WIDTH = 1.3;    // Largeur texte
+        const PANEL_BASE_WIDTH = 1.6;   // Largeur panneaux
+        const PANEL_TEXT_HEIGHT = 0.35; // Hauteur panneaux texte
+        const TEXT_BASE_WIDTH = 1.5;    // Largeur a-text
         const PANEL_COLOR = '#1a1a3a';
         const PANEL_OPACITY = 0.85;
-        const TEXT_Z_OFFSET = 0;        // Texte à Z=0 relatif au panneau
-        const BG_Z_OFFSET = -0.01;      // Fond à Z=-0.01 relatif au panneau
+        const TEXT_Z_OFFSET = 0;        // Texte à Z=0
+        const BG_Z_OFFSET = -0.01;      // Fond à Z=-0.01
 
-        // --- Configuration de la zone de placement aléatoire (relative à content-stack) ---
-        const AREA_WIDTH = 5.0;         // Largeur totale de la zone de dispersion
-        const AREA_HEIGHT = 2.5;        // Hauteur totale de la zone de dispersion
-        const AREA_DEPTH_OFFSET = 1.5;  // Profondeur de la dispersion (0 = tous à la même profondeur)
+        // --- Configuration de la zone de placement ---
+        const AREA_WIDTH = 6.0;         // Augmenté pour plus d'espace
+        const AREA_HEIGHT = 3.5;        // Augmenté
+        const AREA_DEPTH_OFFSET = 2.0;  // Profondeur max de dispersion
+
+        // --- Configuration pour l'évitement de collision ---
+        const MAX_PLACEMENT_ATTEMPTS = 30; // Nombre max d'essais pour placer un panneau
+        const PANEL_EFFECTIVE_DEPTH = 0.1; // Profondeur virtuelle pour la détection de collision
+        let placedPanelBounds = [];      // Stocke les AABB des panneaux placés
 
         // --- Données du contenu (inchangé) ---
         const contentData = [ { type: 'title', text: "AURALIS" }, { type: 'image', srcId: 'logoImg', originalWidth: 2, originalHeight: 2 }, { type: 'text', text: "Step Into Sound and Light:\nA Journey Beyond Music." }, { type: 'text', text: "Imagine a space where sound moves like liquid...\nWelcome to AURALIS!" }, { type: 'header', text: "The Architects" }, { type: 'text', text: "Wang Meng & Yu Miao dissolve boundaries..." }, { type: 'image', srcId: 'wangMengImg', originalWidth: 1, originalHeight: 1.2 }, { type: 'text', text: "• Wang Meng: Visionary audio-visual artist..." }, { type: 'image', srcId: 'yuMiaoImg', originalWidth: 1.5, originalHeight: 1 }, { type: 'text', text: "• Yu Miao: Guzheng virtuoso pushing limits..." }, { type: 'header', text: "Sound & Light" }, { type: 'image', srcId: 'stageWideImg', originalWidth: 2, originalHeight: 1.1 }, { type: 'text', text: "Dazzling visuals extend the sonic experience..." }, { type: 'image', srcId: 'djBackImg', originalWidth: 1.8, originalHeight: 1 }, { type: 'text', text: "Manels Favre shapes 3D sound with SPAT..." }, { type: 'header', text: "Immersive Music" }, { type: 'image', srcId: 'stageDuoBlueImg', originalWidth: 1.8, originalHeight: 1.1 }, { type: 'text', text: "Feel the music flow through you..." }, { type: 'image', srcId: 'stageDuoDarkImg', originalWidth: 1.8, originalHeight: 1.1 }, { type: 'text', text: "A journey into sound, space, and emotion." }, { type: 'cta', text: "Step inside.\nLet yourself be carried away.\n\nComing soon!" } ];
 
-        // --- Fonction setupContentStack (Disposition Aléatoire) ---
+        // --- Fonctions d'aide pour la collision ---
+        function calculateAABB(position, width, height, depth) {
+            const halfWidth = width / 2;
+            const halfHeight = height / 2;
+            const halfDepth = depth / 2;
+            return {
+                minX: position.x - halfWidth, maxX: position.x + halfWidth,
+                minY: position.y - halfHeight, maxY: position.y + halfHeight,
+                minZ: position.z - halfDepth, maxZ: position.z + halfDepth,
+            };
+        }
+
+        function checkOverlap(boxA, boxB) {
+            // Vérifie s'il n'y a PAS de superposition sur AUCUN axe
+            const noOverlap =
+                boxA.maxX < boxB.minX || boxA.minX > boxB.maxX ||
+                boxA.maxY < boxB.minY || boxA.minY > boxB.maxY ||
+                boxA.maxZ < boxB.minZ || boxA.minZ > boxB.maxZ;
+            // S'il n'y a "pas de non-superposition", alors il y a superposition
+            return !noOverlap;
+        }
+
+        // --- Fonction setupContentStack (Placement non superposé) ---
         function setupContentStack() {
             const stack = document.getElementById('content-stack');
             if (!stack) { console.error("Could not find #content-stack entity."); return; }
-
-            // Vider le contenu précédent si la fonction est appelée à nouveau
-            while (stack.firstChild) {
-                stack.removeChild(stack.firstChild);
-            }
+            placedPanelBounds = []; // Réinitialiser les boîtes placées
+            while (stack.firstChild) { stack.removeChild(stack.firstChild); } // Vider le contenu précédent
 
             contentData.forEach((item, index) => {
-                const entity = document.createElement('a-entity');
-                let panelHeight = PANEL_TEXT_HEIGHT; let panelWidth = PANEL_BASE_WIDTH;
-                let isCreated = false; // Pour savoir si un panneau a été créé
+                let panelHeight = PANEL_TEXT_HEIGHT;
+                let panelWidth = PANEL_BASE_WIDTH;
+                let entity = null; // Sera créé si placement réussi
 
-                // Interaction (reste la même)
-                entity.setAttribute('animation__scaleup', `property: scale; to: 1.1 1.1 1.1; startEvents: mouseenter; dur: 200; easing: easeOutQuad;`);
-                entity.setAttribute('animation__scaledown', `property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200; easing: easeInQuad;`);
-                entity.setAttribute('data-interactive', '');
-
-                // --- Création du panneau (texte ou image) ---
-                if (item.type === 'text' || item.type === 'header' || item.type === 'cta' || item.type === 'title') {
-                    if (item.type === 'title') { panelHeight *= 0.7; }
-                    let textWidthAttr = TEXT_BASE_WIDTH;
-                    const bgPlane = document.createElement('a-plane');
-                    bgPlane.setAttribute('width', panelWidth); bgPlane.setAttribute('height', panelHeight);
-                    bgPlane.setAttribute('material', `color: ${PANEL_COLOR}; opacity: ${PANEL_OPACITY}; shader: flat;`);
-                    bgPlane.setAttribute('position', `0 0 ${BG_Z_OFFSET}`); // Fond reculé
-                    entity.appendChild(bgPlane);
-                    const textEntity = document.createElement('a-text');
-                    textEntity.setAttribute('value', item.text); textEntity.setAttribute('color', '#FFFFFF');
-                    textEntity.setAttribute('align', 'center'); textEntity.setAttribute('baseline', 'center');
-                    textEntity.setAttribute('wrap-count', Math.floor(textWidthAttr * 20)); // Ajuster wrap si besoin
-                    textEntity.setAttribute('width', textWidthAttr);
-                    textEntity.setAttribute('position', `0 0 ${TEXT_Z_OFFSET}`); // Texte à Z=0
-                    entity.appendChild(textEntity);
-                    isCreated = true;
-
-                } else if (item.type === 'image' && item.srcId) {
+                // Déterminer dimensions réelles du panneau
+                if (item.type === 'title') { panelHeight *= 0.7; }
+                else if (item.type === 'image' && item.originalWidth && item.originalHeight) {
                     const imgElement = document.getElementById(item.srcId);
-                    if (imgElement && item.originalWidth && item.originalHeight) {
-                        const aspect = item.originalWidth / item.originalHeight; panelWidth = PANEL_BASE_WIDTH; panelHeight = panelWidth / aspect;
-                        const imgBgPlane = document.createElement('a-plane'); imgBgPlane.setAttribute('width', panelWidth * 1.05); imgBgPlane.setAttribute('height', panelHeight * 1.05); imgBgPlane.setAttribute('material', `color: ${PANEL_COLOR}; opacity: ${PANEL_OPACITY}; shader: flat;`);
-                        imgBgPlane.setAttribute('position', `0 0 ${BG_Z_OFFSET - 0.005}`); // Fond image encore un peu plus reculé
-                        entity.appendChild(imgBgPlane);
-                        const imgPlane = document.createElement('a-plane'); imgPlane.setAttribute('width', panelWidth); imgPlane.setAttribute('height', panelHeight); imgPlane.setAttribute('material', `src: #${item.srcId}; shader: flat; transparent: true;`);
-                        imgPlane.setAttribute('position', `0 0 ${TEXT_Z_OFFSET}`); // Image à Z=0
-                        entity.appendChild(imgPlane);
-                        isCreated = true;
+                     // Vérifier que l'asset image existe avant de calculer l'aspect
+                    if (imgElement) {
+                        const aspect = item.originalWidth / item.originalHeight;
+                        panelHeight = panelWidth / aspect;
                     } else {
-                        console.warn(`Image asset not found or dimensions missing for ${item.srcId}`);
+                        console.warn(`Asset image non trouvé pour ${item.srcId}, item ignoré.`);
+                        return; // Ne pas essayer de placer cet item si l'asset manque
                     }
+                } else if (item.type === 'image') {
+                     console.warn(`Dimensions manquantes pour ${item.srcId}, item ignoré.`);
+                     return; // Ignorer si les dimensions pour le calcul d'aspect manquent
                 }
 
-                // --- Positionnement Aléatoire (SI un panneau a été créé) ---
-                if (isCreated) {
-                    const randomX = (Math.random() - 0.5) * AREA_WIDTH;
-                    const randomY = (Math.random() - 0.5) * AREA_HEIGHT;
-                    // Mettre la profondeur négative pour que ce soit *derrière* le point d'ancrage Z
-                    const randomZ = Math.random() * AREA_DEPTH_OFFSET * -1;
+                let placed = false;
+                for (let attempt = 0; attempt < MAX_PLACEMENT_ATTEMPTS; attempt++) {
+                    // 1. Générer une position aléatoire
+                    const randomPos = {
+                        x: (Math.random() - 0.5) * AREA_WIDTH,
+                        y: (Math.random() - 0.5) * AREA_HEIGHT,
+                        z: Math.random() * AREA_DEPTH_OFFSET * -1 // Profondeur négative
+                    };
 
-                    entity.setAttribute('position', `${randomX} ${randomY} ${randomZ}`);
-                    // Garder rotation="0 0 0" pour qu'ils soient parallèles à la vue initiale
-                    stack.appendChild(entity);
+                    // 2. Calculer la boîte englobante pour cette position
+                    const currentBounds = calculateAABB(randomPos, panelWidth, panelHeight, PANEL_EFFECTIVE_DEPTH);
+
+                    // 3. Vérifier la collision avec les panneaux déjà placés
+                    let collision = false;
+                    for (const existingBounds of placedPanelBounds) {
+                        if (checkOverlap(currentBounds, existingBounds)) {
+                            collision = true;
+                            break; // Inutile de vérifier les autres si collision trouvée
+                        }
+                    }
+
+                    // 4. Si pas de collision, placer le panneau
+                    if (!collision) {
+                        entity = document.createElement('a-entity');
+                        entity.setAttribute('animation__scaleup', `property: scale; to: 1.1 1.1 1.1; startEvents: mouseenter; dur: 200; easing: easeOutQuad;`);
+                        entity.setAttribute('animation__scaledown', `property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200; easing: easeInQuad;`);
+                        entity.setAttribute('data-interactive', '');
+
+                        // Ajouter fond et texte/image (logique similaire à avant)
+                        if (item.type === 'text' || item.type === 'header' || item.type === 'cta' || item.type === 'title') {
+                            let textWidthAttr = TEXT_BASE_WIDTH;
+                            const bgPlane = document.createElement('a-plane'); bgPlane.setAttribute('width', panelWidth); bgPlane.setAttribute('height', panelHeight); bgPlane.setAttribute('material', `color: ${PANEL_COLOR}; opacity: ${PANEL_OPACITY}; shader: flat;`); bgPlane.setAttribute('position', `0 0 ${BG_Z_OFFSET}`); entity.appendChild(bgPlane);
+                            const textEntity = document.createElement('a-text'); textEntity.setAttribute('value', item.text); textEntity.setAttribute('color', '#FFFFFF'); textEntity.setAttribute('align', 'center'); textEntity.setAttribute('baseline', 'center'); textEntity.setAttribute('wrap-count', Math.floor(textWidthAttr * 20)); textEntity.setAttribute('width', textWidthAttr); textEntity.setAttribute('position', `0 0 ${TEXT_Z_OFFSET}`); entity.appendChild(textEntity);
+                        } else if (item.type === 'image' && item.srcId) {
+                             // Recalcul des dimensions ici au cas où elles ont changé
+                            const imgElementCheck = document.getElementById(item.srcId);
+                            if(imgElementCheck && item.originalWidth && item.originalHeight){
+                                const aspect = item.originalWidth / item.originalHeight; panelWidth = PANEL_BASE_WIDTH; panelHeight = panelWidth / aspect;
+                                const imgBgPlane = document.createElement('a-plane'); imgBgPlane.setAttribute('width', panelWidth * 1.05); imgBgPlane.setAttribute('height', panelHeight * 1.05); imgBgPlane.setAttribute('material', `color: ${PANEL_COLOR}; opacity: ${PANEL_OPACITY}; shader: flat;`); imgBgPlane.setAttribute('position', `0 0 ${BG_Z_OFFSET - 0.005}`); entity.appendChild(imgBgPlane);
+                                const imgPlane = document.createElement('a-plane'); imgPlane.setAttribute('width', panelWidth); imgPlane.setAttribute('height', panelHeight); imgPlane.setAttribute('material', `src: #${item.srcId}; shader: flat; transparent: true;`); imgPlane.setAttribute('position', `0 0 ${TEXT_Z_OFFSET}`); entity.appendChild(imgPlane);
+                            }
+                        }
+
+                        // Définir la position trouvée et ajouter à la scène
+                        entity.setAttribute('position', `${randomPos.x} ${randomPos.y} ${randomPos.z}`);
+                        stack.appendChild(entity);
+                        placedPanelBounds.push(currentBounds); // Enregistrer la boîte pour les prochaines vérifications
+                        placed = true;
+                        console.log(`Placed panel ${index} at attempt ${attempt + 1}`);
+                        break; // Sortir de la boucle des tentatives
+                    }
+                } // Fin de la boucle des tentatives
+
+                if (!placed) {
+                    console.warn(`Could not place panel ${index} for item type "${item.type}" after ${MAX_PLACEMENT_ATTEMPTS} attempts.`);
                 }
             });
-            console.log("Random layout content stack generated.");
+            console.log("Non-overlapping layout generation complete.");
         }
 
         // --- Attendre chargement scène ---
@@ -158,14 +205,11 @@
         sceneEl.addEventListener('loaded', () => {
             console.log("A-Frame scene loaded event fired.");
             const loader = document.getElementById('arjs-loader-div');
-            if (loader) {
-                console.log("Hiding AR.js loader.");
-                setTimeout(() => { loader.style.display = 'none'; }, 500);
-            } else { console.warn("Could not find loader element to hide."); }
+            if (loader) { console.log("Hiding AR.js loader."); setTimeout(() => { loader.style.display = 'none'; }, 500); }
+            else { console.warn("Could not find loader element to hide."); }
         });
 
-        // --- SUPPRESSION DE LA LOGIQUE DE DRAG VERTICAL ---
-        // (Le bloc de code pour 'touchstart', 'touchmove', 'touchend' a été enlevé)
+        // --- PAS DE DRAG VERTICAL DANS CETTE VERSION ---
 
     </script>
 
