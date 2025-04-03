@@ -11,47 +11,50 @@
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.0/aframe/build/aframe-ar.min.js"></script>
 
     <style>
+        <!-- AVERTISSEMENT : Utiliser <!-- --> ici est incorrect pour CSS. Utilisez /* ... */ -->
         body { margin: 0; overflow: hidden; }
         #wechat-notice { position: absolute; top: 10px; left: 10px; right: 10px; padding: 10px; background: rgba(0,0,0,0.7); color: white; z-index: 101; font-size: 14px; text-align: center; border-radius: 5px; }
 
-        /* --- Styles de l'écran de chargement et de la barre de progression --- */
+        <!-- --- Styles de l'écran de chargement et de la barre de progression --- -->
         .arjs-loader {
             height: 100%;
             width: 100%;
             position: absolute;
             top: 0;
             left: 0;
-            background-color: rgba(0, 0, 0, 0.9); /* Légèrement plus sombre */
+            background-color: rgba(0, 0, 0, 0.9); <!-- Légèrement plus sombre -->
             z-index: 9999;
-            display: flex; /* Utiliser flexbox pour centrer */
+            display: flex; <!-- Utiliser flexbox pour centrer -->
             justify-content: center;
             align-items: center;
-            flex-direction: column; /* Aligner les éléments verticalement */
+            flex-direction: column; <!-- Aligner les éléments verticalement -->
+            opacity: 1; <!-- Start visible -->
+            transition: opacity 0.5s ease-out; <!-- Add fade-out transition -->
         }
-        .arjs-loader-message { /* Style pour le message texte */
+        .arjs-loader-message { <!-- Style pour le message texte -->
             text-align: center;
             font-size: 1.25em;
             color: white;
-            margin-bottom: 20px; /* Espace sous le texte */
+            margin-bottom: 20px; <!-- Espace sous le texte -->
         }
         #progress-bar-container {
-            width: 80%; /* Largeur de la barre */
-            max-width: 300px; /* Largeur maximale */
-            height: 20px; /* Hauteur de la barre */
-            background-color: #333; /* Couleur de fond de la barre */
-            border-radius: 10px; /* Coins arrondis */
-            overflow: hidden; /* Masquer ce qui dépasse */
+            width: 80%; <!-- Largeur de la barre -->
+            max-width: 300px; <!-- Largeur maximale -->
+            height: 20px; <!-- Hauteur de la barre -->
+            background-color: #333; <!-- Couleur de fond de la barre -->
+            border-radius: 10px; <!-- Coins arrondis -->
+            overflow: hidden; <!-- Masquer ce qui dépasse -->
             border: 1px solid #555;
         }
         #progress-bar-fill {
-            width: 0%; /* Commence à 0% */
+            width: 0%; <!-- Commence à 0% -->
             height: 100%;
-            background-color: #4a90e2; /* Couleur de remplissage */
-            border-radius: 10px; /* Coins arrondis */
-            transition: width 0.3s ease-out; /* Animation douce */
+            background-color: #4a90e2; <!-- Couleur de remplissage -->
+            border-radius: 10px; <!-- Coins arrondis -->
+            transition: width 0.3s ease-out; <!-- Animation douce -->
         }
          #progress-text {
-            margin-top: 10px; /* Espace au-dessus du texte du pourcentage */
+            margin-top: 10px; <!-- Espace au-dessus du texte du pourcentage -->
             color: #ccc;
             font-size: 0.9em;
         }
@@ -81,8 +84,8 @@
         vr-mode-ui='enabled: false'>
 
         <!-- --- Assets --- -->
-        <!-- Timeout augmenté pour laisser le temps de charger -->
-        <a-assets timeout="90000">
+        <!-- Timeout *FORTEMENT* augmenté pour test -->
+        <a-assets timeout="180000">
              <img id="logoImg" src="images/logo.jpg" crossOrigin="anonymous">
              <img id="wangMengImg" src="images/wang_meng.jpg" crossOrigin="anonymous">
              <img id="yuMiaoImg" src="images/yu_miao.jpg" crossOrigin="anonymous">
@@ -112,6 +115,7 @@
                       animation__pos="property: position; from: -1 2 -2; to: 1 1.2 -1.5; dir: alternate; dur: 12000; easing: easeInOutSine; loop: true;"
                       animation__rot="property: rotation; to: 0 360 0; dur: 20000; easing: linear; loop: true;"
                       animation-mixer="clip: *; loop: repeat"
+                      visible="false" <!-- Start hidden until loaded -->
                       >
         </a-gltf-model>
 
@@ -122,12 +126,14 @@
 
     <!-- --- Script pour générer le contenu ET gérer la progression --- -->
     <script>
-        // --- Configuration ---
-        const PANEL_BASE_WIDTH = 1.8;
+        <!-- AVERTISSEMENT : Utiliser <!-- --> ici est incorrect pour JavaScript. Utilisez // ou /* ... */ -->
+
+        <!-- --- Configuration --- -->
+        const PANEL_BASE_WIDTH = 1.8;         <!-- Largeur standard panneau image -->
         const PANEL_COLOR = '#1a1a3a';
         const PANEL_OPACITY = 0.85;
-        const BG_Z_OFFSET = -0.01;
-        const IMAGE_Z_OFFSET = 0;
+        const BG_Z_OFFSET = -0.01;            <!-- Décalage Z du fond -->
+        const IMAGE_Z_OFFSET = 0;             <!-- Position Z de l'image -->
 
         const imagePositions = {
             'logoImg':         { x: 0,    y: 0,    z: 0.1 },
@@ -149,22 +155,33 @@
             { type: 'image', srcId: 'stageDuoDarkImg', originalWidth: 1.8, originalHeight: 1.1 }
         ];
 
-        // --- Fonction createImagePanel (Inchangée) ---
+        let assetsFullyLoaded = false; <!-- Flag to track asset loading status -->
+
+        <!-- --- Fonction createImagePanel --- -->
         function createImagePanel(itemData, position) {
             const container = document.getElementById('content-container');
             if (!container || !itemData || itemData.type !== 'image' || !itemData.srcId) return null;
             const imgElement = document.getElementById(itemData.srcId);
-             // Vérification plus robuste des dimensions
+
              const originalWidth = itemData.originalWidth || imgElement?.naturalWidth;
              const originalHeight = itemData.originalHeight || imgElement?.naturalHeight;
 
+             <!-- If assets haven't fully loaded, we might still have issues here -->
              if (!imgElement || !originalWidth || !originalHeight) {
-                console.warn(`Asset/dimensions missing or invalid for ${itemData.srcId}`);
+                <!-- Only warn if assets were supposed to be loaded -->
+                if (assetsFullyLoaded) {
+                    console.warn(`Asset/dimensions missing or invalid for ${itemData.srcId} even after load event.`);
+                } else {
+                    <!-- Expected issue if timeout occurred before creation -->
+                     console.log(`Asset/dimensions not ready yet for ${itemData.srcId} (likely due to loading state).`);
+                }
+                <!-- Optionally return null or create a placeholder -->
                 return null;
              }
 
-
             const entity = document.createElement('a-entity');
+            entity.setAttribute('visible', false); <!-- Start invisible, make visible later -->
+
             const aspect = originalWidth / originalHeight;
             const panelWidth = PANEL_BASE_WIDTH;
             const panelHeight = panelWidth / aspect;
@@ -183,112 +200,159 @@
             const imgPlane = document.createElement('a-plane');
             imgPlane.setAttribute('width', panelWidth);
             imgPlane.setAttribute('height', panelHeight);
+            <!-- Use the check for loaded status before setting src directly? Might be complex. -->
+            <!-- Relying on A-Frame/Three.js to handle it once image is loaded is typical. -->
             imgPlane.setAttribute('material', `src: #${itemData.srcId}; shader: flat; transparent: true;`);
             imgPlane.setAttribute('position', `0 0 ${IMAGE_Z_OFFSET}`);
             entity.appendChild(imgPlane);
 
+
             if (itemData.srcId === 'logoImg') {
-                entity.setAttribute('sound', {
-                    src: '#logoSound',
-                    autoplay: true,
-                    loop: true,
-                    volume: 0.8,
-                    positional: true,
-                    distanceModel: 'inverse',
-                    refDistance: 1,
-                    rolloffFactor: 1
-                });
-                console.log(`Added positional sound component to logoImg panel.`);
+                 <!-- We'll handle sound activation later, after confirming load -->
+                 console.log(`Sound component setup planned for logoImg panel.`);
             }
 
             entity.setAttribute('position', `${position.x} ${position.y} ${position.z}`);
             container.appendChild(entity);
 
-            // console.log(`Created image panel for ${itemData.srcId} at`, position); // Moins de logs en production
             return entity;
         }
 
-        // --- Fonction setupManualLayout (Inchangée) ---
+        <!-- --- Fonction setupManualLayout --- -->
         function setupManualLayout() {
             const container = document.getElementById('content-container');
+             const jellyfish = document.getElementById('jellyfish');
             if (!container) { console.error("Could not find #content-container entity."); return; }
             while (container.firstChild) { container.removeChild(container.firstChild); }
 
+            let allPanelsCreated = true;
             contentData.forEach(item => {
                 if (item.type === 'image' && item.srcId && imagePositions[item.srcId]) {
                     const position = imagePositions[item.srcId];
-                    createImagePanel(item, position);
+                    const panel = createImagePanel(item, position);
+                     if (!panel) allPanelsCreated = false; <!-- Track if any panel failed -->
                 } else if (item.type === 'image' && item.srcId) {
                     console.warn(`Position not defined in imagePositions for ${item.srcId}. Panel not created.`);
                 }
             });
 
-            console.log("Manual image layout generated.");
+             <!-- Make panels and jellyfish visible only if assets are likely loaded -->
+             if (assetsFullyLoaded && allPanelsCreated) {
+                 console.log("Manual image layout generated. Making content visible.");
+                 container.querySelectorAll('a-entity').forEach(el => el.setAttribute('visible', true));
+                 if (jellyfish) jellyfish.setAttribute('visible', true);
+
+                 <!-- Activate sound only now -->
+                 const logoPanel = container.querySelector(`[material*="src: #logoImg"]`)?.parentElement;
+                 if (logoPanel) {
+                     logoPanel.setAttribute('sound', {
+                         src: '#logoSound',
+                         autoplay: true, <!-- Or trigger on interaction if preferred -->
+                         loop: true,
+                         volume: 0.8,
+                         positional: true,
+                         distanceModel: 'inverse',
+                         refDistance: 1,
+                         rolloffFactor: 1
+                     });
+                     console.log(`Activated sound for logoImg panel.`);
+                 }
+
+             } else if (!assetsFullyLoaded) {
+                 console.warn("Manual layout setup called, but assets did not fully load. Content might be incomplete or invisible.");
+                 <!-- Optionally display an error message to the user here instead of hiding the loader -->
+                 <!-- document.querySelector('.arjs-loader-message').textContent = "Erreur de chargement des ressources."; -->
+                 <!-- loaderDiv.style.opacity = '1'; --> <!-- Keep loader visible -->
+                 <!-- return; --> <!-- Prevent hiding loader if assets failed -->
+             } else {
+                 console.warn("Manual layout setup called, some panels failed to create. Content might be incomplete.");
+             }
         }
 
-        // --- NOUVEAU : Gestion de la barre de progression ---
+
+        <!-- --- Gestion de la barre de progression et du chargement --- -->
         document.addEventListener('DOMContentLoaded', () => {
             const assets = document.querySelector('a-assets');
             const progressBarFill = document.getElementById('progress-bar-fill');
             const progressText = document.getElementById('progress-text');
             const loaderDiv = document.getElementById('arjs-loader-div');
             const sceneEl = document.querySelector('a-scene');
+            const loaderMessage = document.querySelector('.arjs-loader-message');
 
-            if (!assets || !progressBarFill || !progressText || !loaderDiv || !sceneEl) {
+            if (!assets || !progressBarFill || !progressText || !loaderDiv || !sceneEl || !loaderMessage) {
                 console.error("Loader/Progress bar elements not found!");
-                // Masquer le loader par sécurité si les éléments manquent
                 if(loaderDiv) loaderDiv.style.display = 'none';
                 return;
             }
 
-            // --- Mettre à jour la barre de progression ---
+            let progressTimeout = null;
+
+            <!-- --- Mettre à jour la barre de progression --- -->
             assets.addEventListener('progress', (event) => {
-                const progress = event.detail.progress; // Valeur entre 0 et 1
+                <!-- Clear any previous timeout check -->
+                clearTimeout(progressTimeout);
+
+                const progress = event.detail.progress; <!-- Valeur entre 0 et 1 -->
                 const percentage = Math.round(progress * 100);
                 progressBarFill.style.width = percentage + '%';
                 progressText.textContent = percentage + '%';
-                // console.log('Assets loading progress:', percentage, '%'); // Optionnel: pour débug
+                console.log('Assets loading progress:', percentage, '%'); <!-- <-- LOG ACTIVÉ -->
+
+                <!-- Set a timeout to check if progress stalls -->
+                progressTimeout = setTimeout(() => {
+                    console.warn('Asset progress seems to have stalled.');
+                    <!-- Optionally update the message -->
+                    <!-- loaderMessage.textContent = 'Chargement lent, veuillez patienter...'; -->
+                }, 15000); <!-- 15 seconds without progress update = warning -->
             });
 
-             // --- Cacher le loader quand TOUT est prêt (assets ET scène) ---
-            sceneEl.addEventListener('loaded', () => {
-                 console.log("A-Frame scene loaded event fired.");
-                 // Assurer que la barre est à 100% visuellement à la fin
+             <!-- --- Événement quand TOUS les assets sont chargés (AVANT le timeout) --- -->
+             assets.addEventListener('loaded', () => {
+                 <!-- Clear stall check -->
+                 clearTimeout(progressTimeout);
+                 console.log(">>>> A-Assets 'loaded' event fired! Assets should be ready.");
+                 assetsFullyLoaded = true;
+                 <!-- Ensure bar is visually 100% -->
                  progressBarFill.style.width = '100%';
                  progressText.textContent = '100%';
+             });
 
-                // Petit délai pour laisser l'utilisateur voir 100% avant de masquer
-                setTimeout(() => {
-                    if (loaderDiv) {
-                        console.log("Hiding AR.js loader.");
-                        // Optionnel : ajouter une transition de fondu pour le masquage
-                        loaderDiv.style.opacity = '0';
-                        setTimeout(() => { loaderDiv.style.display = 'none'; }, 500); // Masquer après la transition
-                    } else {
-                        console.warn("Could not find loader element to hide.");
-                    }
-                }, 500); // Délai de 500ms
+             <!-- --- Gestion d'erreur de chargement/timeout des assets --- -->
+             assets.addEventListener('timeout', (event) => {
+                  <!-- Clear stall check -->
+                 clearTimeout(progressTimeout);
+                 console.error("!!!!! A-Assets timed out !!!!!", event.detail.src);
+                 assetsFullyLoaded = false; <!-- Mark as not loaded -->
+                 loaderMessage.textContent = "Erreur: Le chargement a dépassé le délai.";
+                 <!-- Garder le loader visible ou afficher un message permanent -->
+                 progressBarFill.style.backgroundColor = 'red'; <!-- Indicate error -->
+                 progressText.textContent = 'Timeout!';
+                 <!-- Ne pas masquer le loader automatiquement dans ce cas -->
+             });
 
-                // Configurer le layout manuel une fois la scène chargée
-                setupManualLayout();
+             <!-- --- Cacher le loader quand la SCENE est prête ET idéalement assets chargés --- -->
+            sceneEl.addEventListener('loaded', () => {
+                 console.log("A-Frame scene 'loaded' event fired.");
+
+                 <!-- Appeler setupManualLayout pour créer les entités -->
+                 <!-- setupManualLayout maintenant gère la visibilité basée sur assetsFullyLoaded -->
+                 setupManualLayout();
+
+                 <!-- Masquer le loader SEULEMENT si les assets ont chargé SANS timeout -->
+                 if (assetsFullyLoaded) {
+                     console.log("Assets loaded successfully, hiding loader.");
+                     <!-- Petit délai pour voir le 100% -->
+                     setTimeout(() => {
+                         loaderDiv.style.opacity = '0';
+                         setTimeout(() => { loaderDiv.style.display = 'none'; }, 500);
+                     }, 300); <!-- Short delay -->
+                 } else {
+                     console.warn("Scene loaded, but assets timed out or failed. Loader kept visible (or modified).");
+                     <!-- Le message d'erreur est déjà défini dans le handler 'timeout' -->
+                 }
             });
 
-             // --- Gestion d'erreur de chargement des assets ---
-            assets.addEventListener('timeout', (event) => {
-                console.warn("Asset loading timed out:", event.detail.src);
-                // Le loader sera quand même caché par l'événement 'loaded' de la scène,
-                // mais on pourrait afficher un message d'erreur ici si nécessaire.
-                // Par exemple, changer le texte du loader:
-                // document.querySelector('.arjs-loader-message').textContent = "Erreur de chargement...";
-            });
-
-            // On ne lance PAS setupManualLayout() ici car il doit être appelé APRÈS
-            // que la scène soit chargée ('loaded' event), pas juste quand le DOM est prêt.
-            // Le code existant qui appelle setupManualLayout dans l'événement 'loaded' de la scène est correct.
-
-        }); // Fin de DOMContentLoaded
-
-        // --- Pas de DRAG dans cette version ---
+        }); <!-- Fin de DOMContentLoaded -->
 
     </script>
 </body>
