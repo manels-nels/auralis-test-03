@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>AURALIS AR Experience (Manual Image Layout)</title>
+    <title>AURALIS AR Experience (Positional Audio)</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta name="description" content="AURALIS AR Experience using A-Frame and AR.js with manually defined image layout.">
+    <meta name="description" content="AURALIS AR Experience using A-Frame and AR.js with positional audio on logo.">
 
     <!-- A-Frame Core -->
     <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
@@ -29,7 +29,7 @@
 
     <!-- --- Écran de chargement AR.js --- -->
     <div class="arjs-loader" id="arjs-loader-div">
-        <div>Loading AR Experience...</div>
+        <div>Loading AURALIS Experience...</div>
     </div>
 
     <!-- --- Scène A-Frame AR (Markerless) --- -->
@@ -42,6 +42,7 @@
 
         <!-- --- Assets --- -->
         <a-assets timeout="60000">
+             <!-- Images -->
              <img id="logoImg" src="images/logo.jpg" crossOrigin="anonymous">
              <img id="wangMengImg" src="images/wang_meng.jpg" crossOrigin="anonymous">
              <img id="yuMiaoImg" src="images/yu_miao.jpg" crossOrigin="anonymous">
@@ -49,12 +50,15 @@
              <img id="stageWideImg" src="images/stage_wide.jpg" crossOrigin="anonymous">
              <img id="stageDuoBlueImg" src="images/stage_duo_blue.jpg" crossOrigin="anonymous">
              <img id="stageDuoDarkImg" src="images/stage_duo_dark.jpg" crossOrigin="anonymous">
+
+             <!-- NOUVEAU : Audio Asset 
+             {/* Remplacez "audio/your_sound.mp3" par le chemin réel vers votre fichier son */} -->
+             <audio id="logoSound" src="audio/auralis.mp3" preload="auto" crossOrigin="anonymous"></audio>
         </a-assets>
 
         <!-- --- Conteneur pour les panneaux (Ancre globale) --- -->
-        {/* Positionné un peu plus loin, scale à 1 car les positions sont absolues dans ce conteneur */}
         <a-entity id="content-container" position="0 1.5 -4.0" rotation="0 0 0" scale="1 1 1">
-            <!-- Les panneaux image seront ajoutés ici selon les positions définies en JS -->
+            <!-- Les panneaux image seront ajoutés ici -->
         </a-entity>
 
         <!-- --- Caméra --- -->
@@ -65,46 +69,27 @@
     <!-- --- Script pour générer le contenu --- -->
     <script>
         // --- Configuration ---
-        const PANEL_BASE_WIDTH = 1.8;   // Largeur standard panneau image
-        const PANEL_COLOR = '#1a1a3a';
-        const PANEL_OPACITY = 0.85;
-        const BG_Z_OFFSET = -0.01;      // Décalage Z du fond
-        const IMAGE_Z_OFFSET = 0;       // Position Z de l'image
+        const PANEL_BASE_WIDTH = 1.8;
+        const PANEL_COLOR = '#1a1a3a'; const PANEL_OPACITY = 0.85;
+        const BG_Z_OFFSET = -0.01; const IMAGE_Z_OFFSET = 0;
+        const DEPTH_VARIATION = 0.15; // Gardé pour layout visuel
 
-        // **********************************************************
-        // --- MODIFIEZ ICI : Positions manuelles pour chaque image ---
-        //     Les coordonnées x, y, z sont relatives au centre du
-        //     conteneur #content-container (qui est lui-même placé
-        //     devant la caméra).
-        //     x positif = droite, y positif = haut, z positif = vers vous
-        // **********************************************************
+        // --- Positions manuelles (inchangé) ---
         const imagePositions = {
-            // Logo au centre, légèrement en avant
             'logoImg':         { x: 0,    y: 0,    z: 0.1 },
-
-            // Exemples de placement (à ajuster selon vos préférences)
-            'wangMengImg':     { x: -2.2, y: 2,  z: -0.1 }, // Gauche, un peu haut, un peu derrière
-            'yuMiaoImg':       { x: 2.2,  y: 0.4,  z: -0.1 }, // Droite, un peu haut, un peu derrière
-            'stageWideImg':    { x: 0,    y: 2,  z: -0.3 }, // Au dessus du logo, plus loin derrière
-            'djBackImg':       { x: 0,    y: -2, z: -0.2 }, // En dessous du logo, derrière
-            'stageDuoBlueImg': { x: -2.5, y: -0.8, z: 0.2 },  // En bas à gauche, en avant
-            'stageDuoDarkImg': { x: 2.5,  y: -0.8, z: 0.2 },  // En bas à droite, en avant
-
-            // Ajoutez/modifiez des entrées pour correspondre aux srcId de vos images
+            'wangMengImg':     { x: -2.2, y: 0.4,  z: -0.1 },
+            'yuMiaoImg':       { x: 2.2,  y: 0.4,  z: -0.1 },
+            'stageWideImg':    { x: 0,    y: 1.5,  z: -0.3 },
+            'djBackImg':       { x: -2.5, y: -0.8, z: 0 }, // Position ajustée pour l'exemple
+            'stageDuoBlueImg': { x: 2.5, y: -0.8, z: 0.2 },
+            'stageDuoDarkImg': { x: 0,   y: -1.5, z: 0.2 }, // Position ajustée pour l'exemple
         };
-        // **********************************************************
 
-        // --- Données du contenu (Seules les images seront utilisées) ---
-        const contentData = [ { type: 'image', srcId: 'logoImg', originalWidth: 2, originalHeight: 2 }, 
-                             { type: 'image', srcId: 'wangMengImg', originalWidth: 1, originalHeight: 1.2 }, 
-                             { type: 'image', srcId: 'yuMiaoImg', originalWidth: 1.5, originalHeight: 1 }, 
-                             { type: 'image', srcId: 'stageWideImg', originalWidth: 2, originalHeight: 1.1 }, 
-                             { type: 'image', srcId: 'djBackImg', originalWidth: 1, originalHeight: 1.25 }, 
-                             { type: 'image', srcId: 'stageDuoBlueImg', originalWidth: 1.8, originalHeight: 1.1 }, 
-                             { type: 'image', srcId: 'stageDuoDarkImg', originalWidth: 1.8, originalHeight: 1.1 } ];
+        // --- Données du contenu (Images seulement) ---
+        const contentData = [ { type: 'image', srcId: 'logoImg', originalWidth: 2, originalHeight: 2 }, { type: 'image', srcId: 'wangMengImg', originalWidth: 1, originalHeight: 1.2 }, { type: 'image', srcId: 'yuMiaoImg', originalWidth: 1.5, originalHeight: 1 }, { type: 'image', srcId: 'stageWideImg', originalWidth: 2, originalHeight: 1.1 }, { type: 'image', srcId: 'djBackImg', originalWidth: 1.5, originalHeight: 1 }, /* <- Ratio corrigé si besoin */ { type: 'image', srcId: 'stageDuoBlueImg', originalWidth: 1.8, originalHeight: 1.1 }, { type: 'image', srcId: 'stageDuoDarkImg', originalWidth: 1.8, originalHeight: 1.1 } ];
 
 
-        // --- Fonction createPanel (Uniquement pour images) ---
+        // --- Fonction createPanel (avec ajout du son pour le logo) ---
         function createImagePanel(itemData, position) {
             const container = document.getElementById('content-container');
             if (!container || !itemData || itemData.type !== 'image' || !itemData.srcId) return null;
@@ -125,6 +110,22 @@
             // Image
             const imgPlane = document.createElement('a-plane'); imgPlane.setAttribute('width', panelWidth); imgPlane.setAttribute('height', panelHeight); imgPlane.setAttribute('material', `src: #${itemData.srcId}; shader: flat; transparent: true;`); imgPlane.setAttribute('position', `0 0 ${IMAGE_Z_OFFSET}`); entity.appendChild(imgPlane);
 
+            // *** NOUVEAU : Ajouter le composant son SI c'est le logo ***
+            if (itemData.srcId === 'logoImg') {
+                entity.setAttribute('sound', {
+                    src: '#logoSound',          // Référence à l'asset audio préchargé
+                    autoplay: true,             // Jouer automatiquement
+                    loop: true,                 // Répéter le son
+                    volume: 0.8,                // Volume (0 à 1)
+                    positional: true,           // TRÈS IMPORTANT: active la spatialisation
+                    distanceModel: 'inverse',   // Modèle d'atténuation du son ('linear', 'inverse', 'exponential')
+                    refDistance: 1,             // Distance (en mètres A-Frame) où le volume est de 100%
+                    rolloffFactor: 1            // À quelle vitesse le son diminue avec la distance
+                });
+                console.log(`Added positional sound component to logoImg panel.`);
+            }
+            // *** Fin ajout son ***
+
             // Appliquer la position DÉFINIE MANUELLEMENT
             entity.setAttribute('position', `${position.x} ${position.y} ${position.z}`);
             container.appendChild(entity);
@@ -134,32 +135,23 @@
         }
 
 
-        // --- Fonction setupManualLayout ---
+        // --- Fonction setupManualLayout (inchangée) ---
         function setupManualLayout() {
             const container = document.getElementById('content-container');
             if (!container) { console.error("Could not find #content-container entity."); return; }
             while (container.firstChild) { container.removeChild(container.firstChild); } // Vider
-
-            // Itérer sur les données de contenu (qui ne contiennent que des images maintenant)
             contentData.forEach(item => {
                 if (item.type === 'image' && item.srcId && imagePositions[item.srcId]) {
-                    // Récupérer la position définie dans l'objet imagePositions
-                    const position = imagePositions[item.srcId];
-                    // Créer le panneau à cette position
-                    createImagePanel(item, position);
-                } else if (item.type === 'image' && item.srcId) {
-                    console.warn(`Position not defined in imagePositions for ${item.srcId}. Panel not created.`);
-                }
-                // Ignorer les autres types (texte, etc.)
+                    const position = imagePositions[item.srcId]; createImagePanel(item, position);
+                } else if (item.type === 'image' && item.srcId) { console.warn(`Position not defined for ${item.srcId}.`); }
             });
-
             console.log("Manual image layout generated.");
         }
 
         // --- Attendre chargement scène ---
         const sceneEl = document.querySelector('a-scene');
-        if (sceneEl.hasLoaded) { setupManualLayout(); } // Appeler la nouvelle fonction
-        else { sceneEl.addEventListener('loaded', setupManualLayout); } // Appeler la nouvelle fonction
+        if (sceneEl.hasLoaded) { setupManualLayout(); }
+        else { sceneEl.addEventListener('loaded', setupManualLayout); }
 
         // --- Cacher le loader manuellement ---
         sceneEl.addEventListener('loaded', () => {
@@ -167,6 +159,14 @@
             const loader = document.getElementById('arjs-loader-div');
             if (loader) { console.log("Hiding AR.js loader."); setTimeout(() => { loader.style.display = 'none'; }, 500); }
             else { console.warn("Could not find loader element to hide."); }
+
+            // Tentative de démarrage audio après interaction implicite (chargement scène / caméra)
+            // Cela peut aider sur certains navigateurs où l'autoplay strict est appliqué
+             const logoEntity = document.querySelector('[sound]'); // Trouve l'entité avec le son
+             if (logoEntity && logoEntity.components.sound && !logoEntity.components.sound.isPlaying) {
+                 console.log("Attempting to play sound after scene load...");
+                 logoEntity.components.sound.playSound();
+             }
         });
 
         // --- PAS DE DRAG DANS CETTE VERSION ---
