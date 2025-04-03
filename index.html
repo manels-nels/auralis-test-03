@@ -239,19 +239,11 @@
 
         // --- Écouter les événements de chargement des assets ---
         const assets = document.querySelector('a-assets');
-        assets.addEventListener('materialtextureloaded', () => {
-            loadedAssets++;
-            updateProgressBar();
-        });
-
-        assets.addEventListener('soundloaded', () => {
-            loadedAssets++;
-            updateProgressBar();
-        });
-
-        assets.addEventListener('model-loaded', () => {
-            loadedAssets++;
-            updateProgressBar();
+        assets.addEventListener('loaded', (event) => {
+            if (event.detail && event.detail.src) {
+                loadedAssets++;
+                updateProgressBar();
+            }
         });
 
         sceneEl.addEventListener('loaded', () => {
