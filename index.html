@@ -1,25 +1,23 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>AURALIS AR Experience (Tap to Play Audio)</title> {/* Titre mis à jour */}
+    <title>AURALIS AR Experience (Tap Canvas for Audio)</title> {/* Titre mis à jour */}
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta name="description" content="AURALIS AR Experience using A-Frame/AR.js with tap-to-play audio.">
+    <meta name="description" content="AURALIS AR Experience using A-Frame/AR.js with tap-on-canvas audio start.">
 
     <!-- A-Frame Core -->
     <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
-
     <!-- AR.js for A-Frame -->
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.0/aframe/build/aframe-ar.min.js"></script>
 
     <style>
+        /* ... (styles inchangés) ... */
         body { margin: 0; overflow: hidden; }
         .arjs-loader { height: 100%; width: 100%; position: absolute; top: 0; left: 0; background-color: rgba(0, 0, 0, 0.8); z-index: 9999; display: flex; justify-content: center; align-items: center; }
         .arjs-loader div { text-align: center; font-size: 1.25em; color: white; }
         #wechat-notice { position: absolute; top: 10px; left: 10px; right: 10px; padding: 10px; background: rgba(0,0,0,0.7); color: white; z-index: 101; font-size: 14px; text-align: center; border-radius: 5px; }
-        /* Indication visuelle pour taper (optionnel) */
-        #tap-prompt { position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); padding: 8px 15px; background: rgba(0,0,0,0.6); color: white; z-index: 100; font-size: 14px; border-radius: 5px; pointer-events: none; /* Ne pas intercepter les clics */ display: none; /* Caché initialement */ }
-
+        #tap-prompt { position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); padding: 8px 15px; background: rgba(0,0,0,0.6); color: white; z-index: 100; font-size: 14px; border-radius: 5px; pointer-events: none; display: none; }
     </style>
 </head>
 
@@ -35,8 +33,8 @@
         <div>Loading AR Experience...</div>
     </div>
 
-     <!-- NOUVEAU : Indication pour taper (optionnel) -->
-     <div id="tap-prompt">Touchez l'écran pour démarrer le son</div>
+     <!-- --- Indication pour taper --- -->
+     <div id="tap-prompt">Touchez la vue AR pour démarrer le son</div>
 
     <!-- --- Scène A-Frame AR (Markerless) --- -->
     <a-scene
@@ -46,9 +44,8 @@
         renderer='logarithmicDepthBuffer: true; colorManagement: true;'
         vr-mode-ui='enabled: false'>
 
-        <!-- --- Assets --- -->
+        <!-- --- Assets (inchangés) --- -->
         <a-assets timeout="60000">
-             <!-- Images -->
              <img id="logoImg" src="images/logo.jpg" crossOrigin="anonymous">
              <img id="wangMengImg" src="images/wang_meng.jpg" crossOrigin="anonymous">
              <img id="yuMiaoImg" src="images/yu_miao.jpg" crossOrigin="anonymous">
@@ -56,90 +53,50 @@
              <img id="stageWideImg" src="images/stage_wide.jpg" crossOrigin="anonymous">
              <img id="stageDuoBlueImg" src="images/stage_duo_blue.jpg" crossOrigin="anonymous">
              <img id="stageDuoDarkImg" src="images/stage_duo_dark.jpg" crossOrigin="anonymous">
-             <!-- Audio -->
              <audio id="logoSound" src="audio/your_sound.mp3" preload="auto" crossOrigin="anonymous"></audio>
-             <!-- Modèle 3D -->
              <a-asset-item id="jellyfishModel" src="models/meduse.glb" crossOrigin="anonymous"></a-asset-item>
         </a-assets>
 
-        <!-- --- Conteneur pour les panneaux --- -->
-        <a-entity id="content-container" position="0 1.5 -4.0" rotation="0 0 0" scale="1 1 1">
-             <!-- Panneaux ajoutés par JS -->
-        </a-entity>
+        <!-- --- Conteneur et Méduse (inchangés) --- -->
+        <a-entity id="content-container" position="0 1.5 -4.0" rotation="0 0 0" scale="1 1 1"></a-entity>
+        <a-gltf-model id="jellyfish" src="#jellyfishModel" position="-1 2 -2" scale="0.3 0.3 0.3" rotation="0 0 0" animation__pos="property: position; from: -1 2 -2; to: 1 1.2 -1.5; dir: alternate; dur: 12000; easing: easeInOutSine; loop: true" animation__rot="property: rotation; to: 0 360 0; dur: 20000; easing: linear; loop: true" animation-mixer="clip: *; loop: repeat"></a-gltf-model>
 
-        <!-- --- Méduse 3D Animée (Code corrigé, sans commentaires internes) --- -->
-        <a-gltf-model id="jellyfish"
-                      src="#jellyfishModel"
-                      position="-1 2 -2"
-                      scale="0.3 0.3 0.3"
-                      rotation="0 0 0"
-                      animation__pos="property: position; from: -1 2 -2; to: 1 1.2 -1.5; dir: alternate; dur: 12000; easing: easeInOutSine; loop: true"
-                      animation__rot="property: rotation; to: 0 360 0; dur: 20000; easing: linear; loop: true"
-                      animation-mixer="clip: *; loop: repeat">
-        </a-gltf-model>
-
-        <!-- --- Caméra --- -->
+        <!-- --- Caméra (inchangée) --- -->
         <a-camera cursor="rayOrigin: mouse; fuse: false;" raycaster="objects: [data-interactive]"></a-camera>
 
     </a-scene>
 
-    <!-- --- Script pour générer le contenu & Gérer Audio --- -->
+    <!-- --- Script --- -->
     <script>
-        // --- Configuration ---
-        const PANEL_BASE_WIDTH = 1.8; const PANEL_COLOR = '#1a1a3a'; const PANEL_OPACITY = 0.85;
-        const BG_Z_OFFSET = -0.01; const IMAGE_Z_OFFSET = 0; const DEPTH_VARIATION = 0.15;
+        // --- Configuration, Données, soundStarted flag (inchangés) ---
+        const PANEL_BASE_WIDTH = 1.8; const PANEL_COLOR = '#1a1a3a'; const PANEL_OPACITY = 0.85; const BG_Z_OFFSET = -0.01; const IMAGE_Z_OFFSET = 0; const DEPTH_VARIATION = 0.15;
+        const imagePositions = { /* ... positions ... */ 'logoImg': { x: 0, y: 0, z: 0.1 }, 'wangMengImg': { x: -2.2, y: 0.4, z: -0.1 }, 'yuMiaoImg': { x: 2.2, y: 0.4, z: -0.1 }, 'stageWideImg': { x: 0, y: 1.5, z: -0.3 }, 'djBackImg': { x: -2.5, y: -0.8, z: 0 }, 'stageDuoBlueImg': { x: 2.5, y: -0.8, z: 0.2 }, 'stageDuoDarkImg': { x: 0, y: -1.5, z: 0.2 } };
+        const contentData = [ /* ... données images ... */ { type: 'image', srcId: 'logoImg', originalWidth: 2, originalHeight: 2 }, { type: 'image', srcId: 'wangMengImg', originalWidth: 1, originalHeight: 1.2 }, { type: 'image', srcId: 'yuMiaoImg', originalWidth: 1.5, originalHeight: 1 }, { type: 'image', srcId: 'stageWideImg', originalWidth: 2, originalHeight: 1.1 }, { type: 'image', srcId: 'djBackImg', originalWidth: 1.5, originalHeight: 1 }, { type: 'image', srcId: 'stageDuoBlueImg', originalWidth: 1.8, originalHeight: 1.1 }, { type: 'image', srcId: 'stageDuoDarkImg', originalWidth: 1.8, originalHeight: 1.1 } ];
+        let soundStarted = false;
 
-        // --- Positions manuelles ---
-        const imagePositions = { 'logoImg': { x: 0, y: 0, z: 0.1 }, 'wangMengImg': { x: -2.2, y: 0.4, z: -0.1 }, 'yuMiaoImg': { x: 2.2, y: 0.4, z: -0.1 }, 'stageWideImg': { x: 0, y: 1.5, z: -0.3 }, 'djBackImg': { x: -2.5, y: -0.8, z: 0 }, 'stageDuoBlueImg': { x: 2.5, y: -0.8, z: 0.2 }, 'stageDuoDarkImg': { x: 0, y: -1.5, z: 0.2 } };
-
-        // --- Données du contenu ---
-        const contentData = [ { type: 'image', srcId: 'logoImg', originalWidth: 2, originalHeight: 2 }, { type: 'image', srcId: 'wangMengImg', originalWidth: 1, originalHeight: 1.2 }, { type: 'image', srcId: 'yuMiaoImg', originalWidth: 1.5, originalHeight: 1 }, { type: 'image', srcId: 'stageWideImg', originalWidth: 2, originalHeight: 1.1 }, { type: 'image', srcId: 'djBackImg', originalWidth: 1.5, originalHeight: 1 }, { type: 'image', srcId: 'stageDuoBlueImg', originalWidth: 1.8, originalHeight: 1.1 }, { type: 'image', srcId: 'stageDuoDarkImg', originalWidth: 1.8, originalHeight: 1.1 } ];
-
-        let soundStarted = false; // Flag pour s'assurer que le son ne démarre qu'une fois
-
-        // --- Fonction createPanel (avec son SANS autoplay) ---
-        function createImagePanel(itemData, position) {
-            const container = document.getElementById('content-container'); if (!container || !itemData || itemData.type !== 'image' || !itemData.srcId) return null; const imgElement = document.getElementById(itemData.srcId); if (!imgElement || !itemData.originalWidth || !itemData.originalHeight) { console.warn(`Asset/dimensions missing for ${itemData.srcId}`); return null; } const entity = document.createElement('a-entity'); const aspect = itemData.originalWidth / itemData.originalHeight; const panelWidth = PANEL_BASE_WIDTH; const panelHeight = panelWidth / aspect; entity.setAttribute('animation__scaleup', `property: scale; to: 1.1 1.1 1.1; startEvents: mouseenter; dur: 200; easing: easeOutQuad;`); entity.setAttribute('animation__scaledown', `property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200; easing: easeInQuad;`); entity.setAttribute('data-interactive', ''); const imgBgPlane = document.createElement('a-plane'); imgBgPlane.setAttribute('width', panelWidth * 1.05); imgBgPlane.setAttribute('height', panelHeight * 1.05); imgBgPlane.setAttribute('material', `color: ${PANEL_COLOR}; opacity: ${PANEL_OPACITY}; shader: flat;`); imgBgPlane.setAttribute('position', `0 0 ${BG_Z_OFFSET - 0.005}`); entity.appendChild(imgBgPlane); const imgPlane = document.createElement('a-plane'); imgPlane.setAttribute('width', panelWidth); imgPlane.setAttribute('height', panelHeight); imgPlane.setAttribute('material', `src: #${itemData.srcId}; shader: flat; transparent: true;`); imgPlane.setAttribute('position', `0 0 ${IMAGE_Z_OFFSET}`); entity.appendChild(imgPlane);
-            // *** AJOUT SON MODIFIÉ ***
-            if (itemData.srcId === 'logoImg') {
-                entity.setAttribute('sound', {
-                    src: '#logoSound',
-                    autoplay: false,             // <-- CHANGÉ : PAS d'autoplay
-                    loop: true,
-                    volume: 0.8,
-                    positional: true,
-                    distanceModel: 'inverse',
-                    refDistance: 1,
-                    rolloffFactor: 1
-                });
-                 entity.id = "logoPanelWithSound"; // Donner un ID pour le retrouver facilement
-                console.log(`Sound component added to logo panel (autoplay disabled).`);
-            }
-            entity.setAttribute('position', `${position.x} ${position.y} ${position.z}`); container.appendChild(entity); console.log(`Created image panel for ${itemData.srcId} at`, position); return entity;
-         }
+        // --- Fonction createPanel (inchangée, autoplay: false) ---
+        function createImagePanel(itemData, position) { /* ... code identique ... */
+             const container = document.getElementById('content-container'); if (!container || !itemData || itemData.type !== 'image' || !itemData.srcId) return null; const imgElement = document.getElementById(itemData.srcId); if (!imgElement || !itemData.originalWidth || !itemData.originalHeight) { console.warn(`Asset/dimensions missing for ${itemData.srcId}`); return null; } const entity = document.createElement('a-entity'); const aspect = itemData.originalWidth / itemData.originalHeight; const panelWidth = PANEL_BASE_WIDTH; const panelHeight = panelWidth / aspect; entity.setAttribute('animation__scaleup', `property: scale; to: 1.1 1.1 1.1; startEvents: mouseenter; dur: 200; easing: easeOutQuad;`); entity.setAttribute('animation__scaledown', `property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200; easing: easeInQuad;`); entity.setAttribute('data-interactive', ''); const imgBgPlane = document.createElement('a-plane'); imgBgPlane.setAttribute('width', panelWidth * 1.05); imgBgPlane.setAttribute('height', panelHeight * 1.05); imgBgPlane.setAttribute('material', `color: ${PANEL_COLOR}; opacity: ${PANEL_OPACITY}; shader: flat;`); imgBgPlane.setAttribute('position', `0 0 ${BG_Z_OFFSET - 0.005}`); entity.appendChild(imgBgPlane); const imgPlane = document.createElement('a-plane'); imgPlane.setAttribute('width', panelWidth); imgPlane.setAttribute('height', panelHeight); imgPlane.setAttribute('material', `src: #${itemData.srcId}; shader: flat; transparent: true;`); imgPlane.setAttribute('position', `0 0 ${IMAGE_Z_OFFSET}`); entity.appendChild(imgPlane); if (itemData.srcId === 'logoImg') { entity.setAttribute('sound', { src: '#logoSound', autoplay: false, loop: true, volume: 0.8, positional: true, distanceModel: 'inverse', refDistance: 1, rolloffFactor: 1 }); entity.id = "logoPanelWithSound"; console.log(`Sound component added to logo panel (autoplay disabled).`); } entity.setAttribute('position', `${position.x} ${position.y} ${position.z}`); container.appendChild(entity); console.log(`Created image panel for ${itemData.srcId} at`, position); return entity;
+        }
 
         // --- Fonction setupManualLayout (inchangée) ---
-        function setupManualLayout() { /* ... (Code setupManualLayout reste identique) ... */
+        function setupManualLayout() { /* ... code identique ... */
             const container = document.getElementById('content-container'); if (!container) { console.error("Could not find #content-container entity."); return; } while (container.firstChild) { container.removeChild(container.firstChild); } contentData.forEach(item => { if (item.type === 'image' && item.srcId && imagePositions[item.srcId]) { const position = imagePositions[item.srcId]; createImagePanel(item, position); } else if (item.type === 'image' && item.srcId) { console.warn(`Position not defined for ${item.srcId}.`); } }); console.log("Manual image layout generated.");
         }
 
-        // --- Fonction pour démarrer le son ---
+        // --- Fonction pour démarrer le son (simplifiée, sans removeEventListener explicite) ---
         function startSound() {
-             if (soundStarted) return; // Ne démarrer qu'une fois
-
-             const logoEntity = document.getElementById('logoPanelWithSound'); // Utiliser l'ID
+             if (soundStarted) return;
+             const logoEntity = document.getElementById('logoPanelWithSound');
              const tapPrompt = document.getElementById('tap-prompt');
 
              if (logoEntity && logoEntity.components.sound) {
-                 console.log("Attempting to play sound via user interaction...");
+                 console.log("Attempting to play sound via user interaction on canvas...");
                  logoEntity.components.sound.playSound();
-                 soundStarted = true; // Marquer comme démarré
+                 soundStarted = true;
                  console.log("Sound play requested.");
-                 // Cacher l'indication de taper
                  if(tapPrompt) tapPrompt.style.display = 'none';
-                 // IMPORTANT: Retirer l'écouteur pour ne pas le redéclencher
-                 document.body.removeEventListener('click', startSound);
-                 document.body.removeEventListener('touchstart', startSound);
+                 // L'option { once: true } s'occupe de retirer l'écouteur
              } else {
                  console.warn("Logo entity or sound component not ready when trying to start sound.");
              }
@@ -150,26 +107,28 @@
         if (sceneEl.hasLoaded) { setupManualLayout(); }
         else { sceneEl.addEventListener('loaded', setupManualLayout); }
 
-        // --- Cacher le loader + Gérer le Démarrage Audio ---
+        // --- Cacher le loader + Gérer le Démarrage Audio via TAP SUR CANVAS ---
         sceneEl.addEventListener('loaded', () => {
             console.log("A-Frame scene loaded event fired.");
             const loader = document.getElementById('arjs-loader-div');
             if (loader) { console.log("Hiding AR.js loader."); setTimeout(() => { loader.style.display = 'none'; }, 500); }
             else { console.warn("Could not find loader element to hide."); }
 
-            // *** NOUVELLE LOGIQUE AUDIO ***
-            // Ne plus essayer de jouer le son ici.
-            // Afficher l'indication et ajouter les écouteurs pour le premier tap.
-             const tapPrompt = document.getElementById('tap-prompt');
-             if (tapPrompt) tapPrompt.style.display = 'block'; // Afficher "Touchez l'écran..."
+            // *** LOGIQUE AUDIO MODIFIÉE ***
+            const tapPrompt = document.getElementById('tap-prompt');
+            const arCanvas = sceneEl.canvas; // Cibler le canvas de la scène
 
-             // Ajouter les écouteurs pour le premier clic ou toucher sur TOUT le body
-             // 'click' fonctionne souvent mieux pour déclencher l'audio que 'touchstart' seul
-             document.body.addEventListener('click', startSound, { once: true });
-             // Ajouter aussi touchstart pour mobile, mais click est souvent suffisant
-             // document.body.addEventListener('touchstart', startSound, { once: true });
-             console.log("Tap listener added to body to start sound.");
+            if (tapPrompt) tapPrompt.style.display = 'block';
 
+            if(arCanvas) {
+                 // Ajouter l'écouteur UNIQUEMENT au canvas A-Frame
+                 arCanvas.addEventListener('click', startSound, { once: true });
+                 // Ajouter aussi touchstart peut être utile sur mobile, toujours avec once: true
+                 // arCanvas.addEventListener('touchstart', startSound, { once: true });
+                 console.log("Tap listener added to AR CANVAS to start sound.");
+            } else {
+                 console.error("AR Canvas not found, cannot add tap listener for sound.");
+            }
         });
 
     </script>
