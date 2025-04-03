@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>AURALIS AR Experience (Loading Progress via Manager)</title> {/* Titre mis à jour */}
+    <title>AURALIS AR Experience (Loading Progress)</title> {/* Titre mis à jour */}
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta name="description" content="AURALIS AR Experience using A-Frame/AR.js with LoadingManager progress.">
+    <meta name="description" content="AURALIS AR Experience using A-Frame/AR.js with loading progress bar.">
 
     <!-- A-Frame Core -->
     <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
@@ -12,35 +12,100 @@
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.0/aframe/build/aframe-ar.min.js"></script>
 
     <style>
-        /* ... styles inchangés ... */
-         body { margin: 0; overflow: hidden; } #wechat-notice { position: absolute; top: 10px; left: 10px; right: 10px; padding: 10px; background: rgba(0,0,0,0.7); color: white; z-index: 101; font-size: 14px; text-align: center; border-radius: 5px; } .arjs-loader { height: 100%; width: 100%; position: absolute; top: 0; left: 0; background-color: rgba(0, 0, 0, 0.8); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; font-size: 1.25em; text-align: center; } #loading-text { margin-bottom: 15px; } #progress-container { width: 80%; max-width: 300px; height: 10px; background-color: #555; border: 1px solid #777; border-radius: 5px; overflow: hidden; margin-top: 5px; } #progress-bar { width: 0%; height: 100%; background-color: #eee; transition: width 0.3s ease-out; } #progress-percent { margin-top: 8px; font-size: 0.8em; } .arjs-loader.fade-out { opacity: 0; transition: opacity 0.5s ease-out; pointer-events: none; } #tap-prompt { position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); padding: 8px 15px; background: rgba(0,0,0,0.6); color: white; z-index: 100; font-size: 14px; border-radius: 5px; pointer-events: none; display: none; }
+        body { margin: 0; overflow: hidden; }
+        #wechat-notice { /* ... styles inchangés ... */ position: absolute; top: 10px; left: 10px; right: 10px; padding: 10px; background: rgba(0,0,0,0.7); color: white; z-index: 101; font-size: 14px; text-align: center; border-radius: 5px; }
+
+        /* Styles pour le Loader et la Barre de Progression */
+        .arjs-loader {
+            height: 100%; width: 100%;
+            position: absolute; top: 0; left: 0;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 9999;
+            display: flex;
+            /* Aligner les éléments enfants verticalement */
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 1.25em;
+            text-align: center;
+        }
+        #loading-text {
+             margin-bottom: 15px;
+        }
+        #progress-container {
+            width: 80%; /* Largeur de la barre de progression */
+            max-width: 300px;
+            height: 10px;
+            background-color: #555; /* Fond de la barre */
+            border: 1px solid #777;
+            border-radius: 5px;
+            overflow: hidden; /* Pour que la barre interne ne dépasse pas */
+            margin-top: 5px;
+        }
+        #progress-bar {
+            width: 0%; /* Commence à 0% */
+            height: 100%;
+            background-color: #eee; /* Couleur de la progression */
+            transition: width 0.3s ease-out; /* Animation douce */
+        }
+        #progress-percent {
+            margin-top: 8px;
+            font-size: 0.8em;
+        }
+        /* Cacher le loader à la fin */
+         .arjs-loader.fade-out {
+            opacity: 0;
+            transition: opacity 0.5s ease-out;
+            pointer-events: none;
+        }
     </style>
 </head>
 
 <body style='margin : 0px; overflow: hidden;'>
 
-    <!-- --- Messages et Loader (inchangés) --- -->
-    <div id="wechat-notice" onclick="this.style.display='none';">...</div>
+    <!-- --- Message pour WeChat --- -->
+    <div id="wechat-notice" onclick="this.style.display='none';">
+        <b>Note WeChat:</b> Pour l'expérience AR, cliquez sur '...' puis 'Ouvrir dans le navigateur'.
+    </div>
+
+    <!-- --- Écran de chargement AR.js avec Barre de Progression --- -->
     <div class="arjs-loader" id="arjs-loader-div">
         <div id="loading-text">Loading AURALIS Experience...</div>
-        <div id="progress-container"><div id="progress-bar"></div></div>
+        <div id="progress-container">
+            <div id="progress-bar"></div>
+        </div>
         <div id="progress-percent">0%</div>
     </div>
-    <div id="tap-prompt">Touchez la vue AR pour démarrer le son</div>
 
-    <!-- --- Scène A-Frame (inchangée) --- -->
+    <!-- --- Scène A-Frame AR (Markerless) --- -->
     <a-scene
-        id="ar-scene" embedded
+        id="ar-scene"
+        embedded
         arjs='sourceType: webcam; trackingMethod: best; debugUIEnabled: false;'
         renderer='logarithmicDepthBuffer: true; colorManagement: true;'
         vr-mode-ui='enabled: false'>
-        <a-assets id="main-assets" timeout="60000">
-            {/* ... tous les assets img, audio, a-asset-item ... */}
-             <img id="logoImg" src="images/logo.jpg" crossOrigin="anonymous"> <img id="wangMengImg" src="images/wang_meng.jpg" crossOrigin="anonymous"> <img id="yuMiaoImg" src="images/yu_miao.jpg" crossOrigin="anonymous"> <img id="djBackImg" src="images/dj_back.jpg" crossOrigin="anonymous"> <img id="stageWideImg" src="images/stage_wide.jpg" crossOrigin="anonymous"> <img id="stageDuoBlueImg" src="images/stage_duo_blue.jpg" crossOrigin="anonymous"> <img id="stageDuoDarkImg" src="images/stage_duo_dark.jpg" crossOrigin="anonymous"> <audio id="logoSound" src="audio/your_sound.mp3" preload="auto" crossOrigin="anonymous"></audio> <a-asset-item id="jellyfishModel" src="models/meduse.glb" crossOrigin="anonymous"></a-asset-item>
+
+        <!-- --- Assets --- -->
+        <a-assets id="main-assets" timeout="60000"> {/* Ajout d'un ID pour cibler facilement */}
+             <img id="logoImg" src="images/logo.jpg" crossOrigin="anonymous">
+             <img id="wangMengImg" src="images/wang_meng.jpg" crossOrigin="anonymous">
+             <img id="yuMiaoImg" src="images/yu_miao.jpg" crossOrigin="anonymous">
+             <img id="djBackImg" src="images/dj_back.jpg" crossOrigin="anonymous">
+             <img id="stageWideImg" src="images/stage_wide.jpg" crossOrigin="anonymous">
+             <img id="stageDuoBlueImg" src="images/stage_duo_blue.jpg" crossOrigin="anonymous">
+             <img id="stageDuoDarkImg" src="images/stage_duo_dark.jpg" crossOrigin="anonymous">
+             <audio id="logoSound" src="audio/your_sound.mp3" preload="auto" crossOrigin="anonymous"></audio>
+             <a-asset-item id="jellyfishModel" src="models/meduse.glb" crossOrigin="anonymous"></a-asset-item>
         </a-assets>
+
+        <!-- --- Conteneur & Modèles (inchangés) --- -->
         <a-entity id="content-container" position="0 1.5 -4.0" rotation="0 0 0" scale="1 1 1"></a-entity>
         <a-gltf-model id="jellyfish" src="#jellyfishModel" position="-1 2 -2" scale="0.3 0.3 0.3" rotation="0 0 0" animation__pos="property: position; from: -1 2 -2; to: 1 1.2 -1.5; dir: alternate; dur: 12000; easing: easeInOutSine; loop: true" animation__rot="property: rotation; to: 0 360 0; dur: 20000; easing: linear; loop: true" animation-mixer="clip: *; loop: repeat"></a-gltf-model>
+
+        <!-- --- Caméra (inchangée) --- -->
         <a-camera cursor="rayOrigin: mouse; fuse: false;" raycaster="objects: [data-interactive]"></a-camera>
+
     </a-scene>
 
     <!-- --- Script --- -->
@@ -49,86 +114,95 @@
         const PANEL_BASE_WIDTH = 1.8; const PANEL_COLOR = '#1a1a3a'; const PANEL_OPACITY = 0.85; const BG_Z_OFFSET = -0.01; const IMAGE_Z_OFFSET = 0; const DEPTH_VARIATION = 0.15;
         const imagePositions = { /* ... positions ... */ 'logoImg': { x: 0, y: 0, z: 0.1 }, 'wangMengImg': { x: -2.2, y: 2, z: -0.1 }, 'yuMiaoImg': { x: 2.2, y: 0.4, z: -0.1 }, 'stageWideImg': { x: 0, y: 2, z: -0.3 }, 'djBackImg': { x: 0, y: -2, z: -0.2 }, 'stageDuoBlueImg': { x: -2.5, y: -0.8, z: 0.2 }, 'stageDuoDarkImg': { x: 2.5, y: -0.8, z: 0.2 } };
         const contentData = [ /* ... données images ... */ { type: 'image', srcId: 'logoImg', originalWidth: 2, originalHeight: 2 }, { type: 'image', srcId: 'wangMengImg', originalWidth: 1, originalHeight: 1.2 }, { type: 'image', srcId: 'yuMiaoImg', originalWidth: 1.5, originalHeight: 1 }, { type: 'image', srcId: 'stageWideImg', originalWidth: 2, originalHeight: 1.1 }, { type: 'image', srcId: 'djBackImg', originalWidth: 1, originalHeight: 1.25 }, { type: 'image', srcId: 'stageDuoBlueImg', originalWidth: 1.8, originalHeight: 1.1 }, { type: 'image', srcId: 'stageDuoDarkImg', originalWidth: 1.8, originalHeight: 1.1 } ];
-        let soundStarted = false;
+        let soundStarted = false; // Pour le démarrage audio par tap
 
         // --- Fonction createPanel (inchangée) ---
-        function createImagePanel(itemData, position) { /* ... code identique ... */ }
+        function createImagePanel(itemData, position) { /* ... code identique ... */
+            const container = document.getElementById('content-container'); if (!container || !itemData || itemData.type !== 'image' || !itemData.srcId) return null; const imgElement = document.getElementById(itemData.srcId); if (!imgElement || !itemData.originalWidth || !itemData.originalHeight) { console.warn(`Asset/dimensions missing for ${itemData.srcId}`); return null; } const entity = document.createElement('a-entity'); const aspect = itemData.originalWidth / itemData.originalHeight; const panelWidth = PANEL_BASE_WIDTH; const panelHeight = panelWidth / aspect; entity.setAttribute('animation__scaleup', `property: scale; to: 1.1 1.1 1.1; startEvents: mouseenter; dur: 200; easing: easeOutQuad;`); entity.setAttribute('animation__scaledown', `property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200; easing: easeInQuad;`); entity.setAttribute('data-interactive', ''); const imgBgPlane = document.createElement('a-plane'); imgBgPlane.setAttribute('width', panelWidth * 1.05); imgBgPlane.setAttribute('height', panelHeight * 1.05); imgBgPlane.setAttribute('material', `color: ${PANEL_COLOR}; opacity: ${PANEL_OPACITY}; shader: flat;`); imgBgPlane.setAttribute('position', `0 0 ${BG_Z_OFFSET - 0.005}`); entity.appendChild(imgBgPlane); const imgPlane = document.createElement('a-plane'); imgPlane.setAttribute('width', panelWidth); imgPlane.setAttribute('height', panelHeight); imgPlane.setAttribute('material', `src: #${itemData.srcId}; shader: flat; transparent: true;`); imgPlane.setAttribute('position', `0 0 ${IMAGE_Z_OFFSET}`); entity.appendChild(imgPlane); if (itemData.srcId === 'logoImg') { entity.setAttribute('sound', { src: '#logoSound', autoplay: false, loop: true, volume: 0.8, positional: true, distanceModel: 'inverse', refDistance: 1, rolloffFactor: 1 }); entity.id = "logoPanelWithSound"; console.log(`Sound component added to logo panel (autoplay disabled).`); } entity.setAttribute('position', `${position.x} ${position.y} ${position.z}`); container.appendChild(entity); console.log(`Created image panel for ${itemData.srcId} at`, position); return entity;
+        }
 
         // --- Fonction setupManualLayout (inchangée) ---
-        function setupManualLayout() { /* ... code identique ... */ }
+        function setupManualLayout() { /* ... code identique ... */
+            const container = document.getElementById('content-container'); if (!container) { console.error("Could not find #content-container entity."); return; } while (container.firstChild) { container.removeChild(container.firstChild); } contentData.forEach(item => { if (item.type === 'image' && item.srcId && imagePositions[item.srcId]) { const position = imagePositions[item.srcId]; createImagePanel(item, position); } else if (item.type === 'image' && item.srcId) { console.warn(`Position not defined for ${item.srcId}.`); } }); console.log("Manual image layout generated.");
+        }
 
         // --- Fonction pour démarrer le son (inchangée) ---
-        function startSound() { /* ... code identique ... */ }
+        function startSound() { /* ... code identique ... */
+             if (soundStarted) return; const logoEntity = document.getElementById('logoPanelWithSound'); const tapPrompt = document.getElementById('tap-prompt'); if (logoEntity && logoEntity.components.sound) { console.log("Attempting to play sound via user interaction on canvas..."); logoEntity.components.sound.playSound(); soundStarted = true; console.log("Sound play requested."); if(tapPrompt) tapPrompt.style.display = 'none'; } else { console.warn("Logo entity or sound component not ready when trying to start sound."); }
+        }
 
-        // --- Initialisation et Gestion du Chargement (AVEC LOADING MANAGER) ---
+        // --- Initialisation et Gestion du Chargement ---
         const sceneEl = document.querySelector('a-scene');
         const loaderDiv = document.getElementById('arjs-loader-div');
         const progressBar = document.getElementById('progress-bar');
         const progressPercentText = document.getElementById('progress-percent');
-        const tapPrompt = document.getElementById('tap-prompt'); // Récupérer tapPrompt ici
+        let totalAssets = 0;
+        let loadedAssets = 0;
 
-        // S'assurer que la scène et le LoadingManager sont prêts
-        sceneEl.addEventListener('loaded', () => {
-            console.log("A-Frame scene loaded event fired.");
+        // Compter les assets dès que possible
+        const assetsEl = document.getElementById('main-assets');
+        if (assetsEl) {
+            totalAssets = assetsEl.querySelectorAll('img, audio, a-asset-item').length;
+            console.log(`Total assets to load: ${totalAssets}`);
+        } else {
+            console.error("Could not find <a-assets> element!");
+        }
 
-            // Accéder au LoadingManager de Three.js via la scène A-Frame
-            const loadingManager = THREE.DefaultLoadingManager; // Utiliser le manager par défaut
+        // Écouteur pour chaque asset chargé
+        sceneEl.addEventListener('asset-item-loaded', () => {
+            loadedAssets++;
+            const progress = totalAssets > 0 ? Math.round((loadedAssets / totalAssets) * 100) : 100; // Éviter division par zéro
+            console.log(`Asset loaded (${loadedAssets}/${totalAssets}), Progress: ${progress}%`);
+            if (progressBar) {
+                progressBar.style.width = `${progress}%`;
+            }
+            if (progressPercentText) {
+                progressPercentText.textContent = `${progress}%`;
+            }
+        });
 
-            loadingManager.onStart = function ( url, itemsLoaded, itemsTotal ) {
-                console.log( `Loading Manager: Started loading file: ${url} (${itemsLoaded}/${itemsTotal})` );
-                // Mettre à jour l'UI si nécessaire au démarrage
-                if (progressBar) progressBar.style.width = '0%';
-                if (progressPercentText) progressPercentText.textContent = '0%';
-            };
-
-            loadingManager.onLoad = function ( ) {
-                console.log( 'Loading Manager: Loading complete!' );
-                // Mise en page doit être appelée AVANT de cacher le loader
+        // Appeler la mise en page une fois la scène prête (avant la fin du chargement des assets)
+        if (sceneEl.hasLoaded) {
+            console.log("Scene already loaded, setting up layout.");
+            setupManualLayout();
+        } else {
+            sceneEl.addEventListener('loaded', () => {
+                console.log("Scene loaded event fired (layout setup).");
                 setupManualLayout();
+            });
+        }
 
-                // Assurer 100% affiché
-                if (progressBar) progressBar.style.width = '100%';
-                if (progressPercentText) progressPercentText.textContent = '100%';
+        // Cacher le loader et gérer le démarrage audio une fois TOUT chargé (scène + assets)
+        sceneEl.addEventListener('loaded', () => { // On réutilise 'loaded' car il attend aussi les assets par défaut
+            console.log("Scene loaded event fired (hiding loader, audio setup).");
 
-                // Cacher le loader après délai
-                 setTimeout(() => {
-                    if (loaderDiv) { loaderDiv.classList.add('fade-out'); }
-                 }, 500);
+            // Assurer que la barre est à 100%
+            if (progressBar) progressBar.style.width = `100%`;
+            if (progressPercentText) progressPercentText.textContent = `100%`;
 
-                // Afficher l'invite de tap et ajouter l'écouteur audio
-                if (tapPrompt) tapPrompt.style.display = 'block';
-                const arCanvas = sceneEl.canvas;
-                if(arCanvas) {
-                    arCanvas.addEventListener('click', startSound, { once: true });
-                    console.log("Tap listener added to AR CANVAS to start sound.");
+            // Cacher le loader après un court délai pour voir le 100%
+            setTimeout(() => {
+                if (loaderDiv) {
+                     console.log("Hiding AR.js loader.");
+                     loaderDiv.classList.add('fade-out'); // Utiliser la classe pour l'animation CSS
                 } else {
-                    console.error("AR Canvas not found for tap listener.");
+                    console.warn("Could not find loader element to hide.");
                 }
-            };
+            }, 500); // Délai avant disparition
 
-            loadingManager.onProgress = function ( url, itemsLoaded, itemsTotal ) {
-                 const progress = Math.round( ( itemsLoaded / itemsTotal ) * 100 );
-                 console.log( `Loading Manager: Progress: ${itemsLoaded}/${itemsTotal} (${progress}%) - ${url}` );
-                 if (progressBar) { progressBar.style.width = `${progress}%`; }
-                 if (progressPercentText) { progressPercentText.textContent = `${progress}%`; }
-            };
+            // --- Gérer le Démarrage Audio via TAP SUR CANVAS ---
+            const tapPrompt = document.getElementById('tap-prompt');
+            const arCanvas = sceneEl.canvas;
 
-            loadingManager.onError = function ( url ) {
-                console.error( `Loading Manager: There was an error loading ${url}` );
-                // Optionnel : Afficher une erreur dans l'UI du loader
-                 const loadingText = document.getElementById('loading-text');
-                 if (loadingText) loadingText.textContent = `Error loading: ${url.split('/').pop()}`; // Affiche juste le nom du fichier
-            };
+            if (tapPrompt) tapPrompt.style.display = 'block';
 
-            // Note: Si aucun asset n'est chargé via le LoadingManager (improbable avec <a-assets>),
-            // onLoad pourrait ne pas se déclencher. A-Frame gère cela normalement en interne.
-            // On se fie à l'événement 'loaded' de la scène pour l'initialisation finale.
-
-             // Appeler la mise en page ici aussi au cas où les assets se chargent très vite
-             // ou si l'événement 'loaded' se déclenche avant 'onLoad' (théoriquement possible)
-             // setupManualLayout(); // Déplacé dans onLoad pour être sûr que les assets sont prêts
-
-        }); // Fin de l'écouteur sceneEl.addEventListener('loaded')
+            if(arCanvas) {
+                 arCanvas.addEventListener('click', startSound, { once: true });
+                 console.log("Tap listener added to AR CANVAS to start sound.");
+            } else {
+                 console.error("AR Canvas not found, cannot add tap listener for sound.");
+            }
+        });
 
     </script>
 
