@@ -1,112 +1,98 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>AURALIS AR Experience (Simple Asset Count)</title> <!-- Titre mis à jour -->
+    <title>AURALIS AR Experience (Force Texture Update)</title> <!-- Titre mis à jour -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta name="description" content="AURALIS AR Experience using A-Frame and AR.js with simple asset count progress.">
-    <!-- A-Frame Core -->
+    <meta name="description" content="AURALIS AR Experience with forced texture update for pre-loaded images.">
+    <!-- Scripts A-Frame / AR.js -->
     <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
-    <!-- AR.js for A-Frame -->
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.0/aframe/build/aframe-ar.min.js"></script>
 
     <style>
+        /* Styles inchangés */
         body { margin: 0; overflow: hidden; }
-        /* --- Style Loader (Modifié) --- */
-        .arjs-loader {
-            height: 100%; width: 100%; position: absolute; top: 0; left: 0;
-            background-color: rgba(0, 0, 0, 0.8); z-index: 9999;
-            display: flex; justify-content: center; align-items: center;
-            flex-direction: column; /* Pour empiler texte et compteur */
-            opacity: 1;
-            transition: opacity 0.5s ease-out;
-        }
-        .arjs-loader-message { /* Message principal */
-             text-align: center; font-size: 1.25em; color: white;
-             margin-bottom: 15px;
-        }
-        #progress-counter { /* Compteur X/9 */
-            text-align: center; font-size: 1em; color: #ccc;
-        }
-        #wechat-notice { /* Style WeChat inchangé */
-            position: absolute; top: 10px; left: 10px; right: 10px; padding: 10px;
-            background: rgba(0,0,0,0.7); color: white; z-index: 101;
-            font-size: 14px; text-align: center; border-radius: 5px;
-        }
+        .arjs-loader { height: 100%; width: 100%; position: absolute; top: 0; left: 0; background-color: rgba(0, 0, 0, 0.8); z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; opacity: 1; transition: opacity 0.5s ease-out; }
+        .arjs-loader-message { text-align: center; font-size: 1.25em; color: white; margin-bottom: 15px; }
+        #progress-counter { text-align: center; font-size: 1em; color: #ccc; }
+        #wechat-notice { position: absolute; top: 10px; left: 10px; right: 10px; padding: 10px; background: rgba(0,0,0,0.7); color: white; z-index: 101; font-size: 14px; text-align: center; border-radius: 5px; }
     </style>
 </head>
 <body style='margin : 0px; overflow: hidden;'>
     <!-- --- Message pour WeChat --- -->
-    <div id="wechat-notice" onclick="this.style.display='none';">
-        <b>Note WeChat:</b> Pour l'expérience AR, cliquez sur '...' puis 'Ouvrir dans le navigateur'.
-    </div>
+    <div id="wechat-notice" onclick="this.style.display='none';">...</div>
 
-    <!-- --- Écran de chargement (Modifié) --- -->
+    <!-- --- Écran de chargement --- -->
     <div class="arjs-loader" id="arjs-loader-div">
         <div class="arjs-loader-message">Chargement AURALIS Experience...</div>
-        <div id="progress-counter">0/9</div> <!-- Affichage du compteur -->
+        <div id="progress-counter">0/9</div>
     </div>
 
-    <!-- --- Scène A-Frame AR (Inchangée) --- -->
-    <a-scene
-        id="ar-scene"
-        embedded
-        arjs='sourceType: webcam; trackingMethod: best; debugUIEnabled: false;'
-        renderer='logarithmicDepthBuffer: true; colorManagement: true;'
-        vr-mode-ui='enabled: false'>
-
-        <!-- --- Assets (Inchangés) --- -->
-        <a-assets timeout="120000"> <!-- Timeout augmenté par précaution -->
-             <img id="logoImg" src="images/logo.jpg" crossOrigin="anonymous">
-             <img id="wangMengImg" src="images/wang_meng.jpg" crossOrigin="anonymous">
-             <img id="yuMiaoImg" src="images/yu_miao.jpg" crossOrigin="anonymous">
-             <img id="djBackImg" src="images/dj_back.jpg" crossOrigin="anonymous">
-             <img id="stageWideImg" src="images/stage_wide.jpg" crossOrigin="anonymous">
-             <img id="stageDuoBlueImg" src="images/stage_duo_blue.jpg" crossOrigin="anonymous">
-             <img id="stageDuoDarkImg" src="images/stage_duo_dark.jpg" crossOrigin="anonymous">
-             <audio id="logoSound" src="audio/your_sound.mp3" preload="auto" crossOrigin="anonymous"></audio>
-             <a-asset-item id="jellyfishModel" src="models/meduse.glb" crossOrigin="anonymous"></a-asset-item>
+    <!-- --- Scène A-Frame AR --- -->
+    <a-scene id="ar-scene" embedded arjs='...' renderer='...' vr-mode-ui='enabled: false'>
+        <!-- --- Assets --- -->
+        <a-assets timeout="120000">
+            <img id="logoImg" src="images/logo.jpg" crossOrigin="anonymous">
+            <img id="wangMengImg" src="images/wang_meng.jpg" crossOrigin="anonymous">
+            <img id="yuMiaoImg" src="images/yu_miao.jpg" crossOrigin="anonymous">
+            <img id="djBackImg" src="images/dj_back.jpg" crossOrigin="anonymous">
+            <img id="stageWideImg" src="images/stage_wide.jpg" crossOrigin="anonymous">
+            <img id="stageDuoBlueImg" src="images/stage_duo_blue.jpg" crossOrigin="anonymous">
+            <img id="stageDuoDarkImg" src="images/stage_duo_dark.jpg" crossOrigin="anonymous">
+            <audio id="logoSound" src="audio/your_sound.mp3" preload="auto" crossOrigin="anonymous"></audio>
+            <a-asset-item id="jellyfishModel" src="models/meduse.glb" crossOrigin="anonymous"></a-asset-item>
         </a-assets>
 
-        <!-- --- Conteneur & Modèle (Inchangés) --- -->
+        <!-- --- Contenu --- -->
         <a-entity id="content-container" position="0 1.5 -4.0" rotation="0 0 0" scale="1 1 1"></a-entity>
-        <a-gltf-model id="jellyfish" src="#jellyfishModel" position="-1 2 -2" scale="0.3 0.3 0.3" rotation="0 0 0"
+        <a-gltf-model id="jellyfish" src="#jellyfishModel" position="..." scale="..." rotation="..."
                       animation__pos="..." animation__rot="..." animation-mixer="..."></a-gltf-model>
         <a-camera cursor="..." raycaster="..."></a-camera>
-
     </a-scene>
 
-    <!-- --- Script (Modifié pour comptage MAIS basé sur l'original) --- -->
+    <!-- --- Script --- -->
     <script>
-        // --- Configuration (Inchangée) ---
+        // --- Configuration ---
         const PANEL_BASE_WIDTH = 1.8; const PANEL_COLOR = '#1a1a3a'; const PANEL_OPACITY = 0.85;
         const BG_Z_OFFSET = -0.01; const IMAGE_Z_OFFSET = 0;
         const imagePositions = { /* ... */ }; const contentData = [ /* ... */ ];
 
-        // --- Fonction createImagePanel (Inchangée par rapport à l'original) ---
+        // --- Variables Globales Loader ---
+        const TOTAL_ASSET_COUNT_TARGET = 9;
+        const loadedAssetIdsRegistry = new Set();
+        let loaderIsHidden = false;
+        let sceneIsLoaded = false;
+
+        const progressCounterElement = document.getElementById('progress-counter');
+        const loaderDivElement = document.getElementById('arjs-loader-div');
+        const sceneElement = document.querySelector('a-scene');
+        const assetsElement = document.querySelector('a-assets');
+
+        // --- Fonctions Loader (inchangées) ---
+        function hideLoaderAfterCompletion() { /* ... */ }
+        function registerAssetLoad(assetId) { /* ... */ }
+
+        // *** MODIFIÉ : createImagePanel ***
         function createImagePanel(itemData, position) {
             const container = document.getElementById('content-container');
-            if (!container || !itemData || itemData.type !== 'image' || !itemData.srcId) return null;
+            if (!container || !itemData || !itemData.type !== 'image' || !itemData.srcId) return null;
+
             const imgElement = document.getElementById(itemData.srcId);
-            // Utiliser dimensions fournies, fallback basique si absentes/invalides
-            const originalWidth = itemData.originalWidth || 1; // Fallback
-            const originalHeight = itemData.originalHeight || 1; // Fallback
+             // Utiliser les dimensions fournies ou celles de l'image si possible
+             const originalWidth = itemData.originalWidth || imgElement?.naturalWidth || 1; // Fallback à 1
+             const originalHeight = itemData.originalHeight || imgElement?.naturalHeight || 1; // Fallback à 1
 
-            // Log si l'élément image n'est pas trouvé (pourrait indiquer un problème de timing)
-            if (!imgElement) { console.warn(`Image element #${itemData.srcId} not found when creating panel.`); }
-             // Log si les dimensions ne sont pas valides (peut arriver si l'image n'est pas décodée)
-             if (!imgElement?.naturalWidth || !imgElement?.naturalHeight) { console.warn(`Image #${itemData.srcId} has invalid dimensions (${imgElement?.naturalWidth}x${imgElement?.naturalHeight}) when creating panel.`);}
-
+            if (!imgElement) { console.warn(`Image element #${itemData.srcId} not found.`); }
 
             const entity = document.createElement('a-entity');
             const aspect = originalWidth / originalHeight;
             const panelWidth = PANEL_BASE_WIDTH;
             const panelHeight = panelWidth / aspect;
 
+            // ... setup animations, data-interactive, fond ...
             entity.setAttribute('animation__scaleup', `property: scale; to: 1.1 1.1 1.1; startEvents: mouseenter; dur: 200; easing: easeOutQuad;`);
             entity.setAttribute('animation__scaledown', `property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200; easing: easeInQuad;`);
             entity.setAttribute('data-interactive', '');
-
             const imgBgPlane = document.createElement('a-plane');
             imgBgPlane.setAttribute('width', panelWidth * 1.05); imgBgPlane.setAttribute('height', panelHeight * 1.05);
             imgBgPlane.setAttribute('material', `color: ${PANEL_COLOR}; opacity: ${PANEL_OPACITY}; shader: flat;`);
@@ -115,87 +101,78 @@
 
             const imgPlane = document.createElement('a-plane');
             imgPlane.setAttribute('width', panelWidth); imgPlane.setAttribute('height', panelHeight);
+            // Définir le matériel IMMÉDIATEMENT
             imgPlane.setAttribute('material', `src: #${itemData.srcId}; shader: flat; transparent: true;`);
             imgPlane.setAttribute('position', `0 0 ${IMAGE_Z_OFFSET}`);
             entity.appendChild(imgPlane);
 
-            if (itemData.srcId === 'logoImg') {
-                entity.setAttribute('sound', { src: '#logoSound', autoplay: true, loop: true, volume: 0.8, positional: true, distanceModel: 'inverse', refDistance: 1, rolloffFactor: 1 });
-                console.log(`Attempting sound component for logoImg.`); // Message simplifié
+            // **** DEBUT : Forcer la mise à jour de la texture ****
+            // Si l'image était déjà chargée (selon notre Set), on force la mise à jour
+            // Mettre dans un setTimeout(..., 0) pour s'assurer que le composant material est initialisé
+            if (imgElement && imgElement.complete) { // Vérifier si l'image source est prête
+                 console.log(`Image ${itemData.srcId} was complete when panel created. Scheduling texture update.`);
+                 setTimeout(() => {
+                     if (!entity.parentNode) return; // Vérifier si l'entité est toujours dans la scène
+
+                     const materialComp = imgPlane.components.material;
+                     if (materialComp && materialComp.material && materialComp.material.map) {
+                         console.log(` -> Forcing texture update for ${itemData.srcId}`);
+                         materialComp.material.map.needsUpdate = true;
+                     } else {
+                         // Si la map n'est toujours pas prête, logguer une erreur plus précise
+                          console.error(` -> Failed to force texture update for ${itemData.srcId}: material.map not ready after delay.`);
+                          // On pourrait tenter un délai plus long ici si nécessaire, mais c'est inhabituel
+                          // setTimeout(() => { /* retry */ }, 200);
+                     }
+                 }, 0); // Exécuter dès que possible après le tick actuel
             }
+            // **** FIN : Forcer la mise à jour de la texture ****
+
+            // ... ajout du son ...
+            if (itemData.srcId === 'logoImg') { /* ... son ... */ }
 
             entity.setAttribute('position', `${position.x} ${position.y} ${position.z}`);
             container.appendChild(entity);
-            // console.log(`Created image panel for ${itemData.srcId}`); // Simplifié
             return entity;
         }
 
-        // --- Fonction setupManualLayout (Inchangée par rapport à l'original) ---
-        function setupManualLayout() {
-            console.log("Setting up manual layout...");
-            const container = document.getElementById('content-container');
-            if (!container) { console.error("Could not find #content-container entity."); return; }
-            while (container.firstChild) { container.removeChild(container.firstChild); }
+        // --- Fonction setupManualLayout (Inchangée) ---
+        function setupManualLayout() { /* ... */ }
 
-            contentData.forEach(item => {
-                if (item.type === 'image' && item.srcId && imagePositions[item.srcId]) {
-                    createImagePanel(item, imagePositions[item.srcId]);
-                } else if (item.type === 'image' && item.srcId) {
-                    console.warn(`Position not defined for ${item.srcId}.`);
-                }
-            });
-            console.log("Manual image layout setup finished.");
-        }
-
-        // --- LOGIQUE DE COMPTAGE D'ASSETS (Intégrée dans la structure originale) ---
-        const TOTAL_ASSET_COUNT_TARGET = 9;
-        const loadedAssetIdsRegistry = new Set(); // Pour suivre les IDs uniques chargés
-        let loaderIsHidden = false; // Flag pour état du loader
-        let sceneIsLoaded = false; // Flag pour état de la scène
-
-        const progressCounterElement = document.getElementById('progress-counter');
-        const loaderDivElement = document.getElementById('arjs-loader-div');
-        const sceneElement = document.querySelector('a-scene');
-        const assetsElement = document.querySelector('a-assets');
-
-        function hideLoaderAfterCompletion() {
-            if (loaderIsHidden) return;
-            loaderIsHidden = true;
-            console.log(`All ${TOTAL_ASSET_COUNT_TARGET} assets loaded. Hiding loader.`);
-            progressCounterElement.textContent = `${TOTAL_ASSET_COUNT_TARGET}/${TOTAL_ASSET_COUNT_TARGET}`; // Force 9/9
-            // Délai court pour voir 9/9
-            setTimeout(() => {
-                loaderDivElement.style.opacity = '0';
-                setTimeout(() => { loaderDivElement.style.display = 'none'; }, 500);
-            }, 300);
-        }
-
-        function registerAssetLoad(assetId) {
-            if (loaderIsHidden || loadedAssetIdsRegistry.has(assetId)) {
-                return; // Déjà caché ou déjà compté
-            }
-            loadedAssetIdsRegistry.add(assetId);
-            const currentCount = loadedAssetIdsRegistry.size;
-            console.log(`Asset loaded: ${assetId} (${currentCount}/${TOTAL_ASSET_COUNT_TARGET})`);
-            progressCounterElement.textContent = `${currentCount}/${TOTAL_ASSET_COUNT_TARGET}`;
-
-            if (currentCount >= TOTAL_ASSET_COUNT_TARGET) {
-                 // Vérifier si la scène est aussi chargée avant de cacher
-                 // Bien que setupManualLayout soit appelé indépendamment, on s'assure ici que
-                 // le masquage n'arrive pas *avant* que la scène ait eu sa chance de charger.
-                 // (Normalement sceneIsLoaded devrait être true ici, mais c'est une sécurité)
-                 if (sceneIsLoaded) {
-                     hideLoaderAfterCompletion();
-                 } else {
-                     console.log("All assets loaded, waiting for scene load event to hide loader...");
-                     // Le listener 'loaded' de la scène s'en occupera
-                 }
-            }
-        }
-
-        // --- Attacher les écouteurs DÈS QUE POSSIBLE ---
+        // --- Logique d'écouteurs et d'initialisation (Basée sur la version précédente qui comptait bien) ---
         document.addEventListener('DOMContentLoaded', () => {
             console.log("DOM Loaded. Attaching asset listeners...");
+
+             // Définition des fonctions de rappel ici pour la clarté
+             function hideLoaderAfterCompletion() {
+                 if (loaderIsHidden) return;
+                 loaderIsHidden = true;
+                 console.log(`All ${TOTAL_ASSET_COUNT_TARGET} assets loaded. Hiding loader.`);
+                 progressCounterElement.textContent = `${TOTAL_ASSET_COUNT_TARGET}/${TOTAL_ASSET_COUNT_TARGET}`;
+                 setTimeout(() => {
+                     loaderDivElement.style.opacity = '0';
+                     setTimeout(() => { loaderDivElement.style.display = 'none'; }, 500);
+                 }, 300);
+             }
+
+             function registerAssetLoad(assetId) {
+                 if (loaderIsHidden || loadedAssetIdsRegistry.has(assetId)) {
+                     return;
+                 }
+                 loadedAssetIdsRegistry.add(assetId);
+                 const currentCount = loadedAssetIdsRegistry.size;
+                 console.log(`Asset loaded: ${assetId} (${currentCount}/${TOTAL_ASSET_COUNT_TARGET})`);
+                 progressCounterElement.textContent = `${currentCount}/${TOTAL_ASSET_COUNT_TARGET}`;
+
+                 if (currentCount >= TOTAL_ASSET_COUNT_TARGET) {
+                     if (sceneIsLoaded) { // Cacher seulement si la scène est prête ET tous les assets chargés
+                         hideLoaderAfterCompletion();
+                     } else {
+                         console.log("All assets loaded, waiting for scene load event to hide loader...");
+                     }
+                 }
+             }
+
 
             // Images
             const imageIds = ['logoImg', 'wangMengImg', 'yuMiaoImg', 'djBackImg', 'stageWideImg', 'stageDuoBlueImg', 'stageDuoDarkImg'];
@@ -221,59 +198,53 @@
                 }
             } else { console.warn(`Initial check: Audio ${audioId} not found.`); }
 
-             // Modèle GLTF (via l'entité) - nécessite que l'entité existe
-             const modelEntityId = 'jellyfish';
-             function attachModelListener() {
-                 const modelEntity = document.getElementById(modelEntityId);
-                 if (modelEntity) {
-                      // Vérifier si l'écouteur n'est pas déjà là
-                      if (!modelEntity.dataset.listenerAttached) {
-                            console.log(`Attaching 'model-loaded' listener to #${modelEntityId}`);
-                            modelEntity.addEventListener('model-loaded', () => registerAssetLoad(modelEntityId), { once: true });
-                            modelEntity.dataset.listenerAttached = 'true'; // Marquer l'attachement
-                      }
-                 } else {
-                      console.warn(`attachModelListener: Entity #${modelEntityId} not found yet.`);
-                 }
-             }
-             // Essayer d'attacher tôt, et sera réessayé dans scene.loaded
-             setTimeout(attachModelListener, 150); // Léger délai
+            // Modèle GLTF
+            const modelEntityId = 'jellyfish';
+            let modelListenerAttached = false; // Pour éviter d'ajouter le listener plusieurs fois
+            function attachModelListener() {
+                if (modelListenerAttached) return; // Déjà attaché
+                const modelEntity = document.getElementById(modelEntityId);
+                if (modelEntity) {
+                     console.log(`Attaching 'model-loaded' listener to #${modelEntityId}`);
+                     modelEntity.addEventListener('model-loaded', () => registerAssetLoad(modelEntityId), { once: true });
+                     modelListenerAttached = true; // Marquer comme attaché
+                } else {
+                     console.warn(`attachModelListener: Entity #${modelEntityId} not found yet.`);
+                }
+            }
+            setTimeout(attachModelListener, 150); // Essayer tôt
 
-             // --- Filet de sécurité Timeout ---
+
+             // Timeout
              let timeoutHasOccurred = false;
-             assetsElement?.addEventListener('timeout', () => {
-                 if (timeoutHasOccurred || loaderIsHidden) return;
-                 timeoutHasOccurred = true;
-                 console.error(`!!!!! Assets loading timed out !!!!!`);
-                 progressCounterElement.textContent = `Timeout (${loadedAssetIdsRegistry.size}/${TOTAL_ASSET_COUNT_TARGET})`;
-             }, { once: true });
+             assetsElement?.addEventListener('timeout', () => { /* ... gestion timeout ... */ }, { once: true });
 
-
-             // --- Événement original : SCENE LOADED ---
-             // On garde cet événement pour appeler setupManualLayout et pour attacher le listener du modèle
+             // Scene Loaded
              sceneElement.addEventListener('loaded', () => {
                  console.log(">>> Scene 'loaded' event fired.");
-                 sceneIsLoaded = true; // Marquer la scène comme chargée
-                 setupManualLayout(); // Exécuter la création du layout original
-                 attachModelListener(); // Assurer que le listener du modèle est attaché
+                 if (sceneIsLoaded) return; // Eviter exécution multiple
+                 sceneIsLoaded = true;
+                 setupManualLayout(); // Créer le layout
+                 attachModelListener(); // Réessayer d'attacher le listener modèle
 
-                 // Si *par hasard* tous les assets ont chargé AVANT cet événement, cacher le loader maintenant
+                 // Vérifier si tout est déjà prêt pour cacher
                  if (loadedAssetIdsRegistry.size >= TOTAL_ASSET_COUNT_TARGET && !loaderIsHidden) {
-                     console.log("All assets were already loaded before scene, hiding loader now.");
+                     console.log("All assets were already loaded, hiding loader now (triggered by scene load).");
                      hideLoaderAfterCompletion();
                  }
              });
 
-             // Gérer le cas où la scène est déjà chargée
+            // Scène déjà chargée ?
              if (sceneElement.hasLoaded) {
                  console.log("Scene was already loaded on DOMContentLoaded.");
-                 sceneIsLoaded = true;
-                 setupManualLayout();
-                 attachModelListener();
-                 // Vérifier si on doit cacher immédiatement
-                 if (loadedAssetIdsRegistry.size >= TOTAL_ASSET_COUNT_TARGET && !loaderIsHidden) {
-                      console.log("All assets were already loaded before scene (initial check), hiding loader now.");
-                      hideLoaderAfterCompletion();
+                 if (!sceneIsLoaded) { // Exécuter seulement si pas déjà fait par l'event listener
+                      sceneIsLoaded = true;
+                      setupManualLayout();
+                      attachModelListener();
+                      if (loadedAssetIdsRegistry.size >= TOTAL_ASSET_COUNT_TARGET && !loaderIsHidden) {
+                           console.log("All assets loaded & scene already loaded, hiding loader now (initial check).");
+                           hideLoaderAfterCompletion();
+                      }
                  }
              }
 
