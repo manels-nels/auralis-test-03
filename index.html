@@ -97,9 +97,11 @@
                     // if (item.type === 'cta') textWidthAttr *= CTA_SCALE;
 
                      const bgPlane = document.createElement('a-plane');
-                     bgPlane.setAttribute('width', panelWidth); bgPlane.setAttribute('height', panelHeight);
+                     bgPlane.setAttribute('width', panelWidth); 
+                     bgPlane.setAttribute('height', panelHeight);
                      bgPlane.setAttribute('material', `color: ${PANEL_COLOR}; opacity: ${PANEL_OPACITY}; shader: flat;`);
                      entity.appendChild(bgPlane);
+                     bgPlane.setAttribute('position', `0 0 -0.5`);
 
                      const textEntity = document.createElement('a-text');
                      textEntity.setAttribute('value', item.text);
