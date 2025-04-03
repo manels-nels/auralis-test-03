@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>AURALIS AR Experience (Text on Hover)</title> <!-- Titre mis à jour -->
+    <title>AURALIS AR Experience (Manual Image Layout)</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta name="description" content="AURALIS AR Experience with text appearing on logo hover."> <!-- Description mise à jour -->
+    <meta name="description" content="AURALIS AR Experience using A-Frame and AR.js with manually defined image layout and sound toggle button.">
 
     <!-- A-Frame Core -->
     <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
@@ -12,33 +12,59 @@
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.0/aframe/build/aframe-ar.min.js"></script>
 
     <style>
-        /* --- Styles CSS INCHANGÉS par rapport à ton code --- */
         body { margin: 0; overflow: hidden; }
         .arjs-loader { height: 100%; width: 100%; position: absolute; top: 0; left: 0; background-color: rgba(0, 0, 0, 0.8); z-index: 9999; display: flex; justify-content: center; align-items: center; }
         .arjs-loader div { text-align: center; font-size: 1.25em; color: white; }
         #wechat-notice { position: absolute; top: 10px; left: 10px; right: 10px; padding: 10px; background: rgba(0,0,0,0.7); color: white; z-index: 101; font-size: 14px; text-align: center; border-radius: 5px; }
+
+        /* --- NOUVEAU : Style pour le bouton Son --- */
         #sound-toggle-button {
-            position: absolute; bottom: 20px; left: 20px; z-index: 1000; padding: 10px 15px;
-            font-size: 1em; font-family: sans-serif; color: #333;
-            background-color: rgba(255, 255, 255, 0.8); border: 1px solid #ccc;
-            border-radius: 5px; cursor: pointer; display: none;
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            z-index: 1000; /* Au-dessus de la scène AR */
+            padding: 10px 15px;
+            font-size: 1em;
+            font-family: sans-serif;
+            color: #333;
+            background-color: rgba(255, 255, 255, 0.8); /* Blanc semi-transparent */
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            cursor: pointer;
+            display: none; /* Initialement caché par le style */
         }
-        #sound-toggle-button:hover { background-color: rgba(255, 255, 255, 1); }
-        /* --- Fin Styles CSS --- */
+        #sound-toggle-button:hover {
+             background-color: rgba(255, 255, 255, 1); /* Blanc opaque au survol */
+        }
+        /* --- Fin Style bouton Son --- */
     </style>
 </head>
 
 <body style='margin : 0px; overflow: hidden;'>
 
-    <!-- --- HTML INCHANGÉ par rapport à ton code --- -->
-    <div id="wechat-notice" onclick="this.style.display='none';"><b>Note WeChat:</b> ...</div>
-    <div class="arjs-loader" id="arjs-loader-div"><div>Loading AURALIS Experience......</div></div>
-    <button id="sound-toggle-button">Play Sound</button>
-    <!-- --- Fin HTML --- -->
+    <!-- --- Message pour WeChat --- -->
+    <div id="wechat-notice" onclick="this.style.display='none';">
+        <b>Note WeChat:</b> Pour l'expérience AR, cliquez sur '...' puis 'Ouvrir dans le navigateur'.
+    </div>
 
-    <!-- --- Scène A-Frame (INCHANGÉE) --- -->
-    <a-scene id="ar-scene" embedded arjs='sourceType: webcam; trackingMethod: best; debugUIEnabled: false;' renderer='logarithmicDepthBuffer: true; colorManagement: true;' vr-mode-ui='enabled: false'>
-        <!-- Assets (INCHANGÉS) -->
+    <!-- --- Écran de chargement AR.js --- -->
+    <div class="arjs-loader" id="arjs-loader-div">
+        <div>Loading AURALIS Experience</div>
+    </div>
+
+    <!-- --- NOUVEAU : Bouton pour contrôler le son --- -->
+    <button id="sound-toggle-button">Play Sound</button>
+    <!-- --- Fin Bouton Son --- -->
+
+    <!-- --- Scène A-Frame AR (Markerless) --- -->
+    <a-scene
+        id="ar-scene"
+        embedded
+        arjs='sourceType: webcam; trackingMethod: best; debugUIEnabled: false;'
+        renderer='logarithmicDepthBuffer: true; colorManagement: true;'
+        vr-mode-ui='enabled: false'>
+
+        <!-- --- Assets --- -->
         <a-assets timeout="60000">
              <img id="logoImg" src="images/logo.jpg" crossOrigin="anonymous">
              <img id="wangMengImg" src="images/wang_meng.jpg" crossOrigin="anonymous">
@@ -47,26 +73,64 @@
              <img id="stageWideImg" src="images/stage_wide.jpg" crossOrigin="anonymous">
              <img id="stageDuoBlueImg" src="images/stage_duo_blue.jpg" crossOrigin="anonymous">
              <img id="stageDuoDarkImg" src="images/stage_duo_dark.jpg" crossOrigin="anonymous">
+
+             <!-- Audio Asset -->
+             <!-- !!! REMPLACEZ "audio/your_sound.mp3" par votre chemin réel !!! -->
              <audio id="logoSound" src="audio/your_sound.mp3" preload="auto" crossOrigin="anonymous"></audio>
+
+             <!-- Modèle 3D -->
+             <!-- !!! REMPLACEZ "models/meduse.glb" par votre chemin réel !!! -->
              <a-asset-item id="jellyfishModel" src="models/meduse.glb" crossOrigin="anonymous"></a-asset-item>
         </a-assets>
-        <!-- Conteneur panneaux (INCHANGÉ) -->
-        <a-entity id="content-container" position="0 1.5 -4.0" rotation="0 0 0" scale="1 1 1"></a-entity>
-        <!-- Méduse (INCHANGÉE) -->
-        <a-gltf-model id="jellyfish" src="#jellyfishModel" position="-1 2 -2" scale="0.3 0.3 0.3" rotation="0 0 0" animation__pos="property: position; from: -1 2 -2; to: 1 1.2 -1.5; dir: alternate; dur: 12000; easing: easeInOutSine; loop: true;" animation__rot="property: rotation; to: 0 360 0; dur: 20000; easing: linear; loop: true;" animation-mixer="clip: *; loop: repeat"></a-gltf-model>
-        <!-- Caméra (INCHANGÉE) -->
+
+        <!-- --- Conteneur pour les panneaux (Ancre globale) --- -->
+        <a-entity id="content-container" position="0 1.5 -4.0" rotation="0 0 0" scale="1 1 1">
+            <!-- Les panneaux image seront ajoutés ici -->
+        </a-entity>
+
+        <!-- Méduse 3D Animée -->
+        <a-gltf-model id="jellyfish"
+                      src="#jellyfishModel"
+                      position="-1 2 -2" scale="0.3 0.3 0.3" rotation="0 0 0"
+                      animation__pos="property: position; from: -1 2 -2; to: 1 1.2 -1.5; dir: alternate; dur: 12000; easing: easeInOutSine; loop: true;"
+                      animation__rot="property: rotation; to: 0 360 0; dur: 20000; easing: linear; loop: true;"
+                      animation-mixer="clip: *; loop: repeat">
+        </a-gltf-model>
+
+        <!-- Caméra -->
         <a-camera cursor="rayOrigin: mouse; fuse: false;" raycaster="objects: [data-interactive]"></a-camera>
+
     </a-scene>
 
     <!-- --- Script pour générer le contenu --- -->
     <script>
-        // --- Configuration (INCHANGÉE) ---
-        const PANEL_BASE_WIDTH = 1.8; const PANEL_COLOR = '#1a1a3a'; const PANEL_OPACITY = 0.85; const BG_Z_OFFSET = -0.01; const IMAGE_Z_OFFSET = 0;
-        const imagePositions = { 'logoImg': { x: 0, y: 0, z: 0.1 }, 'wangMengImg': { x: -2.2, y: 2, z: -0.1 }, 'yuMiaoImg': { x: 2.2, y: 0.4, z: -0.1 }, 'stageWideImg': { x: 0, y: 2, z: -0.3 }, 'djBackImg': { x: 0, y: -2, z: -0.2 }, 'stageDuoBlueImg': { x: -2.5, y: -0.8, z: 0.2 }, 'stageDuoDarkImg': { x: 2.5, y: -0.8, z: 0.2 }, };
-        const contentData = [ { type: 'image', srcId: 'logoImg', originalWidth: 2, originalHeight: 2 }, { type: 'image', srcId: 'wangMengImg', originalWidth: 1, originalHeight: 1.2 }, { type: 'image', srcId: 'yuMiaoImg', originalWidth: 1.5, originalHeight: 1 }, { type: 'image', srcId: 'stageWideImg', originalWidth: 2, originalHeight: 1.1 }, { type: 'image', srcId: 'djBackImg', originalWidth: 1, originalHeight: 1.25 }, { type: 'image', srcId: 'stageDuoBlueImg', originalWidth: 1.8, originalHeight: 1.1 }, { type: 'image', srcId: 'stageDuoDarkImg', originalWidth: 1.8, originalHeight: 1.1 } ];
-        // --- Fin Configuration ---
+        // --- Configuration (inchangée) ---
+        const PANEL_BASE_WIDTH = 1.8;
+        const PANEL_COLOR = '#1a1a3a';
+        const PANEL_OPACITY = 0.85;
+        const BG_Z_OFFSET = -0.01;
+        const IMAGE_Z_OFFSET = 0;
 
-        // --- Fonction createPanel (MODIFIÉE UNIQUEMENT pour le logo) ---
+        const imagePositions = { /* ... vos positions ... */
+            'logoImg':         { x: 0,    y: 0,    z: 0.1 },
+            'wangMengImg':     { x: -2.2, y: 2,  z: -0.1 },
+            'yuMiaoImg':       { x: 2.2,  y: 0.4,  z: -0.1 },
+            'stageWideImg':    { x: 0,    y: 2,  z: -0.3 },
+            'djBackImg':       { x: 0,    y: -2, z: -0.2 },
+            'stageDuoBlueImg': { x: -2.5, y: -0.8, z: 0.2 },
+            'stageDuoDarkImg': { x: 2.5,  y: -0.8, z: 0.2 },
+        };
+        const contentData = [ /* ... vos données ... */
+            { type: 'image', srcId: 'logoImg', originalWidth: 2, originalHeight: 2 },
+            { type: 'image', srcId: 'wangMengImg', originalWidth: 1, originalHeight: 1.2 },
+            { type: 'image', srcId: 'yuMiaoImg', originalWidth: 1.5, originalHeight: 1 },
+            { type: 'image', srcId: 'stageWideImg', originalWidth: 2, originalHeight: 1.1 },
+            { type: 'image', srcId: 'djBackImg', originalWidth: 1, originalHeight: 1.25 },
+            { type: 'image', srcId: 'stageDuoBlueImg', originalWidth: 1.8, originalHeight: 1.1 },
+            { type: 'image', srcId: 'stageDuoDarkImg', originalWidth: 1.8, originalHeight: 1.1 }
+        ];
+
+        // --- Fonction createPanel (MODIFIÉE pour son) ---
         function createImagePanel(itemData, position) {
             const container = document.getElementById('content-container');
             if (!container || !itemData || itemData.type !== 'image' || !itemData.srcId) return null;
@@ -77,77 +141,147 @@
             const aspect = itemData.originalWidth / itemData.originalHeight;
             const panelWidth = PANEL_BASE_WIDTH; const panelHeight = panelWidth / aspect;
 
-            // Interaction scale survol (INCHANGÉE)
+            // Interaction (inchangée)
             entity.setAttribute('animation__scaleup', `property: scale; to: 1.1 1.1 1.1; startEvents: mouseenter; dur: 200; easing: easeOutQuad;`);
             entity.setAttribute('animation__scaledown', `property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200; easing: easeInQuad;`);
-            entity.setAttribute('data-interactive', ''); // INCHANGÉ - Important!
+            entity.setAttribute('data-interactive', '');
 
-            // Fond (INCHANGÉ)
+            // Fond (inchangé)
             const imgBgPlane = document.createElement('a-plane'); imgBgPlane.setAttribute('width', panelWidth * 1.05); imgBgPlane.setAttribute('height', panelHeight * 1.05); imgBgPlane.setAttribute('material', `color: ${PANEL_COLOR}; opacity: ${PANEL_OPACITY}; shader: flat;`); imgBgPlane.setAttribute('position', `0 0 ${BG_Z_OFFSET - 0.005}`); entity.appendChild(imgBgPlane);
-            // Image (INCHANGÉE)
+            // Image (inchangée)
             const imgPlane = document.createElement('a-plane'); imgPlane.setAttribute('width', panelWidth); imgPlane.setAttribute('height', panelHeight); imgPlane.setAttribute('material', `src: #${itemData.srcId}; shader: flat; transparent: true;`); imgPlane.setAttribute('position', `0 0 ${IMAGE_Z_OFFSET}`); entity.appendChild(imgPlane);
 
-            // --- MODIFICATION UNIQUEMENT SI C'EST LE LOGO ---
+            // *** MODIFIÉ : Ajouter le composant son SI c'est le logo (SANS AUTOPLAY et AVEC ID) ***
             if (itemData.srcId === 'logoImg') {
-                // 1. ID et Son (INCHANGÉS par rapport à ton code)
-                entity.setAttribute('id', 'logo-panel');
-                entity.setAttribute('sound', { src: '#logoSound', loop: true, volume: 0.8, positional: true, distanceModel: 'inverse', refDistance: 1, rolloffFactor: 1 });
+                entity.setAttribute('id', 'logo-panel'); // <-- AJOUT DE L'ID pour ciblage
+                entity.setAttribute('sound', {
+                    src: '#logoSound',
+                    // autoplay: true,       // <<--- LIGNE SUPPRIMÉE/COMMENTÉE
+                    loop: true,
+                    volume: 0.8,
+                    positional: true,
+                    distanceModel: 'inverse',
+                    refDistance: 1,
+                    rolloffFactor: 1
+                });
                 console.log(`Added sound component to logo-panel (autoplay disabled).`);
-
-                // --- NOUVEAU : Création du texte A-Frame ---
-                const hoverText = document.createElement('a-text');
-                hoverText.setAttribute('value', "bonjour ceci est un test");
-                hoverText.setAttribute('color', "#FFFFFF"); // Couleur du texte
-                hoverText.setAttribute('align', "center"); // Centrer le texte
-                hoverText.setAttribute('width', panelWidth * 1.5); // Largeur max du texte (ajuster si besoin)
-                // Positionner le texte légèrement devant l'image et centré
-                hoverText.setAttribute('position', `0 0 ${IMAGE_Z_OFFSET + 0.05}`); // Un peu devant l'image
-                hoverText.setAttribute('visible', 'false'); // ** CACHÉ PAR DÉFAUT **
-                hoverText.setAttribute('id', 'logo-hover-text'); // Donner un ID pour le cibler
-                entity.appendChild(hoverText); // Ajouter le texte comme enfant du panneau
-                console.log(`Added hover text element to logo-panel.`);
-                // --- Fin Création Texte ---
-
-                // --- NOUVEAU : Contrôler la visibilité du texte au survol de l'entité logo ---
-                entity.addEventListener('mouseenter', () => {
-                    console.log("Mouse entered logo panel, showing text.");
-                    // Pas besoin de chercher par ID, on a la référence directe
-                    hoverText.setAttribute('visible', 'true');
-                });
-                entity.addEventListener('mouseleave', () => {
-                    console.log("Mouse left logo panel, hiding text.");
-                    hoverText.setAttribute('visible', 'false');
-                });
-                console.log(`Added mouseenter/mouseleave listeners to logo-panel for text visibility.`);
-                // --- Fin Contrôle Visibilité ---
             }
-            // --- Fin Modification Logo ---
+            // *** Fin modification son ***
 
-            // Position (INCHANGÉE)
+            // Appliquer la position DÉFINIE MANUELLEMENT (inchangé)
             entity.setAttribute('position', `${position.x} ${position.y} ${position.z}`);
             container.appendChild(entity);
+            // console.log(`Created image panel for ${itemData.srcId} at`, position); // Optionnel
             return entity;
         }
 
-        // --- Fonction setupManualLayout (INCHANGÉE) ---
-        function setupManualLayout() { /* ... code identique ... */
-            const container = document.getElementById('content-container'); if (!container) { console.error("Could not find #content-container entity."); return; } while (container.firstChild) { container.removeChild(container.firstChild); } contentData.forEach(item => { if (item.type === 'image' && item.srcId && imagePositions[item.srcId]) { const position = imagePositions[item.srcId]; createImagePanel(item, position); } else if (item.type === 'image' && item.srcId) { console.warn(`Position not defined for ${item.srcId}. Panel not created.`); } }); console.log("Manual image layout generated.");
-         }
+        // --- Fonction setupManualLayout (inchangée) ---
+        function setupManualLayout() {
+            const container = document.getElementById('content-container');
+            if (!container) { console.error("Could not find #content-container entity."); return; }
+            while (container.firstChild) { container.removeChild(container.firstChild); } // Vider
+            contentData.forEach(item => {
+                if (item.type === 'image' && item.srcId && imagePositions[item.srcId]) {
+                    const position = imagePositions[item.srcId];
+                    createImagePanel(item, position);
+                } else if (item.type === 'image' && item.srcId) {
+                    console.warn(`Position not defined in imagePositions for ${item.srcId}. Panel not created.`);
+                }
+            });
+            console.log("Manual image layout generated.");
+        }
 
-        // --- Fonction toggleLogoSound (INCHANGÉE) ---
-        function toggleLogoSound() { /* ... code identique ... */
-            const logoPanel = document.getElementById('logo-panel'); const soundButton = document.getElementById('sound-toggle-button'); if (!logoPanel || !logoPanel.components.sound || !soundButton) { console.error("Cannot toggle sound: elements not found."); return; } const soundComponent = logoPanel.components.sound; const sceneEl = document.querySelector('a-scene'); const audioContext = sceneEl?.audioListener?.context; if (audioContext && audioContext.state === 'suspended') { audioContext.resume().catch(e => console.error("Error resuming audio context", e)); } if (soundComponent.isPlaying) { soundComponent.pauseSound(); soundButton.textContent = "Play Sound"; } else { soundComponent.playSound(); soundButton.textContent = "Pause Sound"; }
-         }
+        // --- NOUVEAU : Fonction pour activer/désactiver le son du logo ---
+        function toggleLogoSound() {
+            const logoPanel = document.getElementById('logo-panel');
+            const soundButton = document.getElementById('sound-toggle-button');
 
-        // --- Logique d'initialisation (INCHANGÉE par rapport à ton code) ---
+            // Vérifications robustes
+            if (!logoPanel) {
+                console.error("Cannot toggle sound: logo-panel not found.");
+                return;
+            }
+            if (!logoPanel.components || !logoPanel.components.sound) {
+                 console.error("Cannot toggle sound: sound component not found on logo-panel.");
+                 return;
+            }
+             if (!soundButton) {
+                 console.error("Cannot toggle sound: sound-toggle-button not found.");
+                 return;
+            }
+
+            const soundComponent = logoPanel.components.sound;
+            const sceneEl = document.querySelector('a-scene'); // Pour l'AudioContext
+
+            // Essayer de reprendre le contexte Audio au premier clic (important pour iOS)
+            // Utilisation de l'optional chaining (?.) pour plus de sécurité
+            const audioContext = sceneEl?.audioListener?.context;
+            if (audioContext && audioContext.state === 'suspended') {
+                console.log("AudioContext is suspended, attempting to resume...");
+                audioContext.resume().catch(e => console.error("Error resuming audio context:", e));
+                // On continue même en cas d'erreur, playSound peut réussir
+            }
+
+            // Basculer Play/Pause
+            if (soundComponent.isPlaying) {
+                console.log("Pausing sound.");
+                soundComponent.pauseSound();
+                soundButton.textContent = "Play Sound";
+            } else {
+                console.log("Playing sound.");
+                soundComponent.playSound();
+                soundButton.textContent = "Pause Sound";
+            }
+        }
+        // --- Fin Fonction Son ---
+
+        // --- Logique d'initialisation (légèrement modifiée pour le bouton son) ---
         const sceneEl = document.querySelector('a-scene');
-        if (sceneEl.hasLoaded) { setupManualLayout(); } else { sceneEl.addEventListener('loaded', setupManualLayout); }
+
+        // Attendre chargement scène pour le layout (inchangé)
+        if (sceneEl.hasLoaded) {
+            setupManualLayout();
+        } else {
+            sceneEl.addEventListener('loaded', setupManualLayout);
+        }
+
+        // Cacher le loader ET initialiser le bouton Son une fois la scène chargée (MODIFIÉ)
         sceneEl.addEventListener('loaded', () => {
             console.log("A-Frame scene loaded event fired.");
-            const loader = document.getElementById('arjs-loader-div'); if (loader) { setTimeout(() => { loader.style.display = 'none'; }, 500); } else { console.warn("Could not find loader element to hide."); }
-            const soundButton = document.getElementById('sound-toggle-button'); if (soundButton) { setTimeout(() => { const logoPanelExists = document.getElementById('logo-panel'); if (logoPanelExists) { soundButton.style.display = 'block'; soundButton.addEventListener('click', toggleLogoSound); } else { console.error("Logo panel not found after scene load and delay. Sound button cannot be activated."); } }, 100); } else { console.warn("Could not find sound toggle button element."); }
+
+            // Cacher le loader (inchangé)
+            const loader = document.getElementById('arjs-loader-div');
+            if (loader) {
+                console.log("Hiding AR.js loader.");
+                setTimeout(() => { loader.style.display = 'none'; }, 500); // Garde le délai original
+            } else {
+                console.warn("Could not find loader element to hide.");
+            }
+
+            // --- NOUVEAU : Afficher et activer le bouton Son ---
+            const soundButton = document.getElementById('sound-toggle-button');
+            if (soundButton) {
+                // Vérifier que le panneau logo existe (créé par setupManualLayout)
+                // avant d'activer le bouton.
+                // On utilise un petit délai pour être sûr que setupManualLayout a eu le temps.
+                setTimeout(() => {
+                     const logoPanelExists = document.getElementById('logo-panel');
+                     if (logoPanelExists) {
+                         console.log("Making sound toggle button visible and attaching listener.");
+                         soundButton.style.display = 'block'; // Rendre visible
+                         soundButton.addEventListener('click', toggleLogoSound);
+                     } else {
+                          console.error("Logo panel not found after scene load and delay. Sound button cannot be activated.");
+                     }
+                }, 100); // Petit délai pour s'assurer que le DOM est à jour après 'loaded'
+
+            } else {
+                 console.warn("Could not find sound toggle button element.");
+            }
+            // --- Fin Activation Bouton Son ---
         });
-        // --- Fin Logique d'initialisation ---
+
+        // --- PAS DE DRAG DANS CETTE VERSION ---
 
     </script>
 
