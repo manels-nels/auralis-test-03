@@ -12,7 +12,30 @@
     <!-- AR.js for A-Frame -->
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.0/aframe/build/aframe-ar.min.js"></script>
 
-    <style>
+    <style> 
+
+        
+        #progress-container {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    overflow: hidden;
+    display: none;
+    z-index: 1000;
+}
+
+#progress-bar {
+    width: 0%;
+    height: 100%;
+    background: #4caf50;
+    transition: width 0.2s ease-in-out;
+}
+        
         body { margin: 0; overflow: hidden; }
         .arjs-loader { height: 100%; width: 100%; position: absolute; top: 0; left: 0; background-color: rgba(0, 0, 0, 0.8); z-index: 9999; display: flex; justify-content: center; align-items: center; }
         .arjs-loader div { text-align: center; font-size: 1.25em; color: white; }
@@ -32,7 +55,7 @@
         <div>Loading AURALIS Experience...</div>
     </div>
 
-    <!-- --- Scène A-Frame AR (Markerless) --- -->
+     
     <a-scene
         id="ar-scene"
         embedded
@@ -196,7 +219,53 @@
             return entity;
         }
 
+const progressContainer = document.getElementById('progress-container');
+const progressBar = document.getElementById('progress-bar');
 
+const assetsToLoad = [
+    "logoImg", "wangMengImg", "yuMiaoImg", "djBackImg", "stageWideImg", 
+    "stageDuoBlueImg", "stageDuoDarkImg", "jellyfishModel", "logoSound"
+];
+
+let loadedAssets = 0;
+
+// Fonction pour mettre à jour la barre de progression
+function updateProgress() {
+    const percentage = (loadedAssets / assetsToLoad.length) * 100;
+    progressBar.style.width = percentage + "%";
+
+    if (percentage >= 100) {
+        setTimeout(() => {
+            progressContainer.style.display = 'none';
+        }, 500);
+    }
+}
+
+// Afficher la barre au début du chargement
+progressContainer.style.display = 'block';
+
+// Vérifier le chargement des images
+assetsToLoad.forEach(id => {
+    const asset = document.getElementById(id);
+    if (asset) {
+        if (asset.tagName === 'IMG') {
+            asset.onload = () => { loadedAssets++; updateProgress(); };
+        } else if (asset.tagName === 'A-ASSET-ITEM' || asset.tagName === 'AUDIO') {
+            asset.addEventListener('loaded', () => { loadedAssets++; updateProgress(); });
+        }
+    }
+});
+
+// Vérifier le chargement du modèle 3D
+const jellyfishModel = document.getElementById('jellyfish');
+if (jellyfishModel) {
+    jellyfishModel.addEventListener('model-loaded', () => {
+        loadedAssets++;
+        updateProgress();
+    });
+}
+
+        
         // --- Fonction setupManualLayout ---
         function setupManualLayout() {
             const container = document.getElementById('content-container');
@@ -235,6 +304,10 @@
         // --- PAS DE DRAG DANS CETTE VERSION ---
 
     </script>
-
+    
+<div id="progress-container">
+    <div id="progress-bar"></div>
+</div>
+    
 </body>
 </html>
