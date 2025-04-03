@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>AURALIS AR Experience (Simple Progress)</title>
+    <title>AURALIS AR Experience (Fix NaN%)</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta name="description" content="AURALIS AR Experience using A-Frame and AR.js with simple percentage loader.">
+    <meta name="description" content="AURALIS AR Experience using A-Frame and AR.js with simple percentage loader (NaN fix).">
     <!-- A-Frame Core -->
     <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
     <!-- AR.js for A-Frame -->
@@ -51,7 +51,7 @@
     <!-- --- Écran de chargement AR.js avec Texte de Progression --- -->
     <div class="arjs-loader" id="arjs-loader-div">
         <div class="arjs-loader-message">Chargement de l'expérience AURALIS...</div>
-        <!-- Juste un texte pour le pourcentage -->
+        <!-- Juste un texte pour le pourcentage, commence à 0% -->
         <div id="progress-text">0%</div>
     </div>
 
@@ -64,8 +64,7 @@
         vr-mode-ui='enabled: false'>
 
         <!-- --- Assets --- -->
-        <!-- IMPORTANT: Ajustez ce timeout. Si le chargement dépasse ce délai, le % s'arrêtera. -->
-        <!-- Essayez 90 secondes pour commencer -->
+        <!-- IMPORTANT: Toujours pertinent d'ajuster ce timeout si besoin. -->
         <a-assets timeout="90000">
              <img id="logoImg" src="images/logo.jpg" crossOrigin="anonymous">
              <img id="wangMengImg" src="images/wang_meng.jpg" crossOrigin="anonymous">
@@ -74,10 +73,8 @@
              <img id="stageWideImg" src="images/stage_wide.jpg" crossOrigin="anonymous">
              <img id="stageDuoBlueImg" src="images/stage_duo_blue.jpg" crossOrigin="anonymous">
              <img id="stageDuoDarkImg" src="images/stage_duo_dark.jpg" crossOrigin="anonymous">
-
             <!-- Audio Asset -->
              <audio id="logoSound" src="audio/your_sound.mp3" preload="auto" crossOrigin="anonymous"></audio>
-
             <!-- Modèle 3D -->
              <a-asset-item id="jellyfishModel" src="models/meduse.glb" crossOrigin="anonymous"></a-asset-item>
         </a-assets>
@@ -96,7 +93,7 @@
                       animation__pos="property: position; from: -1 2 -2; to: 1 1.2 -1.5; dir: alternate; dur: 12000; easing: easeInOutSine; loop: true;"
                       animation__rot="property: rotation; to: 0 360 0; dur: 20000; easing: linear; loop: true;"
                       animation-mixer="clip: *; loop: repeat"
-                      > <!-- Pas de visible="false" ici, on revient à l'original -->
+                      >
         </a-gltf-model>
 
         <!-- --- Caméra --- -->
@@ -104,16 +101,15 @@
 
     </a-scene>
 
-    <!-- --- Script (simplifié) --- -->
+    <!-- --- Script (avec fix NaN) --- -->
     <script>
-        // --- Configuration ---
+        // --- Configuration (inchangée) ---
         const PANEL_BASE_WIDTH = 1.8;
         const PANEL_COLOR = '#1a1a3a';
         const PANEL_OPACITY = 0.85;
         const BG_Z_OFFSET = -0.01;
         const IMAGE_Z_OFFSET = 0;
-
-        const imagePositions = {
+        const imagePositions = { /* ... positions ... */
             'logoImg':         { x: 0,    y: 0,    z: 0.1 },
             'wangMengImg':     { x: -2.2, y: 2,  z: -0.1 },
             'yuMiaoImg':       { x: 2.2,  y: 0.4,  z: -0.1 },
@@ -121,9 +117,8 @@
             'djBackImg':       { x: 0,    y: -2, z: -0.2 },
             'stageDuoBlueImg': { x: -2.5, y: -0.8, z: 0.2 },
             'stageDuoDarkImg': { x: 2.5,  y: -0.8, z: 0.2 },
-        };
-
-        const contentData = [
+         };
+        const contentData = [ /* ... données ... */
             { type: 'image', srcId: 'logoImg', originalWidth: 2, originalHeight: 2 },
             { type: 'image', srcId: 'wangMengImg', originalWidth: 1, originalHeight: 1.2 },
             { type: 'image', srcId: 'yuMiaoImg', originalWidth: 1.5, originalHeight: 1 },
@@ -133,90 +128,69 @@
             { type: 'image', srcId: 'stageDuoDarkImg', originalWidth: 1.8, originalHeight: 1.1 }
         ];
 
-        // --- Fonction createImagePanel (Retour à la version originale simple) ---
+        // --- Fonction createImagePanel (inchangée par rapport à la version simple précédente) ---
         function createImagePanel(itemData, position) {
             const container = document.getElementById('content-container');
             if (!container || !itemData || itemData.type !== 'image' || !itemData.srcId) return null;
             const imgElement = document.getElementById(itemData.srcId);
-
-            // Utiliser les dimensions fournies, sinon essayer naturalWidth/Height (peut échouer si pas chargé)
             const originalWidth = itemData.originalWidth || imgElement?.naturalWidth;
             const originalHeight = itemData.originalHeight || imgElement?.naturalHeight;
 
             if (!imgElement || !originalWidth || !originalHeight) {
-                console.warn(`Asset/dimensions manquantes ou invalides pour ${itemData.srcId}. Le panneau risque d'être incorrect.`);
-                // On crée quand même une entité vide pour ne pas bloquer, mais elle sera probablement mal rendue
+                console.warn(`Asset/dimensions manquantes ou invalides pour ${itemData.srcId}.`);
             }
 
             const entity = document.createElement('a-entity');
-            // Calculer aspect ratio même si dimensions invalides (donnera NaN mais évite erreur)
             const aspect = (originalWidth && originalHeight) ? originalWidth / originalHeight : 1;
             const panelWidth = PANEL_BASE_WIDTH;
-            const panelHeight = aspect ? panelWidth / aspect : PANEL_BASE_WIDTH; // Fallback height
+            const panelHeight = aspect ? panelWidth / aspect : PANEL_BASE_WIDTH;
 
             entity.setAttribute('animation__scaleup', `property: scale; to: 1.1 1.1 1.1; startEvents: mouseenter; dur: 200; easing: easeOutQuad;`);
             entity.setAttribute('animation__scaledown', `property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200; easing: easeInQuad;`);
             entity.setAttribute('data-interactive', '');
 
-            // Fond
-            const imgBgPlane = document.createElement('a-plane');
+            const imgBgPlane = document.createElement('a-plane'); // Fond
             imgBgPlane.setAttribute('width', panelWidth * 1.05);
             imgBgPlane.setAttribute('height', panelHeight * 1.05);
             imgBgPlane.setAttribute('material', `color: ${PANEL_COLOR}; opacity: ${PANEL_OPACITY}; shader: flat;`);
             imgBgPlane.setAttribute('position', `0 0 ${BG_Z_OFFSET - 0.005}`);
             entity.appendChild(imgBgPlane);
 
-            // Image (peut afficher une texture incomplète si timeout)
-            const imgPlane = document.createElement('a-plane');
+            const imgPlane = document.createElement('a-plane'); // Image
             imgPlane.setAttribute('width', panelWidth);
             imgPlane.setAttribute('height', panelHeight);
             imgPlane.setAttribute('material', `src: #${itemData.srcId}; shader: flat; transparent: true;`);
             imgPlane.setAttribute('position', `0 0 ${IMAGE_Z_OFFSET}`);
             entity.appendChild(imgPlane);
 
-            // Son (version originale simple)
-            if (itemData.srcId === 'logoImg') {
-                entity.setAttribute('sound', {
-                    src: '#logoSound',
-                    autoplay: true,
-                    loop: true,
-                    volume: 0.8,
-                    positional: true,
-                    distanceModel: 'inverse',
-                    refDistance: 1,
-                    rolloffFactor: 1
-                });
+            if (itemData.srcId === 'logoImg') { // Son
+                entity.setAttribute('sound', { src: '#logoSound', autoplay: true, loop: true, volume: 0.8, positional: true, distanceModel: 'inverse', refDistance: 1, rolloffFactor: 1 });
                 console.log(`Added positional sound component to logoImg panel.`);
             }
 
             entity.setAttribute('position', `${position.x} ${position.y} ${position.z}`);
             container.appendChild(entity);
-
-            // console.log(`Created image panel for ${itemData.srcId} at`, position);
             return entity;
         }
 
-        // --- Fonction setupManualLayout (Retour à la version originale simple) ---
+        // --- Fonction setupManualLayout (inchangée par rapport à la version simple précédente) ---
         function setupManualLayout() {
             const container = document.getElementById('content-container');
             if (!container) { console.error("Could not find #content-container entity."); return; }
-            // Vider le conteneur au cas où cette fonction serait appelée plusieurs fois
-            while (container.firstChild) { container.removeChild(container.firstChild); }
+            while (container.firstChild) { container.removeChild(container.firstChild); } // Vider
 
             contentData.forEach(item => {
                 if (item.type === 'image' && item.srcId && imagePositions[item.srcId]) {
-                    const position = imagePositions[item.srcId];
-                    createImagePanel(item, position);
+                    createImagePanel(item, imagePositions[item.srcId]);
                 } else if (item.type === 'image' && item.srcId) {
-                    console.warn(`Position non définie dans imagePositions pour ${item.srcId}. Panel not created.`);
+                    console.warn(`Position non définie pour ${item.srcId}.`);
                 }
             });
-
             console.log("Manual image layout generation attempted.");
         }
 
 
-        // --- Gestion de la progression et du chargement (simplifié) ---
+        // --- Gestion de la progression et du chargement (avec fix NaN) ---
         document.addEventListener('DOMContentLoaded', () => {
             const assets = document.querySelector('a-assets');
             const progressText = document.getElementById('progress-text');
@@ -225,59 +199,75 @@
 
             if (!assets || !progressText || !loaderDiv || !sceneEl) {
                 console.error("Loader/Progress elements not found!");
-                if(loaderDiv) loaderDiv.style.display = 'none'; // Cache le loader si les éléments manquent
+                if(loaderDiv) loaderDiv.style.display = 'none';
                 return;
             }
 
+            let assetsTimedOut = false; // Pour suivre si un timeout s'est produit
+
             // --- Mettre à jour le texte de progression ---
             assets.addEventListener('progress', (event) => {
-                const progress = event.detail.progress; // Valeur entre 0 et 1
-                const percentage = Math.round(progress * 100);
-                progressText.textContent = percentage + '%';
-                // console.log('Assets loading progress:', percentage, '%'); // Décommenter pour débug
+                let percentage = 0; // Valeur par défaut
+                // ***** DEBUT CORRECTION NaN *****
+                // Vérifier si event.detail existe et si progress est un nombre valide
+                if (event.detail && typeof event.detail.progress === 'number' && !isNaN(event.detail.progress)) {
+                    const progress = event.detail.progress; // Valeur entre 0 et 1
+                    percentage = Math.round(progress * 100);
+                } else {
+                    // Si la valeur n'est pas valide (souvent au tout début), on reste à 0% ou on loggue
+                    console.warn('Received invalid progress event detail (ignoring):', event.detail);
+                    // On ne met pas à jour le texte pour éviter le NaN% initial
+                    return; // Optionnel: sortir tôt pour ne pas afficher 0% si on préfère
+                }
+                // ***** FIN CORRECTION NaN *****
+
+                // Ne mettre à jour le texte que si le timeout n'a pas eu lieu
+                if (!assetsTimedOut) {
+                    progressText.textContent = percentage + '%';
+                }
+                // console.log('Assets loading progress:', percentage, '%');
             });
 
              // --- Gestion d'erreur de timeout des assets ---
              assets.addEventListener('timeout', (event) => {
+                 assetsTimedOut = true; // Marquer qu'un timeout s'est produit
                  console.error(`!!!!! A-Assets timed out after ${assets.getAttribute('timeout') || 'default'} ms !!!!!`, event.detail.src);
-                 // Le pourcentage arrête de se mettre à jour.
-                 // On pourrait changer le texte ici, ex:
-                 progressText.textContent = `Timeout (${progressText.textContent})`;
+                 // Changer le texte pour indiquer le timeout
+                 progressText.textContent = `Timeout!`;
              });
 
              // --- Cacher le loader quand la SCENE est prête ---
-             // Ceci se déclenche même si les assets ont eu un timeout.
             sceneEl.addEventListener('loaded', () => {
                  console.log("A-Frame scene 'loaded' event fired.");
+                 setupManualLayout(); // Essayer de créer le layout
 
-                 // Appeler setupManualLayout pour essayer de créer les entités
-                 setupManualLayout();
-
-                 // Masquer le loader après un court délai
-                 console.log("Hiding loader...");
-                 // S'assurer que le % affiche 100% visuellement si tout s'est bien passé
-                 // (ne change rien si timeout a modifié le texte)
-                 if (!progressText.textContent.includes('Timeout')) {
+                 console.log("Preparing to hide loader...");
+                 // Mettre à 100% seulement si aucun timeout n'a eu lieu
+                 if (!assetsTimedOut) {
                      progressText.textContent = '100%';
                  }
+                 // Si timeout, le texte "Timeout!" reste affiché
+
+                 // Masquer le loader après un court délai
                  setTimeout(() => {
                      loaderDiv.style.opacity = '0';
-                     setTimeout(() => { loaderDiv.style.display = 'none'; }, 500); // Attendre la fin de la transition
-                 }, 300); // Petit délai pour voir le 100% ou le message de timeout
+                     setTimeout(() => { loaderDiv.style.display = 'none'; }, 500);
+                 }, 300);
             });
 
-            // Gérer le cas où la scène est déjà chargée quand le JS s'exécute
+            // Gérer le cas où la scène est déjà chargée
              if (sceneEl.hasLoaded) {
                  console.log("Scene was already loaded on DOMContentLoaded.");
                  setupManualLayout();
-                  // Masquer le loader immédiatement s'il est encore visible
                  if (loaderDiv.style.display !== 'none') {
-                     console.log("Hiding loader immediately as scene was already loaded.");
-                      loaderDiv.style.opacity = '0';
-                      setTimeout(() => { loaderDiv.style.display = 'none'; }, 500);
+                     console.log("Hiding loader immediately...");
+                     if (!assetsTimedOut) { // Vérifier aussi ici
+                        progressText.textContent = '100%';
+                     }
+                     loaderDiv.style.opacity = '0';
+                     setTimeout(() => { loaderDiv.style.display = 'none'; }, 500);
                  }
              }
-
 
         }); // Fin de DOMContentLoaded
 
