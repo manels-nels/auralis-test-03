@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>AURALIS AR Experience (A-Frame Non-Overlapping Layout)</title>
+    <title>AURALIS AR Experience (Fixed Image Layout)</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta name="description" content="AURALIS AR Experience using A-Frame and AR.js with non-overlapping random layout.">
+    <meta name="description" content="AURALIS AR Experience using A-Frame and AR.js with fixed image layout.">
 
     <!-- A-Frame Core -->
     <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
@@ -52,8 +52,9 @@
         </a-assets>
 
         <!-- --- Conteneur pour les panneaux (Ancre globale) --- -->
-        <a-entity id="content-stack" position="0 1.5 -3.0" rotation="0 0 0" scale="0.6 0.6 0.6"> {/* Légèrement plus loin et plus petit */}
-            <!-- Les panneaux seront ajoutés ici avec des positions relatives aléatoires non superposées -->
+        {/* Ajustement position/scale pour layout horizontal */}
+        <a-entity id="content-container" position="0 1.5 -3.5" rotation="0 0 0" scale="0.5 0.5 0.5">
+            <!-- Les panneaux image seront ajoutés ici -->
         </a-entity>
 
         <!-- --- Caméra --- -->
@@ -61,145 +62,128 @@
 
     </a-scene>
 
-    <!-- --- Script pour générer le contenu et gérer le layout --- -->
+    <!-- --- Script pour générer le contenu --- -->
     <script>
         // --- Configuration ---
-        const PANEL_BASE_WIDTH = 1.6;   // Largeur panneaux
-        const PANEL_TEXT_HEIGHT = 0.35; // Hauteur panneaux texte
-        const TEXT_BASE_WIDTH = 1.5;    // Largeur a-text
+        const PANEL_BASE_WIDTH = 1.8;   // Largeur standard des panneaux image
+        const HORIZONTAL_SPACING = 0.2; // Espace horizontal entre les panneaux
         const PANEL_COLOR = '#1a1a3a';
         const PANEL_OPACITY = 0.85;
-        const TEXT_Z_OFFSET = 0;        // Texte à Z=0
-        const BG_Z_OFFSET = -0.01;      // Fond à Z=-0.01
+        const BG_Z_OFFSET = -0.01;      // Décalage Z du fond
+        const IMAGE_Z_OFFSET = 0;       // Position Z de l'image
+        const DEPTH_VARIATION = 0.15;    // Amplitude du décalage Z pour l'effet 3D
 
-        // --- Configuration de la zone de placement ---
-        const AREA_WIDTH = 6.0;         // Augmenté pour plus d'espace
-        const AREA_HEIGHT = 3.5;        // Augmenté
-        const AREA_DEPTH_OFFSET = 2.0;  // Profondeur max de dispersion
-
-        // --- Configuration pour l'évitement de collision ---
-        const MAX_PLACEMENT_ATTEMPTS = 30; // Nombre max d'essais pour placer un panneau
-        const PANEL_EFFECTIVE_DEPTH = 0.1; // Profondeur virtuelle pour la détection de collision
-        let placedPanelBounds = [];      // Stocke les AABB des panneaux placés
-
-        // --- Données du contenu (inchangé) ---
+        // --- Données du contenu (Seules les images sont utilisées maintenant) ---
         const contentData = [ { type: 'title', text: "AURALIS" }, { type: 'image', srcId: 'logoImg', originalWidth: 2, originalHeight: 2 }, { type: 'text', text: "Step Into Sound and Light:\nA Journey Beyond Music." }, { type: 'text', text: "Imagine a space where sound moves like liquid...\nWelcome to AURALIS!" }, { type: 'header', text: "The Architects" }, { type: 'text', text: "Wang Meng & Yu Miao dissolve boundaries..." }, { type: 'image', srcId: 'wangMengImg', originalWidth: 1, originalHeight: 1.2 }, { type: 'text', text: "• Wang Meng: Visionary audio-visual artist..." }, { type: 'image', srcId: 'yuMiaoImg', originalWidth: 1.5, originalHeight: 1 }, { type: 'text', text: "• Yu Miao: Guzheng virtuoso pushing limits..." }, { type: 'header', text: "Sound & Light" }, { type: 'image', srcId: 'stageWideImg', originalWidth: 2, originalHeight: 1.1 }, { type: 'text', text: "Dazzling visuals extend the sonic experience..." }, { type: 'image', srcId: 'djBackImg', originalWidth: 1.8, originalHeight: 1 }, { type: 'text', text: "Manels Favre shapes 3D sound with SPAT..." }, { type: 'header', text: "Immersive Music" }, { type: 'image', srcId: 'stageDuoBlueImg', originalWidth: 1.8, originalHeight: 1.1 }, { type: 'text', text: "Feel the music flow through you..." }, { type: 'image', srcId: 'stageDuoDarkImg', originalWidth: 1.8, originalHeight: 1.1 }, { type: 'text', text: "A journey into sound, space, and emotion." }, { type: 'cta', text: "Step inside.\nLet yourself be carried away.\n\nComing soon!" } ];
 
-        // --- Fonctions d'aide pour la collision ---
-        function calculateAABB(position, width, height, depth) {
-            const halfWidth = width / 2;
-            const halfHeight = height / 2;
-            const halfDepth = depth / 2;
-            return {
-                minX: position.x - halfWidth, maxX: position.x + halfWidth,
-                minY: position.y - halfHeight, maxY: position.y + halfHeight,
-                minZ: position.z - halfDepth, maxZ: position.z + halfDepth,
-            };
+        // --- Fonction createPanel (simplifiée pour images seulement) ---
+        function createImagePanel(itemData, position) {
+            const container = document.getElementById('content-container');
+            if (!container || !itemData || itemData.type !== 'image' || !itemData.srcId) {
+                return null; // Ne crée rien si données invalides
+            }
+
+            const imgElement = document.getElementById(itemData.srcId);
+            if (!imgElement || !itemData.originalWidth || !itemData.originalHeight) {
+                console.warn(`Image asset or dimensions missing for ${itemData.srcId}`);
+                return null;
+            }
+
+            const entity = document.createElement('a-entity');
+            const aspect = itemData.originalWidth / itemData.originalHeight;
+            const panelWidth = PANEL_BASE_WIDTH;
+            const panelHeight = panelWidth / aspect;
+
+            // Interaction
+            entity.setAttribute('animation__scaleup', `property: scale; to: 1.1 1.1 1.1; startEvents: mouseenter; dur: 200; easing: easeOutQuad;`);
+            entity.setAttribute('animation__scaledown', `property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200; easing: easeInQuad;`);
+            entity.setAttribute('data-interactive', '');
+
+            // Fond
+            const imgBgPlane = document.createElement('a-plane');
+            imgBgPlane.setAttribute('width', panelWidth * 1.05);
+            imgBgPlane.setAttribute('height', panelHeight * 1.05);
+            imgBgPlane.setAttribute('material', `color: ${PANEL_COLOR}; opacity: ${PANEL_OPACITY}; shader: flat;`);
+            imgBgPlane.setAttribute('position', `0 0 ${BG_Z_OFFSET - 0.005}`); // Fond légèrement derrière
+            entity.appendChild(imgBgPlane);
+
+            // Image
+            const imgPlane = document.createElement('a-plane');
+            imgPlane.setAttribute('width', panelWidth);
+            imgPlane.setAttribute('height', panelHeight);
+            imgPlane.setAttribute('material', `src: #${itemData.srcId}; shader: flat; transparent: true;`);
+            imgPlane.setAttribute('position', `0 0 ${IMAGE_Z_OFFSET}`); // Image à Z=0
+            entity.appendChild(imgPlane);
+
+            // Appliquer la position calculée
+            entity.setAttribute('position', `${position.x} ${position.y} ${position.z}`);
+            container.appendChild(entity);
+
+            console.log(`Created image panel for ${itemData.srcId} at`, position);
+            return entity; // Retourne l'entité créée
         }
 
-        function checkOverlap(boxA, boxB) {
-            // Vérifie s'il n'y a PAS de superposition sur AUCUN axe
-            const noOverlap =
-                boxA.maxX < boxB.minX || boxA.minX > boxB.maxX ||
-                boxA.maxY < boxB.minY || boxA.minY > boxB.maxY ||
-                boxA.maxZ < boxB.minZ || boxA.minZ > boxB.maxZ;
-            // S'il n'y a "pas de non-superposition", alors il y a superposition
-            return !noOverlap;
-        }
 
-        // --- Fonction setupContentStack (Placement non superposé) ---
-        function setupContentStack() {
-            const stack = document.getElementById('content-stack');
-            if (!stack) { console.error("Could not find #content-stack entity."); return; }
-            placedPanelBounds = []; // Réinitialiser les boîtes placées
-            while (stack.firstChild) { stack.removeChild(stack.firstChild); } // Vider le contenu précédent
+        // --- Fonction setupFixedImageLayout ---
+        function setupFixedImageLayout() {
+            const container = document.getElementById('content-container');
+            if (!container) { console.error("Could not find #content-container entity."); return; }
 
-            contentData.forEach((item, index) => {
-                let panelHeight = PANEL_TEXT_HEIGHT;
-                let panelWidth = PANEL_BASE_WIDTH;
-                let entity = null; // Sera créé si placement réussi
+            // Vider le contenu précédent
+            while (container.firstChild) { container.removeChild(container.firstChild); }
 
-                // Déterminer dimensions réelles du panneau
-                if (item.type === 'title') { panelHeight *= 0.7; }
-                else if (item.type === 'image' && item.originalWidth && item.originalHeight) {
-                    const imgElement = document.getElementById(item.srcId);
-                     // Vérifier que l'asset image existe avant de calculer l'aspect
-                    if (imgElement) {
-                        const aspect = item.originalWidth / item.originalHeight;
-                        panelHeight = panelWidth / aspect;
-                    } else {
-                        console.warn(`Asset image non trouvé pour ${item.srcId}, item ignoré.`);
-                        return; // Ne pas essayer de placer cet item si l'asset manque
-                    }
-                } else if (item.type === 'image') {
-                     console.warn(`Dimensions manquantes pour ${item.srcId}, item ignoré.`);
-                     return; // Ignorer si les dimensions pour le calcul d'aspect manquent
-                }
+            // Filtrer les images et séparer le logo
+            const imageData = contentData.filter(item => item.type === 'image' && item.srcId); // S'assurer que srcId existe
+            const logoData = imageData.find(item => item.srcId === 'logoImg');
+            const otherImagesData = imageData.filter(item => item.srcId !== 'logoImg');
 
-                let placed = false;
-                for (let attempt = 0; attempt < MAX_PLACEMENT_ATTEMPTS; attempt++) {
-                    // 1. Générer une position aléatoire
-                    const randomPos = {
-                        x: (Math.random() - 0.5) * AREA_WIDTH,
-                        y: (Math.random() - 0.5) * AREA_HEIGHT,
-                        z: Math.random() * AREA_DEPTH_OFFSET * -1 // Profondeur négative
-                    };
+            if (!logoData) {
+                console.error("Logo data not found in contentData!");
+                return; // Arrêter si le logo manque
+            }
 
-                    // 2. Calculer la boîte englobante pour cette position
-                    const currentBounds = calculateAABB(randomPos, panelWidth, panelHeight, PANEL_EFFECTIVE_DEPTH);
+            // 1. Placer le logo au centre
+            const logoPosition = { x: 0, y: 0, z: DEPTH_VARIATION / 2 }; // Logo légèrement en avant
+            createImagePanel(logoData, logoPosition);
 
-                    // 3. Vérifier la collision avec les panneaux déjà placés
-                    let collision = false;
-                    for (const existingBounds of placedPanelBounds) {
-                        if (checkOverlap(currentBounds, existingBounds)) {
-                            collision = true;
-                            break; // Inutile de vérifier les autres si collision trouvée
-                        }
-                    }
+            // 2. Placer les autres images
+            const numOtherImages = otherImagesData.length;
+            const numLeft = Math.ceil(numOtherImages / 2);
+            // const numRight = numOtherImages - numLeft; // Pas nécessaire si on itère jusqu'à la fin
 
-                    // 4. Si pas de collision, placer le panneau
-                    if (!collision) {
-                        entity = document.createElement('a-entity');
-                        entity.setAttribute('animation__scaleup', `property: scale; to: 1.1 1.1 1.1; startEvents: mouseenter; dur: 200; easing: easeOutQuad;`);
-                        entity.setAttribute('animation__scaledown', `property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200; easing: easeInQuad;`);
-                        entity.setAttribute('data-interactive', '');
+            let currentX;
+            let zOffset;
 
-                        // Ajouter fond et texte/image (logique similaire à avant)
-                        if (item.type === 'text' || item.type === 'header' || item.type === 'cta' || item.type === 'title') {
-                            let textWidthAttr = TEXT_BASE_WIDTH;
-                            const bgPlane = document.createElement('a-plane'); bgPlane.setAttribute('width', panelWidth); bgPlane.setAttribute('height', panelHeight); bgPlane.setAttribute('material', `color: ${PANEL_COLOR}; opacity: ${PANEL_OPACITY}; shader: flat;`); bgPlane.setAttribute('position', `0 0 ${BG_Z_OFFSET}`); entity.appendChild(bgPlane);
-                            const textEntity = document.createElement('a-text'); textEntity.setAttribute('value', item.text); textEntity.setAttribute('color', '#FFFFFF'); textEntity.setAttribute('align', 'center'); textEntity.setAttribute('baseline', 'center'); textEntity.setAttribute('wrap-count', Math.floor(textWidthAttr * 20)); textEntity.setAttribute('width', textWidthAttr); textEntity.setAttribute('position', `0 0 ${TEXT_Z_OFFSET}`); entity.appendChild(textEntity);
-                        } else if (item.type === 'image' && item.srcId) {
-                             // Recalcul des dimensions ici au cas où elles ont changé
-                            const imgElementCheck = document.getElementById(item.srcId);
-                            if(imgElementCheck && item.originalWidth && item.originalHeight){
-                                const aspect = item.originalWidth / item.originalHeight; panelWidth = PANEL_BASE_WIDTH; panelHeight = panelWidth / aspect;
-                                const imgBgPlane = document.createElement('a-plane'); imgBgPlane.setAttribute('width', panelWidth * 1.05); imgBgPlane.setAttribute('height', panelHeight * 1.05); imgBgPlane.setAttribute('material', `color: ${PANEL_COLOR}; opacity: ${PANEL_OPACITY}; shader: flat;`); imgBgPlane.setAttribute('position', `0 0 ${BG_Z_OFFSET - 0.005}`); entity.appendChild(imgBgPlane);
-                                const imgPlane = document.createElement('a-plane'); imgPlane.setAttribute('width', panelWidth); imgPlane.setAttribute('height', panelHeight); imgPlane.setAttribute('material', `src: #${item.srcId}; shader: flat; transparent: true;`); imgPlane.setAttribute('position', `0 0 ${TEXT_Z_OFFSET}`); entity.appendChild(imgPlane);
-                            }
-                        }
+            // Images à gauche
+            for (let i = 0; i < numLeft; i++) {
+                 currentX = -(i + 1) * (PANEL_BASE_WIDTH + HORIZONTAL_SPACING);
+                 // Alterner Z : 0, -DEPTH_VARIATION, 0, ...
+                 zOffset = (i % 2 === 0) ? 0 : -DEPTH_VARIATION;
+                 const position = { x: currentX, y: 0, z: zOffset };
+                 if (otherImagesData[i]) { // Vérifier que l'index existe
+                    createImagePanel(otherImagesData[i], position);
+                 }
+            }
 
-                        // Définir la position trouvée et ajouter à la scène
-                        entity.setAttribute('position', `${randomPos.x} ${randomPos.y} ${randomPos.z}`);
-                        stack.appendChild(entity);
-                        placedPanelBounds.push(currentBounds); // Enregistrer la boîte pour les prochaines vérifications
-                        placed = true;
-                        console.log(`Placed panel ${index} at attempt ${attempt + 1}`);
-                        break; // Sortir de la boucle des tentatives
-                    }
-                } // Fin de la boucle des tentatives
+            // Images à droite
+            for (let i = 0; i < numOtherImages - numLeft; i++) {
+                 currentX = (i + 1) * (PANEL_BASE_WIDTH + HORIZONTAL_SPACING);
+                 // Alterner Z : -DEPTH_VARIATION, 0, -DEPTH_VARIATION, ... (inverse de la gauche)
+                 zOffset = (i % 2 === 0) ? -DEPTH_VARIATION : 0;
+                 const position = { x: currentX, y: 0, z: zOffset };
+                 // L'index dans otherImagesData est numLeft + i
+                 if (otherImagesData[numLeft + i]) { // Vérifier que l'index existe
+                    createImagePanel(otherImagesData[numLeft + i], position);
+                 }
+            }
 
-                if (!placed) {
-                    console.warn(`Could not place panel ${index} for item type "${item.type}" after ${MAX_PLACEMENT_ATTEMPTS} attempts.`);
-                }
-            });
-            console.log("Non-overlapping layout generation complete.");
+            console.log("Fixed image layout generated.");
         }
 
         // --- Attendre chargement scène ---
         const sceneEl = document.querySelector('a-scene');
-        if (sceneEl.hasLoaded) { setupContentStack(); }
-        else { sceneEl.addEventListener('loaded', setupContentStack); }
+        if (sceneEl.hasLoaded) { setupFixedImageLayout(); }
+        else { sceneEl.addEventListener('loaded', setupFixedImageLayout); }
 
         // --- Cacher le loader manuellement ---
         sceneEl.addEventListener('loaded', () => {
@@ -209,7 +193,7 @@
             else { console.warn("Could not find loader element to hide."); }
         });
 
-        // --- PAS DE DRAG VERTICAL DANS CETTE VERSION ---
+        // --- PAS DE DRAG DANS CETTE VERSION ---
 
     </script>
 
