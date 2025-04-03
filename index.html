@@ -49,7 +49,7 @@
 
     <!-- --- Écran de chargement AR.js --- -->
     <div class="arjs-loader" id="arjs-loader-div">
-        <div>Loading AURALIS Experience</div>
+        <div>Loading AURALIS Experiencepp</div>
     </div>
 
     <!-- --- NOUVEAU : Bouton pour contrôler le son --- -->
@@ -186,6 +186,33 @@
                     createImagePanel(item, position);
                 } else if (item.type === 'image' && item.srcId) {
                     console.warn(`Position not defined in imagePositions for ${item.srcId}. Panel not created.`);
+
+                                    // --- DEBUT AJOUT : Création et contrôle du texte au survol ---
+                const hoverText = document.createElement('a-text');
+                hoverText.setAttribute('value', "bonjour ceci est un test");
+                hoverText.setAttribute('color', "#FFF"); // Couleur blanche
+                hoverText.setAttribute('align', "center");
+                hoverText.setAttribute('width', panelWidth * 1.2); // Ajuster si besoin pour la largeur
+                // Positionner légèrement devant l'image (ajuster le Z si besoin)
+                hoverText.setAttribute('position', `0 0 ${IMAGE_Z_OFFSET + 0.05}`);
+                hoverText.setAttribute('visible', 'false'); // Important: cacher au début
+                // Donner un ID pour le débogage si nécessaire
+                hoverText.setAttribute('id', 'logo-hover-text');
+                // Ajouter le texte comme enfant de l'entité panneau
+                entity.appendChild(hoverText);
+                console.log(`Added A-Frame text child to logo-panel.`);
+
+                // Ajouter les écouteurs pour afficher/cacher le texte
+                entity.addEventListener('mouseenter', () => {
+                    hoverText.setAttribute('visible', 'true');
+                    console.log('Logo mouseenter: text visible');
+                });
+                entity.addEventListener('mouseleave', () => {
+                    hoverText.setAttribute('visible', 'false');
+                    console.log('Logo mouseleave: text hidden');
+                });
+                console.log(`Added mouseenter/mouseleave listeners for text visibility.`);
+                // --- FIN AJOUT ---
                 }
             });
             console.log("Manual image layout generated.");
