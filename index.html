@@ -68,7 +68,26 @@
         const TEXT_Z_OFFSET = 0.015; // Position Z du texte devant son fond
 
         // --- Données du contenu (inchangé) ---
-         const contentData = [ { type: 'title', text: "AURALIS" }, { type: 'image', srcId: 'logoImg', originalWidth: 2, originalHeight: 2 }, { type: 'text', text: "Step Into Sound and Light:\nA Journey Beyond Music." }, { type: 'text', text: "Imagine a space where sound moves like liquid...\nWelcome to AURALIS!" }, { type: 'header', text: "The Architects" }, { type: 'text', text: "Wang Meng & Yu Miao dissolve boundaries..." }, { type: 'image', srcId: 'wangMengImg', originalWidth: 1, originalHeight: 1.2 }, { type: 'text', text: "• Wang Meng: Visionary audio-visual artist..." }, { type: 'image', srcId: 'yuMiaoImg', originalWidth: 1.5, originalHeight: 1 }, { type: 'text', text: "• Yu Miao: Guzheng virtuoso pushing limits..." }, { type: 'header', text: "Sound & Light" }, { type: 'image', srcId: 'stageWideImg', originalWidth: 2, originalHeight: 1.1 }, { type: 'text', text: "Dazzling visuals extend the sonic experience..." }, { type: 'image', srcId: 'djBackImg', originalWidth: 1.8, originalHeight: 1 }, { type: 'text', text: "Manels Favre shapes 3D sound with SPAT..." }, { type: 'header', text: "Immersive Music" }, { type: 'image', srcId: 'stageDuoBlueImg', originalWidth: 1.8, originalHeight: 1.1 }, { type: 'text', text: "Feel the music flow through you..." }, { type: 'image', srcId: 'stageDuoDarkImg', originalWidth: 1.8, originalHeight: 1.1 }, { type: 'text', text: "A journey into sound, space, and emotion." }, { type: 'cta', text: "Step inside.\nLet yourself be carried away.\n\nComing soon!" } ];
+         const contentData = [ { type: 'title', text: "AURALIS" }, 
+                              { type: 'image', srcId: 'logoImg', originalWidth: 2, originalHeight: 2 }, 
+                              { type: 'text', text: "Step Into Sound and Light:\nA Journey Beyond Music." }, 
+                              { type: 'text', text: "Imagine a space where sound moves like liquid...\nWelcome to AURALIS!" }, 
+                              { type: 'header', text: "The Architects" }, { type: 'text', text: "Wang Meng & Yu Miao dissolve boundaries..." }, 
+                              { type: 'image', srcId: 'wangMengImg', originalWidth: 1, originalHeight: 1.2 }, 
+                              { type: 'text', text: "• Wang Meng: Visionary audio-visual artist..." }, 
+                              { type: 'image', srcId: 'yuMiaoImg', originalWidth: 1.5, originalHeight: 1 }, 
+                              { type: 'text', text: "• Yu Miao: Guzheng virtuoso pushing limits..." }, 
+                              { type: 'header', text: "Sound & Light" }, 
+                              { type: 'image', srcId: 'stageWideImg', originalWidth: 2, originalHeight: 1.1 }, 
+                              { type: 'text', text: "Dazzling visuals extend the sonic experience..." }, 
+                              { type: 'image', srcId: 'djBackImg', originalWidth: 1.8, originalHeight: 1 }, 
+                              { type: 'text', text: "Manels Favre shapes 3D sound with SPAT..." }, 
+                              { type: 'header', text: "Immersive Music" }, 
+                              { type: 'image', srcId: 'stageDuoBlueImg', originalWidth: 1.8, originalHeight: 1.1 }, 
+                              { type: 'text', text: "Feel the music flow through you..." }, 
+                              { type: 'image', srcId: 'stageDuoDarkImg', originalWidth: 1.8, originalHeight: 1.1 }, 
+                              { type: 'text', text: "A journey into sound, space, and emotion." }, 
+                              { type: 'cta', text: "Step inside.\nLet yourself be carried away.\n\nComing soon!" } ];
 
         // --- Fonction setupContentStack (corrigée) ---
         function setupContentStack() {
@@ -155,6 +174,63 @@
                 setTimeout(() => { loader.style.display = 'none'; }, 500);
             } else { console.warn("Could not find loader element to hide."); }
         });
+        // --- NOUVEAU: Logique pour le Drag Vertical ---
+        // Attend que la scène soit chargée pour attacher les écouteurs au canvas
+        sceneEl.addEventListener('loaded', () => {
+            const contentStackVertical = document.getElementById('content-stack');
+            const arSceneCanvas = sceneEl.canvas; // Obtenir le canvas une fois la scène chargée
+
+            if (!arSceneCanvas || !contentStackVertical) {
+                 console.error("Cannot setup vertical drag: Scene canvas or content-stack not found after scene load.");
+                 return;
+            }
+
+            let isDraggingY = false;
+            let startY = 0;
+            let initialEntityY = 0;
+            const dragFactorY = -0.008; // Sensibilité (ajustez si besoin)
+
+            // --- Touch Start ---
+            arSceneCanvas.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 1) {
+                    isDraggingY = true;
+                    startY = e.touches[0].clientY;
+                    // Lire la position Y actuelle au moment du toucher
+                    initialEntityY = contentStackVertical.object3D.position.y;
+                    console.log("Touch Start Y:", startY, "Initial Entity Y:", initialEntityY);
+                }
+            }, { passive: true }); // passive: true ici car on n'appelle pas preventDefault
+
+            // --- Touch Move ---
+            arSceneCanvas.addEventListener('touchmove', (e) => {
+                if (!isDraggingY || e.touches.length !== 1) return;
+
+                // preventDefault est souvent nécessaire pour le drag précis sur mobile
+                e.preventDefault();
+
+                const currentY = e.touches[0].clientY;
+                const deltaY = currentY - startY;
+                const newEntityY = initialEntityY + deltaY * dragFactorY;
+
+                // Mettre à jour la position via setAttribute
+                let currentPos = contentStackVertical.getAttribute('position');
+                contentStackVertical.setAttribute('position', { x: currentPos.x, y: newEntityY, z: currentPos.z });
+
+            }, { passive: false }); // Nécessite passive: false pour preventDefault
+
+            // --- Touch End/Cancel ---
+            const touchEndHandler = (e) => {
+                if (isDraggingY) {
+                    console.log("Touch End/Cancel Y");
+                    isDraggingY = false;
+                }
+            };
+            arSceneCanvas.addEventListener('touchend', touchEndHandler);
+            arSceneCanvas.addEventListener('touchcancel', touchEndHandler);
+
+            console.log("Vertical drag listeners added to scene canvas.");
+        });
+
 
     </script>
 
