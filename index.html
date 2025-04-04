@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Simple AR Click Test with Sound Toggle and Multiple Jellyfish</title> <!-- Titre mis à jour -->
+    <title>Simple AR Click Test with Sound Toggle</title> <!-- Titre mis à jour -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta name="description" content="A-Frame + AR.js with clickable images, sound toggle, and multiple jellyfish created via JS."> <!-- Description mise à jour -->
+    <meta name="description" content="A-Frame + AR.js example with clickable images and a sound toggle button."> <!-- Description mise à jour -->
 
     <!-- A-Frame Core -->
     <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
@@ -15,19 +15,39 @@
         /* Style pour le corps et le message pop-up */
         body { margin: 0; overflow: hidden; font-family: sans-serif; }
         #message-popup {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            z-index: 10; background-color: rgba(0, 0, 0, 0.7); color: white;
-            padding: 15px 25px; border-radius: 5px; text-align: center;
-            font-size: 1.2em; display: none; cursor: pointer;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10; /* Au-dessus de la scène et du bouton son */
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 1.2em;
+            display: none; /* Caché par défaut */
+            cursor: pointer; /* Indique qu'il est cliquable pour fermer */
         }
         /* NOUVEAU: Style pour le bouton Son */
         #sound-toggle-button {
-            position: absolute; bottom: 20px; left: 20px; z-index: 9;
-            padding: 10px 15px; font-size: 1em; font-family: sans-serif; color: #333;
-            background-color: rgba(255, 255, 255, 0.8); border: 1px solid #ccc;
-            border-radius: 5px; cursor: pointer; display: none;
+            position: absolute;
+            bottom: 20px; /* Position en bas */
+            left: 20px;   /* Position à gauche */
+            z-index: 9;   /* Légèrement sous le popup mais au-dessus de la scène */
+            padding: 10px 15px;
+            font-size: 1em;
+            font-family: sans-serif;
+            color: #333;
+            background-color: rgba(255, 255, 255, 0.8);
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            cursor: pointer;
+            display: none; /* Caché par défaut, affiché via JS */
         }
-        #sound-toggle-button:hover { background-color: rgba(255, 255, 255, 1); }
+        #sound-toggle-button:hover {
+            background-color: rgba(255, 255, 255, 1);
+        }
     </style>
 </head>
 
@@ -41,31 +61,32 @@
 
     <!-- Scène A-Frame AR -->
     <a-scene
-        id="ar-scene"  <!-- ID Important pour JS -->
+        id="ar-scene"
         embedded
         arjs='sourceType: webcam; trackingMethod: best; debugUIEnabled: false;'
         renderer='logarithmicDepthBuffer: true;'
         vr-mode-ui='enabled: false'>
 
-        <!-- Assets : Précharger les images, le son ET le modèle 3D -->
-        <a-assets timeout="60000"> <!-- Augmentation du timeout si le modèle est lourd -->
-             <!-- Images -->
+        <!-- Assets : Précharger les images ET le son -->
+        <a-assets timeout="30000">
+             <!-- Assure-toi que les chemins vers tes images sont corrects -->
              <img id="logoAsset" src="images/logo.jpg" crossOrigin="anonymous">
              <img id="wangMengAsset" src="images/wang_meng.jpg" crossOrigin="anonymous">
-             <!-- Audio -->
+             <!-- Assure-toi que le chemin vers ton audio est correct -->
              <audio id="logoAudio" src="audio/auralis.mp3" preload="auto" crossOrigin="anonymous"></audio>
-             <!-- Modèle 3D (UNE SEULE FOIS) -->
-             <a-asset-item id="jellyfishModel" src="models/meduse.glb" crossOrigin="anonymous"></a-asset-item>
+
+            <a-asset-item id="jellyfishModel" src="models/meduse.glb" crossOrigin="anonymous"></a-asset-item>
         </a-assets>
 
         <!-- L'image cliquable en RA (logo) AVEC SON (sans autoplay) -->
         <a-image
             id="clickable-logo"
             src="#logoAsset"
-            position="0 1.5 -3"
-            width="1" height="1"
+            position="0 1.5 -3"  /* Centre */
+            width="1"
+            height="1"           /* Ajuste si besoin */
             data-interactive
-            sound="src: #logoAudio; loop: true; volume: 0.8; positional: true"
+            sound="src: #logoAudio; loop: true; volume: 0.8; positional: true" <!-- AUTOPLAY SUPPRIMÉ -->
             >
         </a-image>
 
@@ -73,128 +94,159 @@
         <a-image
             id="clickable-wangmeng"
             src="#wangMengAsset"
-            position="1.5 1.5 -3"
-            width="1" height="1"
+            position="1.5 1.5 -3" /* Droite */
+            width="1"
+            height="1"           /* Ajuste si besoin */
             data-interactive
             >
         </a-image>
 
-        <!-- Les méduses seront ajoutées ici par JavaScript -->
+        
 
         <!-- Caméra avec raycaster pour détecter les clics -->
         <a-camera
             cursor="rayOrigin: mouse; fuse: false;"
-            raycaster="objects: [data-interactive];"
+            raycaster="objects: [data-interactive];" /* Ne tester que les objets avec data-interactive */
             >
         </a-camera>
 
     </a-scene>
 
-    <!-- Script pour gérer le clic, le son ET la création des méduses -->
+    <!-- Script pour gérer le clic ET le son -->
     <script>
         // Fonction pour activer/désactiver le son du logo
         function toggleLogoSound() {
-            const logoElement = document.getElementById('clickable-logo');
+            const logoElement = document.getElementById('clickable-logo'); // L'élément a-image
             const soundButton = document.getElementById('sound-toggle-button');
-            if (!logoElement || !soundButton) { console.error("Logo or sound button not found for toggle."); return; }
+
+            if (!logoElement || !soundButton) {
+                console.error("Logo element or sound button not found.");
+                return;
+            }
+            // Accéder au composant son attaché à l'élément
             const soundComponent = logoElement.components.sound;
-            if (!soundComponent) { console.error("Sound component not found on logo."); return; }
+            if (!soundComponent) {
+                 console.error("Sound component not found on logo element.");
+                 return;
+            }
+
+            // Gérer le contexte audio pour mobile (important au premier clic)
             const sceneEl = document.querySelector('a-scene');
             const audioContext = sceneEl?.audioListener?.context;
             if (audioContext && audioContext.state === 'suspended') {
+                console.log("AudioContext suspended, resuming...");
                 audioContext.resume().catch(e => console.error("Error resuming audio context", e));
             }
+
+            // Basculer Play/Pause
             if (soundComponent.isPlaying) {
-                soundComponent.pauseSound(); soundButton.textContent = "Play Sound";
+                console.log("Pausing logo sound.");
+                soundComponent.pauseSound();
+                soundButton.textContent = "Play Sound";
             } else {
-                soundComponent.playSound(); soundButton.textContent = "Pause Sound";
+                console.log("Playing logo sound.");
+                soundComponent.playSound();
+                soundButton.textContent = "Pause Sound";
             }
         }
 
-        // NOUVEAU : Fonction pour créer plusieurs instances de méduses
+        // Attendre que la scène soit chargée pour être sûr que les éléments existent
+        document.addEventListener('DOMContentLoaded', () => {
+            const sceneEl = document.querySelector('a-scene');
+
+            sceneEl.addEventListener('loaded', () => {
+                console.log("A-Frame scene loaded.");
+
+                // Récupérer tous les éléments nécessaires
+                const clickableLogo = document.getElementById('clickable-logo');
+                const clickableWangMeng = document.getElementById('clickable-wangmeng');
+                const messagePopup = document.getElementById('message-popup');
+                const soundButton = document.getElementById('sound-toggle-button'); // Aussi besoin ici pour la vérification
+
+                // Vérification de l'existence des éléments pour les clics image/popup
+                if (clickableLogo && clickableWangMeng && messagePopup) {
+                    console.log("Logo, WangMeng, and popup elements found for click listeners.");
+
+                    // Écouteur pour le clic sur l'image logo -> bonjour
+                    clickableLogo.addEventListener('click', () => {
+                        console.log("Click detected on the logo image!");
+                        messagePopup.textContent = "bonjour";
+                        messagePopup.style.display = 'block';
+                    });
+
+                    // Écouteur pour le clic sur l'image wangmeng -> bye
+                    clickableWangMeng.addEventListener('click', () => {
+                        console.log("Click detected on the Wang Meng image!");
+                        messagePopup.textContent = "bye";
+                        messagePopup.style.display = 'block';
+                    });
+
+                    // Écouteur pour le clic sur la div pop-up pour la cacher
+                    messagePopup.addEventListener('click', () => {
+                        console.log("Popup clicked, hiding.");
+                        messagePopup.style.display = 'none';
+                    });
+
+                     console.log("Click listeners added for both images and popup.");
+
+                } else {
+                    // Log d'erreur détaillé
+                    if (!clickableLogo) console.error("Clickable logo element (#clickable-logo) not found!");
+                    if (!clickableWangMeng) console.error("Clickable Wang Meng element (#clickable-wangmeng) not found!");
+                    if (!messagePopup) console.error("Message popup element (#message-popup) not found!");
+                }
+
+                // Activer le bouton Son (vérification séparée car il dépend juste du logo)
+                const logoElementExists = document.getElementById('clickable-logo');
+                if (soundButton && logoElementExists) {
+                    console.log("Making sound toggle button visible and attaching listener.");
+                    soundButton.style.display = 'block'; // Rendre le bouton visible
+                    soundButton.addEventListener('click', toggleLogoSound); // Attacher la fonction de contrôle
+                } else {
+                    if (!soundButton) console.error("Sound toggle button element not found!");
+                    if (!logoElementExists) console.error("Logo element not found, cannot activate sound button!");
+
+                    // NOUVEAU : Créer plusieurs méduses après le chargement de la scène
+        document.addEventListener('DOMContentLoaded', () => {
+            const sceneEl = document.querySelector('#ar-scene'); // Utilise l'ID
+
+            if (sceneEl.hasLoaded) {
+                createJellyfishInstances();
+            } else {
+                sceneEl.addEventListener('loaded', createJellyfishInstances);
+            }
+        });
+
         function createJellyfishInstances() {
             const sceneEl = document.querySelector('#ar-scene');
-            if (!sceneEl) { console.error("Scene element #ar-scene not found!"); return; }
-
             const jellyfishPositions = [
-                { x: -1,  y: 2,   z: -2.5 },
-                { x: 1.8, y: 1.8, z: -3.8 },
-                { x: -1.5,y: 1.5, z: -4.2 },
-                { x: 0.8, y: 2.2, z: -3.0 } // Ajout d'une 4ème pour l'exemple
+                { x: -1, y: 2,   z: -2 },
+                { x: 2,  y: 1.8, z: -3.5 },
+                { x: -2, y: 1.5, z: -4 },
+                // Ajoute autant de positions que tu veux
+                { x: 0.5, y: 2.2, z: -2.8 }
             ];
-            const baseScale = 0.3;
-            const baseAnimDurPos = 12000;
-            const baseAnimDurRot = 20000;
 
             jellyfishPositions.forEach((pos, index) => {
                 const jellyfish = document.createElement('a-gltf-model');
                 jellyfish.setAttribute('id', `jellyfish-${index + 1}`);
                 jellyfish.setAttribute('src', '#jellyfishModel');
                 jellyfish.setAttribute('position', `${pos.x} ${pos.y} ${pos.z}`);
-                const scaleVar = baseScale * (0.9 + Math.random() * 0.2);
-                jellyfish.setAttribute('scale', `${scaleVar} ${scaleVar} ${scaleVar}`);
-                jellyfish.setAttribute('rotation', `0 ${Math.random() * 360} 0`);
+                jellyfish.setAttribute('scale', '0.3 0.3 0.3'); // Échelle commune
+                jellyfish.setAttribute('rotation', `0 ${Math.random() * 360} 0`); // Rotation Y aléatoire
                 jellyfish.setAttribute('animation-mixer', 'clip: *; loop: repeat');
+
+                // Animations (tu peux les rendre variables aussi)
                 let fromPos = `${pos.x} ${pos.y} ${pos.z}`;
-                let toX = pos.x + (Math.random() - 0.5) * 1.5;
-                let toY = pos.y + (Math.random() * 0.6 + 0.3);
-                let toZ = pos.z + (Math.random() - 0.5) * 1.5;
-                let toPos = `${toX} ${toY} ${toZ}`;
-                let durPos = baseAnimDurPos * (0.8 + Math.random() * 0.4);
-                jellyfish.setAttribute(`animation__pos`, `property: position; from: ${fromPos}; to: ${toPos}; dir: alternate; dur: ${durPos}; easing: easeInOutSine; loop: true;`);
-                let rotY = Math.random() > 0.5 ? 360 : -360;
-                let durRot = baseAnimDurRot * (0.8 + Math.random() * 0.4);
-                jellyfish.setAttribute(`animation__rot`, `property: rotation; to: 0 ${rotY} 0; dur: ${durRot}; easing: linear; loop: true;`);
-                sceneEl.appendChild(jellyfish);
-                console.log(`Created jellyfish-${index + 1} at ${pos.x}, ${pos.y}, ${pos.z}`);
+                let toPos = `${pos.x + (Math.random() - 0.5)} ${pos.y + (Math.random() * 0.5 + 0.5)} ${pos.z + (Math.random() - 0.5)}`;
+                jellyfish.setAttribute(`animation__pos`, `property: position; from: ${fromPos}; to: ${toPos}; dir: alternate; dur: ${10000 + Math.random() * 5000}; easing: easeInOutSine; loop: true;`);
+                jellyfish.setAttribute(`animation__rot`, `property: rotation; to: 0 ${Math.random() > 0.5 ? 360 : -360} 0; dur: ${15000 + Math.random() * 10000}; easing: linear; loop: true;`);
+
+                sceneEl.appendChild(jellyfish); // Ajoute la méduse à la scène
+                console.log(`Created jellyfish-${index + 1}`);
             });
-        }
-
-        // Attendre que la scène soit chargée pour initialiser
-        document.addEventListener('DOMContentLoaded', () => {
-            const sceneEl = document.querySelector('a-scene');
-
-            sceneEl.addEventListener('loaded', () => {
-                console.log("A-Frame scene loaded. Initializing elements...");
-
-                // Récupérer les éléments pour les clics
-                const clickableLogo = document.getElementById('clickable-logo');
-                const clickableWangMeng = document.getElementById('clickable-wangmeng');
-                const messagePopup = document.getElementById('message-popup');
-
-                // Ajouter les écouteurs de clic pour les images et le popup
-                if (clickableLogo && clickableWangMeng && messagePopup) {
-                    console.log("Adding click listeners for images and popup.");
-                    clickableLogo.addEventListener('click', () => {
-                        messagePopup.textContent = "bonjour"; messagePopup.style.display = 'block';
-                    });
-                    clickableWangMeng.addEventListener('click', () => {
-                        messagePopup.textContent = "bye"; messagePopup.style.display = 'block';
-                    });
-                    messagePopup.addEventListener('click', () => { messagePopup.style.display = 'none'; });
-                } else {
-                    if (!clickableLogo) console.error("Clickable logo not found!");
-                    if (!clickableWangMeng) console.error("Clickable Wang Meng not found!");
-                    if (!messagePopup) console.error("Message popup not found!");
                 }
 
-                // Activer le bouton Son
-                const soundButton = document.getElementById('sound-toggle-button');
-                const logoElementExists = document.getElementById('clickable-logo');
-                if (soundButton && logoElementExists) {
-                    console.log("Activating sound toggle button.");
-                    soundButton.style.display = 'block';
-                    soundButton.addEventListener('click', toggleLogoSound);
-                } else {
-                    if (!soundButton) console.error("Sound toggle button not found!");
-                    if (!logoElementExists) console.error("Logo element not found for sound button activation!");
-                }
-
-                // Créer les instances de méduses
-                console.log("Creating jellyfish instances...");
-                createJellyfishInstances();
-
-                console.log("Initialization complete.");
             }); // Fin de sceneEl.addEventListener('loaded')
         }); // Fin de document.addEventListener('DOMContentLoaded')
     </script>
