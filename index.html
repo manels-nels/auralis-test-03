@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Simple AR Click Test</title>
+    <title>Simple AR Click Test with Sound Toggle</title> <!-- Titre mis à jour -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta name="description" content="Minimal A-Frame + AR.js example with a clickable image.">
+    <meta name="description" content="A-Frame + AR.js example with clickable images and a sound toggle button."> <!-- Description mise à jour -->
 
     <!-- A-Frame Core -->
     <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
@@ -19,7 +19,7 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            z-index: 10; /* Au-dessus de la scène AR */
+            z-index: 10; /* Au-dessus de la scène et du bouton son */
             background-color: rgba(0, 0, 0, 0.7);
             color: white;
             padding: 15px 25px;
@@ -29,8 +29,7 @@
             display: none; /* Caché par défaut */
             cursor: pointer; /* Indique qu'il est cliquable pour fermer */
         }
-
-                /* NOUVEAU: Style pour le bouton Son */
+        /* NOUVEAU: Style pour le bouton Son */
         #sound-toggle-button {
             position: absolute;
             bottom: 20px; /* Position en bas */
@@ -56,9 +55,8 @@
 
     <!-- Div HTML pour afficher le message (initialement cachée) -->
     <div id="message-popup"></div>
-    <div id="message-popup-w"></div>
 
-        <!-- NOUVEAU: Bouton pour contrôler le son du logo -->
+    <!-- NOUVEAU: Bouton pour contrôler le son du logo -->
     <button id="sound-toggle-button">Play Sound</button>
 
     <!-- Scène A-Frame AR -->
@@ -69,62 +67,50 @@
         renderer='logarithmicDepthBuffer: true;'
         vr-mode-ui='enabled: false'>
 
-        <!-- Assets : Précharger l'image -->
+        <!-- Assets : Précharger les images ET le son -->
         <a-assets timeout="30000">
-             <!-- Assure-toi que le chemin vers ton image est correct -->
+             <!-- Assure-toi que les chemins vers tes images sont corrects -->
              <img id="logoAsset" src="images/logo.jpg" crossOrigin="anonymous">
-            <img id="wangMengAsset" src="images/wang_meng.jpg" crossOrigin="anonymous">
-            <img id="yumiaoAsset" src="images/yu_miao.jpg" crossOrigin="anonymous">
-                         <!-- NOUVEAU: Asset audio pour le logo -->
-             <audio id="logoAudio" src="audio/auralis.mp3" preload="auto" crossOrigin="anonymous"></audio><!-- ---------------------------------- -->
+             <img id="wangMengAsset" src="images/wang_meng.jpg" crossOrigin="anonymous">
+             <!-- Assure-toi que le chemin vers ton audio est correct -->
+             <audio id="logoAudio" src="audio/auralis.mp3" preload="auto" crossOrigin="anonymous"></audio>
         </a-assets>
 
-        <!-- L'image cliquable en RA -->
+        <!-- L'image cliquable en RA (logo) AVEC SON (sans autoplay) -->
         <a-image
             id="clickable-logo"
             src="#logoAsset"
-            position="0 1.5 -3"  
-            width="1"            
-            height="1"           
+            position="0 1.5 -3"  /* Centre */
+            width="1"
+            height="1"           /* Ajuste si besoin */
             data-interactive
-            sound="src: #logoAudio; loop: true; volume: 0.8; positional: true"
+            sound="src: #logoAudio; loop: true; volume: 0.8; positional: true" <!-- AUTOPLAY SUPPRIMÉ -->
             >
         </a-image>
 
-                <!-- NOUVEAU : La deuxième image cliquable -------------------------------------------------------------------- -->
+        <!-- La deuxième image cliquable (wangmeng) SANS SON -->
         <a-image
-            id="clickable-wangmeng"          
-            src="#wangMengAsset"            
-            position="1.5 1.5 -3"         
-            width="1"                       
-            height="1.2"                      
-            data-interactive                
-            >
-        </a-image>
-
-        <a-image
-            id="clickable-yumiao"          
-            src="#yumiaoAsset"            
-            position="-1.5 1.5 -3"         
-            width="1.5"                       
-            height="1"                      
-            data-interactive                
+            id="clickable-wangmeng"
+            src="#wangMengAsset"
+            position="1.5 1.5 -3" /* Droite */
+            width="1"
+            height="1"           /* Ajuste si besoin */
+            data-interactive
             >
         </a-image>
 
         <!-- Caméra avec raycaster pour détecter les clics -->
         <a-camera
             cursor="rayOrigin: mouse; fuse: false;"
-            raycaster="objects: [data-interactive];" 
+            raycaster="objects: [data-interactive];" /* Ne tester que les objets avec data-interactive */
             >
         </a-camera>
 
     </a-scene>
 
-    <!-- Script pour gérer le clic -->
+    <!-- Script pour gérer le clic ET le son -->
     <script>
-
-                // NOUVEAU : Fonction pour activer/désactiver le son du logo
+        // Fonction pour activer/désactiver le son du logo
         function toggleLogoSound() {
             const logoElement = document.getElementById('clickable-logo'); // L'élément a-image
             const soundButton = document.getElementById('sound-toggle-button');
@@ -159,6 +145,7 @@
                 soundButton.textContent = "Pause Sound";
             }
         }
+
         // Attendre que la scène soit chargée pour être sûr que les éléments existent
         document.addEventListener('DOMContentLoaded', () => {
             const sceneEl = document.querySelector('a-scene');
@@ -166,51 +153,47 @@
             sceneEl.addEventListener('loaded', () => {
                 console.log("A-Frame scene loaded.");
 
-                const clickableImage = document.getElementById('clickable-logo');
-                const messagePopup = document.getElementById('message-popup');
+                // Récupérer tous les éléments nécessaires
+                const clickableLogo = document.getElementById('clickable-logo');
                 const clickableWangMeng = document.getElementById('clickable-wangmeng');
-                 const clickableYumiao = document.getElementById('clickable-yumiao');// Récupère la nouvelle image-----------------------
+                const messagePopup = document.getElementById('message-popup');
+                const soundButton = document.getElementById('sound-toggle-button'); // Aussi besoin ici pour la vérification
 
-                if (clickableImage && messagePopup && clickableWangMeng && clickableYumiao) { // Ajoute clickableWangMeng à la vérification---------------------- 
-                    console.log("Logo, WangMeng, and popup elements found.");
+                // Vérification de l'existence des éléments pour les clics image/popup
+                if (clickableLogo && clickableWangMeng && messagePopup) {
+                    console.log("Logo, WangMeng, and popup elements found for click listeners.");
 
-                    // Écouteur pour le clic sur l'image A-Frame
-                    clickableImage.addEventListener('click', () => {
+                    // Écouteur pour le clic sur l'image logo -> bonjour
+                    clickableLogo.addEventListener('click', () => {
                         console.log("Click detected on the logo image!");
-                        messagePopup.textContent = "bonjour"; // Met le texte dans la div
-                        messagePopup.style.display = 'block';   // Affiche la div
+                        messagePopup.textContent = "bonjour";
+                        messagePopup.style.display = 'block';
                     });
 
-                                // NOUVEAU : Écouteur pour le clic sur la deuxième image-------------------------------------------------------------
-            clickableWangMeng.addEventListener('click', () => {
-                console.log("Click detected on the Wang Meng image!");
-                messagePopup.textContent = "bye"; // Met le texte "bye"
-                messagePopup.style.display = 'block';   // Affiche la même div
-            });
-                    clickableYumiao.addEventListener('click', () => {
-                console.log("Click detected on the Yu Miao image!");
-                messagePopup.textContent = "plop"; // Met le texte "bye"
-                messagePopup.style.display = 'block';   // Affiche la même div
-            });
+                    // Écouteur pour le clic sur l'image wangmeng -> bye
+                    clickableWangMeng.addEventListener('click', () => {
+                        console.log("Click detected on the Wang Meng image!");
+                        messagePopup.textContent = "bye";
+                        messagePopup.style.display = 'block';
+                    });
 
                     // Écouteur pour le clic sur la div pop-up pour la cacher
                     messagePopup.addEventListener('click', () => {
                         console.log("Popup clicked, hiding.");
-                        messagePopup.style.display = 'none';    // Cache la div
+                        messagePopup.style.display = 'none';
                     });
 
                      console.log("Click listeners added for both images and popup.");
 
                 } else {
-                    if (!clickableImage) console.error("Clickable image element (#clickable-logo) not found!");
+                    // Log d'erreur détaillé
+                    if (!clickableLogo) console.error("Clickable logo element (#clickable-logo) not found!");
+                    if (!clickableWangMeng) console.error("Clickable Wang Meng element (#clickable-wangmeng) not found!");
                     if (!messagePopup) console.error("Message popup element (#message-popup) not found!");
-                    if (!clickableWangMeng) console.error("Clickable Wang Meng element (#clickable-wangmeng) not found!"); 
-                    if (!clickableYumiao) console.error("Clickable Yu Miao element (#clickable-yumiao) not found!");// Ajoute cette ligne-------
+                }
 
-                                    // --- DEBUT AJOUT : Activer le bouton Son ---
-                const soundButton = document.getElementById('sound-toggle-button');
-                const logoElementExists = document.getElementById('clickable-logo'); // Vérifier si le logo existe
-
+                // Activer le bouton Son (vérification séparée car il dépend juste du logo)
+                const logoElementExists = document.getElementById('clickable-logo');
                 if (soundButton && logoElementExists) {
                     console.log("Making sound toggle button visible and attaching listener.");
                     soundButton.style.display = 'block'; // Rendre le bouton visible
@@ -219,10 +202,9 @@
                     if (!soundButton) console.error("Sound toggle button element not found!");
                     if (!logoElementExists) console.error("Logo element not found, cannot activate sound button!");
                 }
-                // --- FIN AJOUT ---
-                
-            });
-        });
+
+            }); // Fin de sceneEl.addEventListener('loaded')
+        }); // Fin de document.addEventListener('DOMContentLoaded')
     </script>
 
 </body>
