@@ -212,6 +212,47 @@
                 } else {
                     if (!soundButton) console.error("Sound toggle button element not found!");
                     if (!logoElementExists) console.error("Logo element not found, cannot activate sound button!");
+
+
+                    // NOUVEAU : Créer plusieurs méduses après le chargement de la scène
+        document.addEventListener('DOMContentLoaded', () => {
+            const sceneEl = document.querySelector('#ar-scene'); // Utilise l'ID
+
+            if (sceneEl.hasLoaded) {
+                createJellyfishInstances();
+            } else {
+                sceneEl.addEventListener('loaded', createJellyfishInstances);
+            }
+        });
+
+        function createJellyfishInstances() {
+            const sceneEl = document.querySelector('#ar-scene');
+            const jellyfishPositions = [
+                { x: -1, y: 2,   z: -2 },
+                { x: 2,  y: 1.8, z: -3.5 },
+                { x: -2, y: 1.5, z: -4 },
+                // Ajoute autant de positions que tu veux
+                { x: 0.5, y: 2.2, z: -2.8 }
+            ];
+
+            jellyfishPositions.forEach((pos, index) => {
+                const jellyfish = document.createElement('a-gltf-model');
+                jellyfish.setAttribute('id', `jellyfish-${index + 1}`);
+                jellyfish.setAttribute('src', '#jellyfishModel');
+                jellyfish.setAttribute('position', `${pos.x} ${pos.y} ${pos.z}`);
+                jellyfish.setAttribute('scale', '0.3 0.3 0.3'); // Échelle commune
+                jellyfish.setAttribute('rotation', `0 ${Math.random() * 360} 0`); // Rotation Y aléatoire
+                jellyfish.setAttribute('animation-mixer', 'clip: *; loop: repeat');
+
+                // Animations (tu peux les rendre variables aussi)
+                let fromPos = `${pos.x} ${pos.y} ${pos.z}`;
+                let toPos = `${pos.x + (Math.random() - 0.5)} ${pos.y + (Math.random() * 0.5 + 0.5)} ${pos.z + (Math.random() - 0.5)}`;
+                jellyfish.setAttribute(`animation__pos`, `property: position; from: ${fromPos}; to: ${toPos}; dir: alternate; dur: ${10000 + Math.random() * 5000}; easing: easeInOutSine; loop: true;`);
+                jellyfish.setAttribute(`animation__rot`, `property: rotation; to: 0 ${Math.random() > 0.5 ? 360 : -360} 0; dur: ${15000 + Math.random() * 10000}; easing: linear; loop: true;`);
+
+                sceneEl.appendChild(jellyfish); // Ajoute la méduse à la scène
+                console.log(`Created jellyfish-${index + 1}`);
+            });
                 }
 
             }); // Fin de sceneEl.addEventListener('loaded')
