@@ -12,6 +12,26 @@
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.0/aframe/build/aframe-ar.min.js"></script>
 
     <style>
+
+/* xxxxxxxxxxxxxxx--- NOUVEAU : Style pour le bouton Son --- */
+        #sound-toggle-button {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            z-index: 1000; /* Au-dessus de la scène AR */
+            padding: 10px 15px;
+            font-size: 1em;
+            font-family: sans-serif;
+            color: #333;
+            background-color: rgba(255, 255, 255, 0.8); /* Blanc semi-transparent */
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            cursor: pointer;
+            display: none; /* Initialement caché par le style */
+        }
+        #sound-toggle-button:hover {
+             background-color: rgba(255, 255, 255, 1); /* Blanc opaque au survol */
+        
         /* Style pour le corps et le message pop-up */
         body { margin: 0; overflow: hidden; font-family: sans-serif; }
         #message-popup {
