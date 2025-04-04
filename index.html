@@ -110,6 +110,16 @@
                       animation-mixer="clip: *; loop: repeat">
         </a-gltf-model>
 
+
+        <!-- Méduse 3D Animée -->
+        <a-gltf-model id="jellyfish"
+                      src="#jellyfishModel"
+                      position="-1 2 -5" scale="0.2 0.2 0.2" rotation="0 0 0"
+                      animation__pos="property: position; from: 1 2 -4; to: -1 -1.2 -4; dir: alternate; dur: 18000; easing: easeInOutSine; loop: true;"
+                      animation__rot="property: rotation; to: 0 360 0; dur: 20000; easing: linear; loop: true;"
+                      animation-mixer="clip: *; loop: repeat">
+        </a-gltf-model>
+        
         <!-- Caméra avec raycaster pour détecter les clics -->
         <a-camera
             cursor="rayOrigin: mouse; fuse: false;"
