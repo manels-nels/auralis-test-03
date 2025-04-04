@@ -50,7 +50,7 @@
         <a-assets timeout="30000">
              <!-- Assure-toi que le chemin vers ton image est correct -->
              <img id="logoAsset" src="images/logo.jpg" crossOrigin="anonymous">
-            <img id="wangMengImg" src="images/wang_meng.jpg" crossOrigin="anonymous">
+            <img id="wangMengAsset" src="images/wang_meng.jpg" crossOrigin="anonymous"> <!-- ---------------------------------- -->
         </a-assets>
 
         <!-- L'image cliquable en RA -->
@@ -60,7 +60,18 @@
             position="0 1.5 -3"  
             width="1"            
             height="1"           
-            data-interactive     
+            data-interactive   
+            >
+        </a-image>
+
+                <!-- NOUVEAU : La deuxième image cliquable -------------------------------------------------------------------- -->
+        <a-image
+            id="clickable-wangmeng"          
+            src="#wangMengAsset"            
+            position="1.5 1.5 -3"         
+            width="1"                       
+            height="1"                      
+            data-interactive                
             >
         </a-image>
 
@@ -84,9 +95,10 @@
 
                 const clickableImage = document.getElementById('clickable-logo');
                 const messagePopup = document.getElementById('message-popup');
+                const clickableWangMeng = document.getElementById('clickable-wangmeng'); // Récupère la nouvelle image-----------------------
 
-                if (clickableImage && messagePopup) {
-                    console.log("Image and popup elements found.");
+                if (clickableImage && messagePopup && clickableWangMeng) { // Ajoute clickableWangMeng à la vérification---------------------- 
+                    console.log("Logo, WangMeng, and popup elements found.");
 
                     // Écouteur pour le clic sur l'image A-Frame
                     clickableImage.addEventListener('click', () => {
@@ -95,17 +107,25 @@
                         messagePopup.style.display = 'block';   // Affiche la div
                     });
 
+                                // NOUVEAU : Écouteur pour le clic sur la deuxième image-------------------------------------------------------------
+            clickableWangMeng.addEventListener('click', () => {
+                console.log("Click detected on the Wang Meng image!");
+                messagePopup.textContent = "bye"; // Met le texte "bye"
+                messagePopup.style.display = 'block';   // Affiche la même div
+            });
+
                     // Écouteur pour le clic sur la div pop-up pour la cacher
                     messagePopup.addEventListener('click', () => {
                         console.log("Popup clicked, hiding.");
                         messagePopup.style.display = 'none';    // Cache la div
                     });
 
-                     console.log("Click listeners added.");
+                     console.log("Click listeners added for both images and popup.");
 
                 } else {
                     if (!clickableImage) console.error("Clickable image element (#clickable-logo) not found!");
                     if (!messagePopup) console.error("Message popup element (#message-popup) not found!");
+                    if (!clickableWangMeng) console.error("Clickable Wang Meng element (#clickable-wangmeng) not found!"); // Ajoute cette ligne-------
                 }
             });
         });
