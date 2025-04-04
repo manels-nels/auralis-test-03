@@ -29,6 +29,26 @@
             display: none; /* Caché par défaut */
             cursor: pointer; /* Indique qu'il est cliquable pour fermer */
         }
+
+                /* NOUVEAU: Style pour le bouton Son */
+        #sound-toggle-button {
+            position: absolute;
+            bottom: 20px; /* Position en bas */
+            left: 20px;   /* Position à gauche */
+            z-index: 9;   /* Légèrement sous le popup mais au-dessus de la scène */
+            padding: 10px 15px;
+            font-size: 1em;
+            font-family: sans-serif;
+            color: #333;
+            background-color: rgba(255, 255, 255, 0.8);
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            cursor: pointer;
+            display: none; /* Caché par défaut, affiché via JS */
+        }
+        #sound-toggle-button:hover {
+            background-color: rgba(255, 255, 255, 1);
+        }
     </style>
 </head>
 
@@ -37,6 +57,9 @@
     <!-- Div HTML pour afficher le message (initialement cachée) -->
     <div id="message-popup"></div>
     <div id="message-popup-w"></div>
+
+        <!-- NOUVEAU: Bouton pour contrôler le son du logo -->
+    <button id="sound-toggle-button">Play Sound</button>
 
     <!-- Scène A-Frame AR -->
     <a-scene
@@ -51,7 +74,9 @@
              <!-- Assure-toi que le chemin vers ton image est correct -->
              <img id="logoAsset" src="images/logo.jpg" crossOrigin="anonymous">
             <img id="wangMengAsset" src="images/wang_meng.jpg" crossOrigin="anonymous">
-            <img id="yumiaoAsset" src="images/yu_miao.jpg" crossOrigin="anonymous"><!-- ---------------------------------- -->
+            <img id="yumiaoAsset" src="images/yu_miao.jpg" crossOrigin="anonymous">
+                         <!-- NOUVEAU: Asset audio pour le logo -->
+             <audio id="logoAudio" src="audio/auralis.mp3" preload="auto" crossOrigin="anonymous"></audio><!-- ---------------------------------- -->
         </a-assets>
 
         <!-- L'image cliquable en RA -->
@@ -61,7 +86,8 @@
             position="0 1.5 -3"  
             width="1"            
             height="1"           
-            data-interactive   
+            data-interactive
+            sound="src: #logoAudio; loop: true; volume: 0.8; positional: true"
             >
         </a-image>
 
@@ -97,6 +123,42 @@
 
     <!-- Script pour gérer le clic -->
     <script>
+
+                // NOUVEAU : Fonction pour activer/désactiver le son du logo
+        function toggleLogoSound() {
+            const logoElement = document.getElementById('clickable-logo'); // L'élément a-image
+            const soundButton = document.getElementById('sound-toggle-button');
+
+            if (!logoElement || !soundButton) {
+                console.error("Logo element or sound button not found.");
+                return;
+            }
+            // Accéder au composant son attaché à l'élément
+            const soundComponent = logoElement.components.sound;
+            if (!soundComponent) {
+                 console.error("Sound component not found on logo element.");
+                 return;
+            }
+
+            // Gérer le contexte audio pour mobile (important au premier clic)
+            const sceneEl = document.querySelector('a-scene');
+            const audioContext = sceneEl?.audioListener?.context;
+            if (audioContext && audioContext.state === 'suspended') {
+                console.log("AudioContext suspended, resuming...");
+                audioContext.resume().catch(e => console.error("Error resuming audio context", e));
+            }
+
+            // Basculer Play/Pause
+            if (soundComponent.isPlaying) {
+                console.log("Pausing logo sound.");
+                soundComponent.pauseSound();
+                soundButton.textContent = "Play Sound";
+            } else {
+                console.log("Playing logo sound.");
+                soundComponent.playSound();
+                soundButton.textContent = "Pause Sound";
+            }
+        }
         // Attendre que la scène soit chargée pour être sûr que les éléments existent
         document.addEventListener('DOMContentLoaded', () => {
             const sceneEl = document.querySelector('a-scene');
@@ -144,7 +206,21 @@
                     if (!messagePopup) console.error("Message popup element (#message-popup) not found!");
                     if (!clickableWangMeng) console.error("Clickable Wang Meng element (#clickable-wangmeng) not found!"); 
                     if (!clickableYumiao) console.error("Clickable Yu Miao element (#clickable-yumiao) not found!");// Ajoute cette ligne-------
+
+                                    // --- DEBUT AJOUT : Activer le bouton Son ---
+                const soundButton = document.getElementById('sound-toggle-button');
+                const logoElementExists = document.getElementById('clickable-logo'); // Vérifier si le logo existe
+
+                if (soundButton && logoElementExists) {
+                    console.log("Making sound toggle button visible and attaching listener.");
+                    soundButton.style.display = 'block'; // Rendre le bouton visible
+                    soundButton.addEventListener('click', toggleLogoSound); // Attacher la fonction de contrôle
+                } else {
+                    if (!soundButton) console.error("Sound toggle button element not found!");
+                    if (!logoElementExists) console.error("Logo element not found, cannot activate sound button!");
                 }
+                // --- FIN AJOUT ---
+                
             });
         });
     </script>
