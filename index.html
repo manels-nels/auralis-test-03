@@ -52,7 +52,11 @@
              <img id="logoAsset" src="images/logo.jpg" crossOrigin="anonymous">
             <img id="wangMengAsset" src="images/wang_meng.jpg" crossOrigin="anonymous">
             <img id="yumiaoAsset" src="images/yu_miao.jpg" crossOrigin="anonymous"><!-- ---------------------------------- -->
+             <!-- NOUVEAU: Asset audio pour le logo -->
+             <audio id="logoAudio" src="audio/auralis.mp3" preload="auto" crossOrigin="anonymous"></audio>
         </a-assets>
+
+        
 
         <!-- L'image cliquable en RA -->
         <a-image
@@ -61,7 +65,8 @@
             position="0 1.5 -3"  
             width="1"            
             height="1"           
-            data-interactive   
+            data-interactive 
+            sound="src: #logoAudio; autoplay: true; loop: true; volume: 0.8; positional: true"  
             >
         </a-image>
 
@@ -85,6 +90,8 @@
             data-interactive                
             >
         </a-image>
+
+                    
 
         <!-- Caméra avec raycaster pour détecter les clics -->
         <a-camera
