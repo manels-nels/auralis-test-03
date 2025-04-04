@@ -50,7 +50,8 @@
         <a-assets timeout="30000">
              <!-- Assure-toi que le chemin vers ton image est correct -->
              <img id="logoAsset" src="images/logo.jpg" crossOrigin="anonymous">
-            <img id="wangMengAsset" src="images/wang_meng.jpg" crossOrigin="anonymous"> <!-- ---------------------------------- -->
+            <img id="wangMengAsset" src="images/wang_meng.jpg" crossOrigin="anonymous">
+            <img id="yumiaoAsset" src="images/yu_miao.jpg" crossOrigin="anonymous"><!-- ---------------------------------- -->
         </a-assets>
 
         <!-- L'image cliquable en RA -->
@@ -75,6 +76,16 @@
             >
         </a-image>
 
+        <a-image
+            id="clickable-yumiao"          
+            src="#wangMengAsset"            
+            position="-1.5 1.5 -3"         
+            width="1.2"                       
+            height="1"                      
+            data-interactive                
+            >
+        </a-image>
+
         <!-- Caméra avec raycaster pour détecter les clics -->
         <a-camera
             cursor="rayOrigin: mouse; fuse: false;"
@@ -95,9 +106,10 @@
 
                 const clickableImage = document.getElementById('clickable-logo');
                 const messagePopup = document.getElementById('message-popup');
-                const clickableWangMeng = document.getElementById('clickable-wangmeng'); // Récupère la nouvelle image-----------------------
+                const clickableWangMeng = document.getElementById('clickable-wangmeng');
+                 const clickableYumiao = document.getElementById('clickable-yumiao');// Récupère la nouvelle image-----------------------
 
-                if (clickableImage && messagePopup && clickableWangMeng) { // Ajoute clickableWangMeng à la vérification---------------------- 
+                if (clickableImage && messagePopup && clickableWangMeng && clickableYumiao) { // Ajoute clickableWangMeng à la vérification---------------------- 
                     console.log("Logo, WangMeng, and popup elements found.");
 
                     // Écouteur pour le clic sur l'image A-Frame
@@ -113,6 +125,11 @@
                 messagePopup.textContent = "bye"; // Met le texte "bye"
                 messagePopup.style.display = 'block';   // Affiche la même div
             });
+                    clickableYumiao.addEventListener('click', () => {
+                console.log("Click detected on the Yu Miao image!");
+                messagePopup.textContent = "plop"; // Met le texte "bye"
+                messagePopup.style.display = 'block';   // Affiche la même div
+            });
 
                     // Écouteur pour le clic sur la div pop-up pour la cacher
                     messagePopup.addEventListener('click', () => {
@@ -125,7 +142,8 @@
                 } else {
                     if (!clickableImage) console.error("Clickable image element (#clickable-logo) not found!");
                     if (!messagePopup) console.error("Message popup element (#message-popup) not found!");
-                    if (!clickableWangMeng) console.error("Clickable Wang Meng element (#clickable-wangmeng) not found!"); // Ajoute cette ligne-------
+                    if (!clickableWangMeng) console.error("Clickable Wang Meng element (#clickable-wangmeng) not found!"); 
+                    if (!clickableYumiao) console.error("Clickable Yu Miao element (#clickable-yumiao) not found!");// Ajoute cette ligne-------
                 }
             });
         });
