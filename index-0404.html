@@ -36,6 +36,10 @@
         #sound-toggle-button:hover {
              background-color: rgba(255, 255, 255, 1); /* Blanc opaque au survol */
         }
+
+            /* bouton popup----------------------------------------------------------------- */
+    <div id="message-popup"></div>
+        
         /* --- Fin Style bouton Son --- */
     </style>
 </head>
@@ -55,6 +59,26 @@
     <!-- --- NOUVEAU : Bouton pour contrôler le son --- -->
     <button id="sound-toggle-button">Play Sound</button>
     <!-- --- Fin Bouton Son --- -->
+
+            <!-- --- NOUVEAU : Style pour le message pop-up ------------------------------------------------------ -->
+        #message-popup {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10001; /* Au-dessus des autres boutons et de la scène */
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 1.2em;
+            font-family: sans-serif;
+            display: none; /* Caché par défaut */
+            cursor: pointer; /* Indique qu'il est cliquable pour fermer */
+            max-width: 80%;
+        }
+        <!-- --- Fin Style Pop-up --- -->
 
     <!-- --- Scène A-Frame AR (Markerless) --- -->
     <a-scene
@@ -165,6 +189,20 @@
                     rolloffFactor: 1
                 });
                 console.log(`Added sound component to logo-panel (autoplay disabled).`);
+
+                                // --- DEBUT AJOUT : Écouteur de clic pour le panneau logo -----------------------------------------
+                entity.addEventListener('click', () => {
+                    console.log("Logo panel clicked!");
+                    const messagePopup = document.getElementById('message-popup');
+                    if (messagePopup) {
+                        messagePopup.textContent = "bonjour"; // Met le texte
+                        messagePopup.style.display = 'block';   // Affiche la div
+                    } else {
+                        console.error("Message popup element (#message-popup) not found!");
+                    }
+                });
+                console.log(`Added click listener to logo-panel.`);
+                // --- FIN AJOUT ---
             }
             // *** Fin modification son ***
 
@@ -277,6 +315,18 @@
 
             } else {
                  console.warn("Could not find sound toggle button element.");
+
+                            // --- DEBUT AJOUT : Activer le clic pour cacher le pop-up ------------------------------------------------
+            const messagePopup = document.getElementById('message-popup');
+            if (messagePopup) {
+                messagePopup.addEventListener('click', () => {
+                    messagePopup.style.display = 'none'; // Cache la div
+                });
+                console.log("Added click listener to hide message popup.");
+            } else {
+                 console.error("Message popup element (#message-popup) not found on scene load.");
+            }
+            // --- FIN AJOUT ---
             }
             // --- Fin Activation Bouton Son ---
         });
