@@ -12,26 +12,6 @@
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.0/aframe/build/aframe-ar.min.js"></script>
 
     <style>
-
-/* xxxxxxxxxxxxxxx--- NOUVEAU : Style pour le bouton Son --- */
-        #sound-toggle-button {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            z-index: 1000; /* Au-dessus de la scène AR */
-            padding: 10px 15px;
-            font-size: 1em;
-            font-family: sans-serif;
-            color: #333;
-            background-color: rgba(255, 255, 255, 0.8); /* Blanc semi-transparent */
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            cursor: pointer;
-            display: none; /* Initialement caché par le style */
-        }
-        #sound-toggle-button:hover {
-             background-color: rgba(255, 255, 255, 1); /* Blanc opaque au survol */
-        
         /* Style pour le corps et le message pop-up */
         body { margin: 0; overflow: hidden; font-family: sans-serif; }
         #message-popup {
@@ -55,9 +35,6 @@
 <body style='margin : 0px; overflow: hidden;'>
 
     <!-- Div HTML pour afficher le message (initialement cachée) -->
-    <!-- --- NOUVEAU : Bouton pour contrôler le son --- -->
-    <button id="sound-toggle-button">Play Sound</button>
-    <!-- --- Fin Bouton Son --- -->
     <div id="message-popup"></div>
     <div id="message-popup-w"></div>
 
@@ -75,11 +52,7 @@
              <img id="logoAsset" src="images/logo.jpg" crossOrigin="anonymous">
             <img id="wangMengAsset" src="images/wang_meng.jpg" crossOrigin="anonymous">
             <img id="yumiaoAsset" src="images/yu_miao.jpg" crossOrigin="anonymous"><!-- ---------------------------------- -->
-             <!-- NOUVEAU: Asset audio pour le logo -->
-             <audio id="logoAudio" src="audio/your_sound.mp3" preload="auto" crossOrigin="anonymous"></audio>
         </a-assets>
-
-        
 
         <!-- L'image cliquable en RA -->
         <a-image
@@ -88,8 +61,7 @@
             position="0 1.5 -3"  
             width="1"            
             height="1"           
-            data-interactive 
-            sound="src: #logoAudio; autoplay: true; loop: true; volume: 0.8; positional: true"  
+            data-interactive   
             >
         </a-image>
 
@@ -113,8 +85,6 @@
             data-interactive                
             >
         </a-image>
-
-                    
 
         <!-- Caméra avec raycaster pour détecter les clics -->
         <a-camera
