@@ -61,10 +61,7 @@
 
 <body style='margin : 0px; overflow: hidden;'>
 
-    <!-- --- Écran de chargement AR.js --- -->
-    <div class="arjs-loader" id="arjs-loader-div">
-        <div>Loading AURALIS Experience, be patient...</div>
-    </div>
+    
 
     <!-- Div HTML pour afficher le message (initialement cachée) -->
     <div id="message-popup"></div>
@@ -281,16 +278,7 @@
                     if (!messagePopup) console.error("Message popup element (#message-popup) not found!");
                 }
 
-                 // Cacher le loader (inchangé)
-            const loader = document.getElementById('arjs-loader-div');
-            if (loader) {
-                console.log("Hiding AR.js loader.");
-                setTimeout(() => { loader.style.display = 'none'; }, 500); // Garde le délai original
-            } else {
-                console.warn("Could not find loader element to hide.");
-
-                
-            }
+                 
 
                 // Activer le bouton Son (vérification séparée car il dépend juste du logo)
                 const logoElementExists = document.getElementById('clickable-logo');
