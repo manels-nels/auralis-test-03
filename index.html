@@ -48,7 +48,7 @@
 
     <!-- --- Écran de chargement initial --- -->
     <div id="initial-loader">
-        <div>Auralis experience Loading,<br>be patient...1</div>
+        <div>Auralis experience Loading,<br>be patient...4</div>
     </div>
     <!-- --- Fin Écran de chargement initial --- -->
 
@@ -126,72 +126,43 @@
         ];
         // --- Fin Données ---
 
-        // --- Fonction pour créer les images courbes spécifiques ---
+                // --- Fonction createImagePanel (VERSION DE TEST SIMPLIFIÉE) ---
         function createImagePanel(itemData) {
-            console.log(`Attempting to create panel for: ${itemData?.srcId}`); // DEBUG
+            console.log(`[TEST] Attempting simple panel for: ${itemData?.srcId}`);
             const sceneEl = document.querySelector('a-scene');
-            if (!sceneEl) { console.error("Scene element not found in createImagePanel!"); return null;}
-            if (!itemData || itemData.type !== 'image' || !itemData.srcId) { console.warn("Invalid itemData passed to createImagePanel:", itemData); return null;}
-
+            if (!sceneEl || !itemData || !itemData.srcId) return null;
             const imgElement = document.getElementById(itemData.srcId);
-            if (!imgElement) {
-                console.error(`!!! Asset element with ID '${itemData.srcId}' NOT FOUND in <a-assets> !!! Skipping panel.`); // DEBUG
-                return null;
-            }
-            if (!itemData.originalWidth || !itemData.originalHeight) { console.warn(`Dimensions missing for ${itemData.srcId}`); return null; }
-
-            const specificPosition = imagePositions[itemData.srcId];
-            if (!specificPosition) {
-                console.error(`!!! Position not defined in imagePositions for key '${itemData.srcId}'. Skipping panel.`); // DEBUG
-                return null;
-            }
-            console.log(` - Position data found:`, specificPosition); // DEBUG
+             if (!imgElement || !itemData.originalWidth || !itemData.originalHeight) { return null; } // Simplifié
 
             const curvedImage = document.createElement('a-curvedimage');
-            const specificRadius = CYLINDER_RADIUS + (specificPosition.z || 0);
-            const aspect = itemData.originalWidth / itemData.originalHeight;
-            const panelHeight = PANEL_BASE_WIDTH / aspect;
-            const thetaLength = (PANEL_BASE_WIDTH / specificRadius) * (180 / Math.PI);
 
-             // DEBUG: Vérifier les valeurs calculées
-             console.log(` - Calculated values: radius=${specificRadius.toFixed(2)}, height=${panelHeight.toFixed(2)}, theta=${thetaLength.toFixed(2)}`);
-
-            // Vérifier si les valeurs sont valides (pas NaN, pas Infinity)
-            if (isNaN(specificRadius) || !isFinite(specificRadius) || isNaN(panelHeight) || !isFinite(panelHeight) || isNaN(thetaLength) || !isFinite(thetaLength) || specificRadius <= 0 || panelHeight <= 0 || thetaLength <= 0) {
-                console.error(`!!! Invalid calculated geometry for ${itemData.srcId}: R=${specificRadius}, H=${panelHeight}, T=${thetaLength}. Skipping.`);
-                return null;
-            }
+            // --- VALEURS FIXES POUR LE TEST ---
+            const TEST_RADIUS = 3;
+            const TEST_HEIGHT = 1.0; // Hauteur fixe
+            const TEST_THETA = 30;   // Largeur angulaire fixe (30 degrés)
+            const TEST_POSITION = "0 1.6 -0.1"; // Position fixe devant, Y=1.6, très légèrement devant 0
+            const TEST_ROTATION = "0 0 0";    // Rotation fixe
+            // --- FIN VALEURS FIXES ---
 
             curvedImage.setAttribute('src', `#${itemData.srcId}`);
-            curvedImage.setAttribute('radius', specificRadius);
-            curvedImage.setAttribute('height', panelHeight);
-            curvedImage.setAttribute('theta-length', thetaLength);
-            curvedImage.setAttribute('material', 'shader: flat; transparent: true;');
-            curvedImage.setAttribute('data-interactive', '');
+            curvedImage.setAttribute('radius', TEST_RADIUS);
+            curvedImage.setAttribute('height', TEST_HEIGHT);
+            curvedImage.setAttribute('theta-length', TEST_THETA);
+            curvedImage.setAttribute('material', 'shader: flat; transparent: true; side: double;'); // Ajout side:double au cas où
+            curvedImage.setAttribute('data-interactive', ''); // Garde pour le clic si besoin
 
-            const specificY = BASE_Y_POSITION + (specificPosition.y || 0);
-            curvedImage.setAttribute('position', `0 ${specificY} 0`);
-            const angleDegrees = specificPosition.x || 0;
-            curvedImage.setAttribute('rotation', `0 ${-angleDegrees} 0`);
-            console.log(` - Setting attributes: Y=${specificY.toFixed(2)}, Angle=${angleDegrees}`); // DEBUG
+            // NE PAS utiliser la position/rotation calculée pour ce test
+            curvedImage.setAttribute('position', TEST_POSITION);
+            curvedImage.setAttribute('rotation', TEST_ROTATION);
 
-            // Gestion spécifique pour les images cliquables
-            const messagePopup = document.getElementById('message-popup');
+            // Pas besoin de gérer les clics spécifiques pour ce test simple
 
-            if (itemData.srcId === 'logoAsset') {
-                curvedImage.setAttribute('id', 'logo-panel');
-                curvedImage.setAttribute('sound', { src: '#logoAudio', loop: true, volume: 0.8, positional: true });
-                curvedImage.addEventListener('click', () => {
-                    if (messagePopup) {
-                        messagePopup.textContent = "Imagine a space where sound moves like liquid...";
-                        messagePopup.style.display = 'block';
-                    }
-                });
-            } else if (itemData.srcId === 'wangMengAsset') {
-                 curvedImage.addEventListener('click', () => {
-                    if (messagePopup) { messagePopup.textContent = "bye"; messagePopup.style.display = 'block'; }
-                });
-            }
+            sceneEl.appendChild(curvedImage);
+            console.log(`--- [TEST] Appended simple curved panel for ${itemData.srcId}`);
+            return curvedImage;
+        }
+
+            
             // (Ajoute les autres else if ici)
 
             sceneEl.appendChild(curvedImage);
