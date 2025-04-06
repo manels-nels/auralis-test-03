@@ -86,7 +86,7 @@
 
     <!-- --- NOUVEAU : Écran de chargement initial --- -->
     <div id="initial-loader">
-        <div>Auralis experience Loading,<br>be patient...2</div>
+        <div>Auralis experience Loading,<br>be patient...3</div>
     </div>
     <!-- --- Fin Écran de chargement initial --- -->
 
@@ -153,11 +153,8 @@
 
     <!-- Script pour gérer le clic ET le son -->
     <script>
-        // Fonction pour activer/désactiver le son du logo
-        function toggleLogoSound() {
-
-
-                // --- AJOUT: Configuration Layout Courbe Spécifique ---
+        
+        // --- AJOUT: Configuration Layout Courbe Spécifique ---
     const PANEL_BASE_WIDTH = 1.5;    // Largeur visuelle souhaitée (ajuste)
     const CYLINDER_RADIUS = 3.0;     // Rayon de base (ajuste)
     const BASE_Y_POSITION = 1.6;     // Hauteur de base (ajuste)
@@ -187,6 +184,12 @@
         { type: 'image', srcId: 'stageduoDarkAsset', originalWidth: 1.8, originalHeight: 1.1 }
     ];
     // --- Fin Données ---
+        
+        // Fonction pour activer/désactiver le son du logo
+        function toggleLogoSound() {
+
+
+                
             
             const logoElement = document.getElementById('clickable-logo'); // L'élément a-image
             const soundButton = document.getElementById('sound-toggle-button');
