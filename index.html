@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>AURALIS Experience </title> <!-- Titre mis à jour -->
+    <title>AURALIS Experience (Curved Layout)</title> <!-- Titre mis à jour -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta name="description" content="A-Frame + AR.js example with clickable images and a sound toggle button."> <!-- Description mise à jour -->
+    <meta name="description" content="A-Frame + AR.js with curved images, specific layout, clicks, sound toggle, and loading screen."> <!-- Description mise à jour -->
 
     <!-- A-Frame Core -->
     <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
@@ -12,88 +12,58 @@
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.0/aframe/build/aframe-ar.min.js"></script>
 
     <style>
-        
-                /* --- NOUVEAU : Style pour l'écran de chargement initial --- */
+        /* --- Style pour l'écran de chargement initial --- */
         #initial-loader {
-            position: fixed; /* Reste fixe même si la page défile (peu probable ici) */
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #1a1a2a; /* Fond sombre, cohérent avec tes panneaux */
-            z-index: 10000; /* Au-dessus de tout, y compris le loader AR.js */
-            display: flex; /* Utilise flexbox pour centrer */
-            justify-content: center;
-            align-items: center;
-            color: white;
-            font-size: 1.5em;
-            font-family: sans-serif;
-            text-align: center;
-            line-height: 1.4; /* Espacement pour le texte sur deux lignes */
-            /* Transitions pour un fondu enchaîné (optionnel) */
-            opacity: 1;
-            transition: opacity 0.7s ease-out;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: #1a1a2a; z-index: 10000; display: flex;
+            justify-content: center; align-items: center; color: white;
+            font-size: 1.5em; font-family: sans-serif; text-align: center;
+            line-height: 1.4; opacity: 1; transition: opacity 0.7s ease-out;
         }
         /* --- Fin Style chargement initial --- */
-        
-        /* Style pour le corps et le message pop-up */
+
+        /* Style pour le corps */
         body { margin: 0; overflow: hidden; font-family: sans-serif; }
 
-
-          
-        
-    
-
-        
+        /* Style pour le message pop-up */
         #message-popup {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 10; /* Au-dessus de la scène et du bouton son */
-            background-color: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 15px 25px;
-            border-radius: 5px;
-            text-align: center;
-            font-size: 1.2em;
-            display: none; /* Caché par défaut */
-            cursor: pointer; /* Indique qu'il est cliquable pour fermer */
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            z-index: 10001; background-color: rgba(0, 0, 0, 0.7); color: white;
+            padding: 15px 25px; border-radius: 5px; text-align: center;
+            font-size: 1.2em; display: none; cursor: pointer; max-width: 80%;
         }
-        /* NOUVEAU: Style pour le bouton Son */
+        /* Style pour le bouton Son */
         #sound-toggle-button {
-            position: absolute;
-            bottom: 20px; /* Position en bas */
-            left: 20px;   /* Position à gauche */
-            z-index: 9;   /* Légèrement sous le popup mais au-dessus de la scène */
-            padding: 10px 15px;
-            font-size: 1em;
-            font-family: sans-serif;
-            color: #333;
-            background-color: rgba(255, 255, 255, 0.8);
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            cursor: pointer;
-            display: none; /* Caché par défaut, affiché via JS */
+            position: absolute; bottom: 20px; left: 20px; z-index: 10000;
+            padding: 10px 15px; font-size: 1em; font-family: sans-serif; color: #333;
+            background-color: rgba(255, 255, 255, 0.8); border: 1px solid #ccc;
+            border-radius: 5px; cursor: pointer; display: none;
         }
-        #sound-toggle-button:hover {
-            background-color: rgba(255, 255, 255, 1);
-        }
+        #sound-toggle-button:hover { background-color: rgba(255, 255, 255, 1); }
+
+         /* Notice WeChat (gardé pour référence, tu peux l'enlever si non désiré) */
+         #wechat-notice { position: absolute; top: 10px; left: 10px; right: 10px; padding: 10px; background: rgba(0,0,0,0.7); color: white; z-index: 10001; font-size: 14px; text-align: center; border-radius: 5px; }
+
     </style>
 </head>
 
 <body style='margin : 0px; overflow: hidden;'>
 
-    <!-- --- NOUVEAU : Écran de chargement initial --- -->
+    <!-- --- Écran de chargement initial --- -->
     <div id="initial-loader">
-        <div>Auralis experience Loading,<br>be patient...1</div>
+        <div>Auralis experience Loading,<br>be patient...</div>
     </div>
     <!-- --- Fin Écran de chargement initial --- -->
 
-    <!-- Div HTML pour afficher le message (initialement cachée) -->
+    <!-- --- Message pour WeChat (Optionnel) --- -->
+     <div id="wechat-notice" onclick="this.style.display='none';">
+        <b>Note WeChat:</b> Pour l'expérience AR, cliquez sur '...' puis 'Ouvrir dans le navigateur'.
+    </div>
+
+    <!-- Div HTML pour afficher le message -->
     <div id="message-popup"></div>
 
-    <!-- NOUVEAU: Bouton pour contrôler le son du logo -->
+    <!-- Bouton pour contrôler le son du logo -->
     <button id="sound-toggle-button">Play Sound</button>
 
     <!-- Scène A-Frame AR -->
@@ -104,243 +74,197 @@
         renderer='logarithmicDepthBuffer: true;'
         vr-mode-ui='enabled: false'>
 
-        <!-- Assets : Précharger les images ET le son -->
-        <a-assets timeout="30000">
-             <!-- Assure-toi que les chemins vers tes images sont corrects -->
+        <!-- Assets : Précharger les images, le son ET le modèle 3D -->
+        <a-assets timeout="60000">
+             <!-- Images -->
              <img id="logoAsset" src="images/logo.jpg" crossOrigin="anonymous">
              <img id="wangMengAsset" src="images/wang_meng.jpg" crossOrigin="anonymous">
-            <img id="yumiaoAsset" src="images/yu_miao.jpg" crossOrigin="anonymous">
+             <img id="yumiaoAsset" src="images/yu_miao.jpg" crossOrigin="anonymous">
              <img id="manelsAsset" src="images/manels.jpg" crossOrigin="anonymous">
              <img id="stageWideAsset" src="images/stage_wide.jpg" crossOrigin="anonymous">
              <img id="stageduoBlueAsset" src="images/stage_duo_blue.jpg" crossOrigin="anonymous">
-            <img id="stageduoDarkAsset" src="images/stage_duo_dark.jpg" crossOrigin="anonymous">
-             <!-- Assure-toi que le chemin vers ton audio est correct -->
+             <img id="stageduoDarkAsset" src="images/stage_duo_dark.jpg" crossOrigin="anonymous">
+             <!-- Audio -->
              <audio id="logoAudio" src="audio/auralis.mp3" preload="auto" crossOrigin="anonymous"></audio>
-
-            <a-asset-item id="jellyfishModel" src="models/meduse.glb" crossOrigin="anonymous"></a-asset-item>
+             <!-- Modèle 3D -->
+             <a-asset-item id="jellyfishModel" src="models/meduse.glb" crossOrigin="anonymous"></a-asset-item>
         </a-assets>
 
-        
+        <!-- Les images courbes seront ajoutées ici par JavaScript -->
 
-        <!-- Méduse 3D Animée -->
-        <a-gltf-model id="jellyfish"
-                      src="#jellyfishModel"
-                      position="-1 2 -2" scale="0.3 0.3 0.3" rotation="0 0 0"
-                      animation__pos="property: position; from: -1 2 -2; to: 1 1.2 -1.5; dir: alternate; dur: 12000; easing: easeInOutSine; loop: true;"
-                      animation__rot="property: rotation; to: 0 360 0; dur: 20000; easing: linear; loop: true;"
-                      animation-mixer="clip: *; loop: repeat">
-        </a-gltf-model>
+        <!-- Méduses (Tes instances HTML, assure des ID uniques) -->
+        <a-gltf-model id="jellyfish-INSTANCE-1" src="#jellyfishModel" position="-1 2 -2" scale="0.3 0.3 0.3" rotation="0 0 0" animation__pos="property: position; from: -1 2 -2; to: 1 1.2 -1.5; dir: alternate; dur: 12000; easing: easeInOutSine; loop: true;" animation__rot="property: rotation; to: 0 360 0; dur: 20000; easing: linear; loop: true;" animation-mixer="clip: *; loop: repeat"></a-gltf-model>
+        <a-gltf-model id="jellyfish-INSTANCE-2" src="#jellyfishModel" position="-1 2 -5" scale="0.2 0.2 0.2" rotation="0 0 0" animation__pos="property: position; from: 1 2 -4; to: -1 -1.2 -4; dir: alternate; dur: 18000; easing: easeInOutSine; loop: true;" animation__rot="property: rotation; to: 0 360 0; dur: 20000; easing: linear; loop: true;" animation-mixer="clip: *; loop: repeat"></a-gltf-model>
 
-
-        <!-- Méduse 3D Animée -->
-        <a-gltf-model id="jellyfish"
-                      src="#jellyfishModel"
-                      position="-1 2 -5" scale="0.2 0.2 0.2" rotation="0 0 0"
-                      animation__pos="property: position; from: 1 2 -4; to: -1 -1.2 -4; dir: alternate; dur: 18000; easing: easeInOutSine; loop: true;"
-                      animation__rot="property: rotation; to: 0 360 0; dur: 20000; easing: linear; loop: true;"
-                      animation-mixer="clip: *; loop: repeat">
-        </a-gltf-model>
-        
-        <!-- Caméra avec raycaster pour détecter les clics -->
-        <a-camera
-            cursor="rayOrigin: mouse; fuse: false;"
-            raycaster="objects: [data-interactive];" /* Ne tester que les objets avec data-interactive */
-            >
-        </a-camera>
+        <!-- Caméra -->
+        <a-camera cursor="rayOrigin: mouse; fuse: false;" raycaster="objects: [data-interactive];"></a-camera>
 
     </a-scene>
 
-    <!-- Script pour gérer le clic ET le son -->
+    <!-- Script complet -->
     <script>
-            // --- Configuration Layout Courbe Spécifique ---
-    const PANEL_BASE_WIDTH = 1.5;    // Largeur visuelle souhaitée (ajuste)
-    const CYLINDER_RADIUS = 3.0;     // Rayon de base (ajuste)
-    const BASE_Y_POSITION = 1.6;     // Hauteur de base (ajuste)
+        // --- Configuration Layout Courbe Spécifique ---
+        const PANEL_BASE_WIDTH = 1.5;    // Largeur visuelle souhaitée (ajuste)
+        const CYLINDER_RADIUS = 3.0;     // Rayon de base (ajuste)
+        const BASE_Y_POSITION = 1.6;     // Hauteur de base (ajuste)
 
-    // --- Positions souhaitées (X -> Angle, Y -> Hauteur Delta, Z -> Rayon Delta) ---
-    const imagePositions = {
-        // Utilise les ID d'asset (<img id="...">) comme clés
-        'logoAsset':       { x: 0,    y: 0,    z: 0.1 },  // Centre, hauteur base, un peu plus près
-        'wangMengAsset':   { x: -30,  y: 0.5,  z: 0 },    // Gauche, plus haut
-        'yumiaoAsset':     { x: 30,   y: 0.4,  z: 0 },    // Droite, un peu plus haut
-        'manelsAsset':     { x: 60,   y: 0.8,  z: -0.2 }, // Très droite, haut, peu plus loin
-        'stageWideAsset':  { x: -60,  y: -0.5, z: 0 },    // Très gauche, bas
-        'stageduoBlueAsset':{ x: 0,    y: 1.0,  z: -0.3 }, // Centre, très haut, plus loin
-        'stageduoDarkAsset':{ x: 0,    y: -1.0, z: 0.2 }  // Centre, très bas, plus près
-        // Vérifie que les clés ici correspondent aux ID de tes <img> dans <a-assets>
-    };
+        // --- Positions souhaitées (X -> Angle, Y -> Hauteur Delta, Z -> Rayon Delta) ---
+        const imagePositions = {
+            'logoAsset':       { x: 0,    y: 0,    z: 0.1 },
+            'wangMengAsset':   { x: -30,  y: 0.5,  z: 0 },
+            'yumiaoAsset':     { x: 30,   y: 0.4,  z: 0 },
+            'manelsAsset':     { x: 60,   y: 0.8,  z: -0.2 },
+            'stageWideAsset':  { x: -60,  y: -0.5, z: 0 },
+            'stageduoBlueAsset':{ x: 0,    y: 1.0,  z: -0.3 },
+            'stageduoDarkAsset':{ x: 0,    y: -1.0, z: 0.2 }
+        };
 
-    // --- Données du Contenu (Pour Aspect Ratio) ---
-    const contentData = [
-        { type: 'image', srcId: 'logoAsset',       originalWidth: 1,   originalHeight: 1 },
-        { type: 'image', srcId: 'wangMengAsset',   originalWidth: 1,   originalHeight: 1.2 },
-        { type: 'image', srcId: 'yumiaoAsset',     originalWidth: 1.5, originalHeight: 1 },
-        { type: 'image', srcId: 'manelsAsset',     originalWidth: 1,   originalHeight: 1.25 },
-        { type: 'image', srcId: 'stageWideAsset',  originalWidth: 2,   originalHeight: 1.1 },
-        { type: 'image', srcId: 'stageduoBlueAsset', originalWidth: 1.8, originalHeight: 1.1 },
-        { type: 'image', srcId: 'stageduoDarkAsset', originalWidth: 1.8, originalHeight: 1.1 }
-    ];
-    // --- Fin Données ---
-        
-        // Fonction pour activer/désactiver le son du logo
+        // --- Données du Contenu (Pour Aspect Ratio) ---
+        const contentData = [
+            { type: 'image', srcId: 'logoAsset',       originalWidth: 1,   originalHeight: 1 },
+            { type: 'image', srcId: 'wangMengAsset',   originalWidth: 1,   originalHeight: 1.2 },
+            { type: 'image', srcId: 'yumiaoAsset',     originalWidth: 1.5, originalHeight: 1 },
+            { type: 'image', srcId: 'manelsAsset',     originalWidth: 1,   originalHeight: 1.25 },
+            { type: 'image', srcId: 'stageWideAsset',  originalWidth: 2,   originalHeight: 1.1 },
+            { type: 'image', srcId: 'stageduoBlueAsset', originalWidth: 1.8, originalHeight: 1.1 },
+            { type: 'image', srcId: 'stageduoDarkAsset', originalWidth: 1.8, originalHeight: 1.1 }
+        ];
+        // --- Fin Données ---
+
+        // --- Fonction pour créer les images courbes spécifiques ---
+        function createImagePanel(itemData) {
+            const sceneEl = document.querySelector('a-scene');
+            if (!sceneEl || !itemData || itemData.type !== 'image' || !itemData.srcId) return null;
+            const imgElement = document.getElementById(itemData.srcId);
+            if (!imgElement || !itemData.originalWidth || !itemData.originalHeight) { console.warn(`Asset/dimensions missing for ${itemData.srcId}`); return null; }
+
+            const specificPosition = imagePositions[itemData.srcId];
+            if (!specificPosition) { console.warn(`Position not defined for ${itemData.srcId}. Skipping.`); return null; }
+
+            const curvedImage = document.createElement('a-curvedimage');
+            const specificRadius = CYLINDER_RADIUS + (specificPosition.z || 0);
+            const aspect = itemData.originalWidth / itemData.originalHeight;
+            const panelHeight = PANEL_BASE_WIDTH / aspect;
+            const thetaLength = (PANEL_BASE_WIDTH / specificRadius) * (180 / Math.PI);
+
+            curvedImage.setAttribute('src', `#${itemData.srcId}`);
+            curvedImage.setAttribute('radius', specificRadius);
+            curvedImage.setAttribute('height', panelHeight);
+            curvedImage.setAttribute('theta-length', thetaLength);
+            curvedImage.setAttribute('material', 'shader: flat; transparent: true;');
+            curvedImage.setAttribute('data-interactive', ''); // IMPORTANT pour le clic
+
+            const specificY = BASE_Y_POSITION + (specificPosition.y || 0);
+            curvedImage.setAttribute('position', `0 ${specificY} 0`);
+            const angleDegrees = specificPosition.x || 0;
+            curvedImage.setAttribute('rotation', `0 ${-angleDegrees} 0`);
+
+            // Gestion spécifique pour les images cliquables
+            const messagePopup = document.getElementById('message-popup');
+
+            if (itemData.srcId === 'logoAsset') {
+                curvedImage.setAttribute('id', 'logo-panel');
+                curvedImage.setAttribute('sound', { src: '#logoAudio', loop: true, volume: 0.8, positional: true });
+                curvedImage.addEventListener('click', () => {
+                    if (messagePopup) {
+                        messagePopup.textContent = "Imagine a space where sound moves like liquid..."; // Ton texte
+                        messagePopup.style.display = 'block';
+                    }
+                });
+                console.log(`Created logo panel with click listener.`);
+            } else if (itemData.srcId === 'wangMengAsset') {
+                 curvedImage.addEventListener('click', () => {
+                    if (messagePopup) { messagePopup.textContent = "bye"; messagePopup.style.display = 'block'; }
+                });
+                 console.log(`Created wangMeng panel with click listener.`);
+            }
+            // --- Ajoute d'autres 'else if' ici pour les clics sur les autres images ---
+            else if (itemData.srcId === 'yumiaoAsset') {
+                 curvedImage.addEventListener('click', () => {
+                    if (messagePopup) { messagePopup.textContent = "Texte pour Yumiao"; messagePopup.style.display = 'block'; }
+                });
+                 console.log(`Created yumiao panel with click listener.`);
+            }
+             // (etc. pour manelsAsset, stageWideAsset...)
+
+            sceneEl.appendChild(curvedImage);
+            return curvedImage;
+        }
+
+        // --- Fonction pour mettre en place le layout ---
+        function setupManualLayout() {
+            const oldPanels = document.querySelectorAll('a-curvedimage');
+            oldPanels.forEach(panel => panel.parentNode?.removeChild(panel));
+            console.log("Cleared previous curved panels (if any).");
+
+            contentData.forEach((item) => {
+                if (item.type === 'image' && item.srcId) {
+                    createImagePanel(item);
+                }
+            });
+            console.log("Specific curved image layout generated.");
+        }
+
+        // --- Fonction pour contrôler le son ---
         function toggleLogoSound() {
-            const logoElement = document.getElementById('clickable-logo'); // L'élément a-image
+            const logoPanel = document.getElementById('logo-panel');
             const soundButton = document.getElementById('sound-toggle-button');
-
-            if (!logoElement || !soundButton) {
-                console.error("Logo element or sound button not found.");
-                return;
-            }
-            // Accéder au composant son attaché à l'élément
-            const soundComponent = logoElement.components.sound;
-            if (!soundComponent) {
-                 console.error("Sound component not found on logo element.");
-                 return;
-            }
-
-            // Gérer le contexte audio pour mobile (important au premier clic)
+            if (!logoPanel || !soundButton) { console.error("Logo panel or sound button not found."); return; }
+            const soundComponent = logoPanel.components.sound;
+            if (!soundComponent) { console.error("Sound component not found on logo panel."); return; }
             const sceneEl = document.querySelector('a-scene');
             const audioContext = sceneEl?.audioListener?.context;
             if (audioContext && audioContext.state === 'suspended') {
-                console.log("AudioContext suspended, resuming...");
                 audioContext.resume().catch(e => console.error("Error resuming audio context", e));
             }
-
-            // Basculer Play/Pause
             if (soundComponent.isPlaying) {
-                console.log("Pausing logo sound.");
-                soundComponent.pauseSound();
-                soundButton.textContent = "Play Sound";
+                soundComponent.pauseSound(); soundButton.textContent = "Play Sound";
             } else {
-                console.log("Playing logo sound.");
-                soundComponent.playSound();
-                soundButton.textContent = "Pause Sound";
+                soundComponent.playSound(); soundButton.textContent = "Pause Sound";
             }
         }
 
-
-    // --- Nouvelle Fonction pour créer les images courbes spécifiques ---
-    function createImagePanel(itemData) {
-        const sceneEl = document.querySelector('a-scene');
-        if (!sceneEl || !itemData || itemData.type !== 'image' || !itemData.srcId) return null;
-        const imgElement = document.getElementById(itemData.srcId);
-        if (!imgElement || !itemData.originalWidth || !itemData.originalHeight) { console.warn(`Asset/dimensions missing for ${itemData.srcId}`); return null; }
-
-        const specificPosition = imagePositions[itemData.srcId];
-        if (!specificPosition) { console.warn(`Position not defined for ${itemData.srcId}. Skipping.`); return null; }
-
-        const curvedImage = document.createElement('a-curvedimage');
-        const specificRadius = CYLINDER_RADIUS + (specificPosition.z || 0);
-        const aspect = itemData.originalWidth / itemData.originalHeight;
-        const panelHeight = PANEL_BASE_WIDTH / aspect;
-        const thetaLength = (PANEL_BASE_WIDTH / specificRadius) * (180 / Math.PI);
-
-        curvedImage.setAttribute('src', `#${itemData.srcId}`);
-        curvedImage.setAttribute('radius', specificRadius);
-        curvedImage.setAttribute('height', panelHeight);
-        curvedImage.setAttribute('theta-length', thetaLength);
-        curvedImage.setAttribute('material', 'shader: flat; transparent: true;');
-        curvedImage.setAttribute('data-interactive', ''); // IMPORTANT pour le clic
-
-        const specificY = BASE_Y_POSITION + (specificPosition.y || 0);
-        curvedImage.setAttribute('position', `0 ${specificY} 0`);
-        const angleDegrees = specificPosition.x || 0;
-        curvedImage.setAttribute('rotation', `0 ${-angleDegrees} 0`);
-
-        // --- Gestion spécifique pour les images cliquables ---
-        const messagePopup = document.getElementById('message-popup'); // Récupère le popup une fois
-
-        if (itemData.srcId === 'logoAsset') {
-            curvedImage.setAttribute('id', 'logo-panel'); // ID pour le son
-            curvedImage.setAttribute('sound', { src: '#logoAudio', loop: true, volume: 0.8, positional: true });
-            curvedImage.addEventListener('click', () => {
-                if (messagePopup) {
-                    messagePopup.textContent = "Imagine a space where sound moves like liquid..."; // Ton texte
-                    messagePopup.style.display = 'block';
-                }
-            });
-            console.log(`Created logo panel with click listener.`);
-        } else if (itemData.srcId === 'wangMengAsset') {
-             curvedImage.addEventListener('click', () => {
-                if (messagePopup) { messagePopup.textContent = "bye"; messagePopup.style.display = 'block'; }
-            });
-             console.log(`Created wangMeng panel with click listener.`);
-        }
-        // --- Ajoute d'autres 'else if' ici pour les clics sur les autres images ---
-        // else if (itemData.srcId === 'yumiaoAsset') {
-        //     curvedImage.addEventListener('click', () => {
-        //        if (messagePopup) { messagePopup.textContent = "Texte pour Yumiao"; messagePopup.style.display = 'block'; }
-        //     });
-        //     console.log(`Created yumiao panel with click listener.`);
-        // }
-        // etc...
-
-        sceneEl.appendChild(curvedImage);
-        return curvedImage;
-    }
-
-            // --- Nouvelle Fonction pour mettre en place le layout ---
-    function setupManualLayout() {
-        const oldPanels = document.querySelectorAll('a-curvedimage');
-        oldPanels.forEach(panel => panel.parentNode?.removeChild(panel));
-        console.log("Cleared previous curved panels (if any).");
-
-        contentData.forEach((item) => {
-            if (item.type === 'image' && item.srcId) {
-                createImagePanel(item);
-            }
-        });
-        console.log("Specific curved image layout generated.");
-    }
-        
-        // Attendre que la scène soit chargée pour être sûr que les éléments existent
+        // --- Logique d'initialisation ---
         document.addEventListener('DOMContentLoaded', () => {
             const sceneEl = document.querySelector('a-scene');
 
             sceneEl.addEventListener('loaded', () => {
-                            // --- Contenu MODIFIÉ de sceneEl.addEventListener('loaded') ---
+                console.log("A-Frame scene loaded. Initializing layout and elements...");
 
-            console.log("A-Frame scene loaded. Initializing layout and elements...");
+                // Cacher l'écran de chargement initial
+                const initialLoader = document.getElementById('initial-loader');
+                if (initialLoader) {
+                    initialLoader.style.opacity = '0';
+                    setTimeout(() => { initialLoader.style.display = 'none'; }, 700);
+                } else { console.warn("Initial loader element not found!"); }
 
-            // Cacher l'écran de chargement initial (INCHANGÉ)
-            const initialLoader = document.getElementById('initial-loader');
-            if (initialLoader) {
-                initialLoader.style.opacity = '0';
-                setTimeout(() => { initialLoader.style.display = 'none'; }, 700);
-            } else { console.warn("Initial loader element not found!"); }
+                // Mettre en place le layout courbe
+                setupManualLayout();
 
-            // ** NOUVEAU : Appeler setupManualLayout pour créer les images courbes **
-            setupManualLayout();
+                // Activer le bouton Son
+                const soundButton = document.getElementById('sound-toggle-button');
+                setTimeout(() => {
+                     const logoPanelExists = document.getElementById('logo-panel');
+                     if (soundButton && logoPanelExists) {
+                         console.log("Activating sound toggle button.");
+                         soundButton.style.display = 'block';
+                         soundButton.addEventListener('click', toggleLogoSound);
+                     } else {
+                         if (!soundButton) console.error("Sound toggle button not found!");
+                         if (!logoPanelExists) console.error("Logo panel (#logo-panel) not found after layout, cannot activate sound button!");
+                     }
+                }, 150);
 
-            // Activer le bouton Son (Logique inchangée, mais vérifie #logo-panel créé par setupManualLayout)
-            const soundButton = document.getElementById('sound-toggle-button');
-            setTimeout(() => { // Délai pour s'assurer que #logo-panel existe
-                 const logoPanelExists = document.getElementById('logo-panel'); // logo-panel est créé dans createImagePanel
-                 if (soundButton && logoPanelExists) {
-                     console.log("Activating sound toggle button.");
-                     soundButton.style.display = 'block';
-                     soundButton.addEventListener('click', toggleLogoSound);
-                 } else {
-                     if (!soundButton) console.error("Sound toggle button not found!");
-                     if (!logoPanelExists) console.error("Logo panel (#logo-panel) not found after layout, cannot activate sound button!");
-                 }
-            }, 150); // Garde un petit délai
+                // Activer le clic pour cacher le pop-up
+                const messagePopup = document.getElementById('message-popup');
+                if (messagePopup) {
+                    messagePopup.addEventListener('click', () => { messagePopup.style.display = 'none'; });
+                    console.log("Added click listener to hide message popup.");
+                } else {
+                     console.error("Message popup element (#message-popup) not found on scene load.");
+                }
 
-            // Activer le clic pour cacher le pop-up (INCHANGÉ)
-            const messagePopup = document.getElementById('message-popup');
-            if (messagePopup) {
-                messagePopup.addEventListener('click', () => { messagePopup.style.display = 'none'; });
-                console.log("Added click listener to hide message popup.");
-            } else {
-                 console.error("Message popup element (#message-popup) not found on scene load.");
-            }
-
-            // (Les méduses sont toujours définies en HTML dans ce code)
-            // (Si tu créais les méduses par JS, l'appel createJellyfishInstances serait ici)
-
-            console.log("Initialization complete.");
-
-            // --- Fin du contenu MODIFIÉ ---
+                console.log("Initialization complete.");
 
             }); // Fin de sceneEl.addEventListener('loaded')
         }); // Fin de document.addEventListener('DOMContentLoaded')
