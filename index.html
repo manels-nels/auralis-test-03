@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>AURALIS Experience (Curved Specific Layout)</title> <!-- Titre mis à jour -->
+    <title>AURALIS Experience (Curved Image Visibility Test)</title> <!-- Titre mis à jour -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta name="description" content="A-Frame + AR.js with specific curved layout, clicks, sound toggle, jellyfish and loading screen."> <!-- Description mise à jour -->
+    <meta name="description" content="A-Frame + AR.js example - Testing curved image visibility."> <!-- Description mise à jour -->
 
     <!-- A-Frame Core -->
     <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
@@ -28,19 +28,18 @@
         /* Style pour le message pop-up */
         #message-popup {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            z-index: 10001; /* Au-dessus du bouton son */ background-color: rgba(0, 0, 0, 0.7); color: white;
+            z-index: 10; background-color: rgba(0, 0, 0, 0.7); color: white;
             padding: 15px 25px; border-radius: 5px; text-align: center;
-            font-size: 1.2em; display: none; cursor: pointer; max-width: 80%;
+            font-size: 1.2em; display: none; cursor: pointer;
         }
         /* Style pour le bouton Son */
         #sound-toggle-button {
-            position: absolute; bottom: 20px; left: 20px; z-index: 10000; /* Sous le popup */
+            position: absolute; bottom: 20px; left: 20px; z-index: 9;
             padding: 10px 15px; font-size: 1em; font-family: sans-serif; color: #333;
             background-color: rgba(255, 255, 255, 0.8); border: 1px solid #ccc;
             border-radius: 5px; cursor: pointer; display: none;
         }
         #sound-toggle-button:hover { background-color: rgba(255, 255, 255, 1); }
-
     </style>
 </head>
 
@@ -48,7 +47,7 @@
 
     <!-- --- Écran de chargement initial --- -->
     <div id="initial-loader">
-        <div>Auralis experience Loading,<br>be patient...4</div>
+        <div>Auralis experience Loading,<br>be patient...1</div>
     </div>
     <!-- --- Fin Écran de chargement initial --- -->
 
@@ -67,7 +66,7 @@
         vr-mode-ui='enabled: false'>
 
         <!-- Assets : Précharger les images, le son ET le modèle 3D -->
-        <a-assets timeout="60000">
+        <a-assets timeout="60000"> <!-- Timeout augmenté au cas où -->
              <!-- Images -->
              <img id="logoAsset" src="images/logo.jpg" crossOrigin="anonymous">
              <img id="wangMengAsset" src="images/wang_meng.jpg" crossOrigin="anonymous">
@@ -82,10 +81,10 @@
              <a-asset-item id="jellyfishModel" src="models/meduse.glb" crossOrigin="anonymous"></a-asset-item>
         </a-assets>
 
-        <!-- Les images courbes seront ajoutées ici par JavaScript -->
+        <!-- Les images courbes (de test) seront ajoutées ici par JavaScript -->
         <!-- SUPPRESSION des <a-image> effectuée -->
 
-        <!-- Méduses (Tes instances HTML, assure des ID uniques) -->
+        <!-- Méduses (Tes instances HTML) -->
         <a-gltf-model id="jellyfish-INSTANCE-1" src="#jellyfishModel" position="-1 2 -2" scale="0.3 0.3 0.3" rotation="0 0 0" animation__pos="property: position; from: -1 2 -2; to: 1 1.2 -1.5; dir: alternate; dur: 12000; easing: easeInOutSine; loop: true;" animation__rot="property: rotation; to: 0 360 0; dur: 20000; easing: linear; loop: true;" animation-mixer="clip: *; loop: repeat"></a-gltf-model>
         <a-gltf-model id="jellyfish-INSTANCE-2" src="#jellyfishModel" position="-1 2 -5" scale="0.2 0.2 0.2" rotation="0 0 0" animation__pos="property: position; from: 1 2 -4; to: -1 -1.2 -4; dir: alternate; dur: 18000; easing: easeInOutSine; loop: true;" animation__rot="property: rotation; to: 0 360 0; dur: 20000; easing: linear; loop: true;" animation-mixer="clip: *; loop: repeat"></a-gltf-model>
 
@@ -94,28 +93,10 @@
 
     </a-scene>
 
-        <!-- Script complet et modifié avec DEBUGGING -->
+    <!-- Script complet et modifié pour le TEST -->
     <script>
-        // --- Configuration Layout Courbe Spécifique ---
-        const PANEL_BASE_WIDTH = 1.5;
-        const CYLINDER_RADIUS = 3.0;
-        const BASE_Y_POSITION = 1.6;
-
-        // --- Positions souhaitées ---
-        const imagePositions = {
-            // VÉRIFIE QUE CES CLÉS SONT IDENTIQUES AUX ID DES <img> DANS <a-assets>
-            'logoAsset':       { x: 0,    y: 0,    z: 0.1 },
-            'wangMengAsset':   { x: -30,  y: 0.5,  z: 0 },
-            'yumiaoAsset':     { x: 30,   y: 0.4,  z: 0 },
-            'manelsAsset':     { x: 60,   y: 0.8,  z: -0.2 },
-            'stageWideAsset':  { x: -60,  y: -0.5, z: 0 },
-            'stageduoBlueAsset':{ x: 0,    y: 1.0,  z: -0.3 },
-            'stageduoDarkAsset':{ x: 0,    y: -1.0, z: 0.2 }
-        };
-
-        // --- Données du Contenu ---
+        // --- AJOUT: Données du Contenu (Pour Aspect Ratio) ---
         const contentData = [
-            // VÉRIFIE QUE CES srcId SONT IDENTIQUES AUX ID DES <img> DANS <a-assets>
             { type: 'image', srcId: 'logoAsset',       originalWidth: 1,   originalHeight: 1 },
             { type: 'image', srcId: 'wangMengAsset',   originalWidth: 1,   originalHeight: 1.2 },
             { type: 'image', srcId: 'yumiaoAsset',     originalWidth: 1.5, originalHeight: 1 },
@@ -126,13 +107,15 @@
         ];
         // --- Fin Données ---
 
-                // --- Fonction createImagePanel (VERSION DE TEST SIMPLIFIÉE) ---
+        // --- MODIFICATION: Fonction createImagePanel (VERSION DE TEST SIMPLIFIÉE) ---
         function createImagePanel(itemData) {
             console.log(`[TEST] Attempting simple panel for: ${itemData?.srcId}`);
             const sceneEl = document.querySelector('a-scene');
-            if (!sceneEl || !itemData || !itemData.srcId) return null;
+            // Vérifications de base
+            if (!sceneEl) { console.error("Scene not found!"); return null; }
+            if (!itemData || !itemData.srcId) { console.warn("Invalid itemData:", itemData); return null; }
             const imgElement = document.getElementById(itemData.srcId);
-             if (!imgElement || !itemData.originalWidth || !itemData.originalHeight) { return null; } // Simplifié
+            if (!imgElement) { console.error(`Asset ${itemData.srcId} not found!`); return null; }
 
             const curvedImage = document.createElement('a-curvedimage');
 
@@ -146,97 +129,83 @@
 
             curvedImage.setAttribute('src', `#${itemData.srcId}`);
             curvedImage.setAttribute('radius', TEST_RADIUS);
-            curvedImage.setAttribute('height', TEST_HEIGHT);
+            curvedImage.setAttribute('height', TEST_HEIGHT); // Utilise la hauteur de test
             curvedImage.setAttribute('theta-length', TEST_THETA);
-            curvedImage.setAttribute('material', 'shader: flat; transparent: true; side: double;'); // Ajout side:double au cas où
-            curvedImage.setAttribute('data-interactive', ''); // Garde pour le clic si besoin
+            curvedImage.setAttribute('material', 'shader: flat; transparent: true; side: double;');
+            // On peut ajouter data-interactive si on veut tester le raycaster plus tard, mais pas nécessaire pour la visibilité
+            // curvedImage.setAttribute('data-interactive', '');
 
-            // NE PAS utiliser la position/rotation calculée pour ce test
+            // Utiliser la position/rotation de TEST
             curvedImage.setAttribute('position', TEST_POSITION);
             curvedImage.setAttribute('rotation', TEST_ROTATION);
 
-            // Pas besoin de gérer les clics spécifiques pour ce test simple
+            // PAS de gestion de clic/son spécifique dans cette version de test
 
             sceneEl.appendChild(curvedImage);
             console.log(`--- [TEST] Appended simple curved panel for ${itemData.srcId}`);
             return curvedImage;
         }
 
-            
-            // (Ajoute les autres else if ici)
-
-            sceneEl.appendChild(curvedImage);
-             console.log(`--- Successfully CREATED AND APPENDED panel for ${itemData.srcId}`); // DEBUG
-            return curvedImage;
-        }
-
-        // --- Fonction pour mettre en place le layout ---
+        // --- AJOUT: Nouvelle fonction setupManualLayout (appelle la version de test) ---
         function setupManualLayout() {
-             console.log("Running setupManualLayout..."); // DEBUG
             const oldPanels = document.querySelectorAll('a-curvedimage');
-            if (oldPanels.length > 0) {
-                console.log(`Clearing ${oldPanels.length} previous curved panels...`); // DEBUG
-                oldPanels.forEach(panel => panel.parentNode?.removeChild(panel));
-            } else {
-                 console.log("No previous curved panels to clear."); // DEBUG
-            }
+            oldPanels.forEach(panel => panel.parentNode?.removeChild(panel));
+            console.log("Cleared previous curved panels (if any).");
 
-            if (!contentData || contentData.length === 0) {
-                 console.error("contentData array is empty or undefined!"); // DEBUG
-                 return;
-            }
-
-            console.log(`Iterating through ${contentData.length} items in contentData...`); // DEBUG
             contentData.forEach((item) => {
                 if (item.type === 'image' && item.srcId) {
-                    createImagePanel(item); // Appelle la fonction de création
-                } else {
-                    console.warn("Skipping item in contentData due to missing type/srcId:", item); // DEBUG
+                    createImagePanel(item); // Appelle la version de TEST
                 }
             });
-            console.log("Finished setupManualLayout."); // DEBUG
+            console.log("Simplified test layout generation complete.");
         }
 
-        // --- Fonction pour contrôler le son (INCHANGÉE) ---
-        function toggleLogoSound() { /* ... code identique ... */ }
+        // --- Fonction pour contrôler le son (INCHANGÉE, mais peut ne pas trouver #clickable-logo) ---
+        function toggleLogoSound() {
+            // Cette fonction essaiera toujours de trouver #clickable-logo qui n'est plus créé
+            // Elle loguera une erreur dans la console, ce qui est OK pour ce test.
+            const logoElement = document.getElementById('clickable-logo');
+            const soundButton = document.getElementById('sound-toggle-button');
+            if (!logoElement || !soundButton) { console.error("Expected: Logo element or sound button not found in TEST version."); return; }
+            // ... reste de la fonction ...
+        }
 
-        // --- Logique d'initialisation ---
+        // --- Logique d'initialisation MODIFIÉE ---
         document.addEventListener('DOMContentLoaded', () => {
-            console.log("DOMContentLoaded event fired."); // DEBUG
             const sceneEl = document.querySelector('a-scene');
-             if (!sceneEl) {
-                 console.error("!!! CRITICAL: A-Frame scene element not found on DOMContentLoaded!"); // DEBUG
-                 return;
-            }
 
             sceneEl.addEventListener('loaded', () => {
-                console.log("A-Frame scene 'loaded' event fired. Initializing layout and elements..."); // DEBUG
+                console.log("A-Frame scene loaded. Initializing TEST layout and elements...");
 
-                // Cacher l'écran de chargement initial
+                // Cacher l'écran de chargement initial (INCHANGÉ)
                 const initialLoader = document.getElementById('initial-loader');
                 if (initialLoader) {
                     initialLoader.style.opacity = '0';
                     setTimeout(() => { initialLoader.style.display = 'none'; }, 700);
                 } else { console.warn("Initial loader element not found!"); }
 
-                // Mettre en place le layout courbe
-                setupManualLayout(); // Appel crucial
+                // ** MODIFICATION: Appeler setupManualLayout pour créer les images de TEST **
+                setupManualLayout();
 
-                // Activer le bouton Son
+                 // --- Bloc pour récupérer les éléments HTML supprimé ---
+                 // --- Bloc pour ajouter les listeners aux éléments HTML supprimé ---
+
+                // Activer le bouton Son (Tentative, échouera probablement car #clickable-logo n'est pas créé dans ce test)
                 const soundButton = document.getElementById('sound-toggle-button');
                 setTimeout(() => {
-                     const logoPanelExists = document.getElementById('logo-panel');
+                     const logoPanelExists = document.getElementById('clickable-logo'); // Ne sera pas trouvé
                      if (soundButton && logoPanelExists) {
-                         console.log("Activating sound toggle button.");
+                         // Ce code ne devrait pas s'exécuter dans le test
                          soundButton.style.display = 'block';
                          soundButton.addEventListener('click', toggleLogoSound);
                      } else {
                          if (!soundButton) console.error("Sound toggle button not found!");
-                         if (!logoPanelExists) console.error("Logo panel (#logo-panel) not found after layout, cannot activate sound button!");
+                         // On s'attend à cette erreur dans le test :
+                         if (!logoPanelExists) console.log("Info: Logo panel (#clickable-logo) not found as expected in TEST version, sound button not activated.");
                      }
                 }, 150);
 
-                // Activer le clic pour cacher le pop-up
+                // Activer le clic pour cacher le pop-up (INCHANGÉ)
                 const messagePopup = document.getElementById('message-popup');
                 if (messagePopup) {
                     messagePopup.addEventListener('click', () => { messagePopup.style.display = 'none'; });
@@ -245,19 +214,11 @@
                      console.error("Message popup element (#message-popup) not found on scene load.");
                 }
 
-                console.log("Initialization complete.");
+                console.log("TEST Initialization complete.");
 
             }); // Fin de sceneEl.addEventListener('loaded')
-
-            // DEBUG: Ajouter un listener d'erreur sur la scène
-             sceneEl.addEventListener('error', (evt) => {
-                 console.error("A-Frame scene error event:", evt);
-             });
-             console.log("Error listener added to scene."); // DEBUG
-
         }); // Fin de document.addEventListener('DOMContentLoaded')
     </script>
 
 </body>
-</html>
 </html>
