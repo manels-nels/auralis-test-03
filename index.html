@@ -68,48 +68,51 @@
             { srcId: 'stageduoBlueAsset', yOffset: Y_OFFSET_BELOW, originalWidth: 1.8, originalHeight: 1.1 }
         ];
 
-        // --- Fonction pour créer UNE image courbe ---
-        function createCurvedImage(imgData) {
-            const container = document.getElementById('curved-images-container');
-            if (!container) { console.error("Container not found"); return; }
+            // --- Fonction pour créer UNE image (MODIFIÉE POUR TEST AVEC <a-plane>) ---
+    function createCurvedImage(imgData) { // Gardons le nom pour l'instant
+        const container = document.getElementById('curved-images-container');
+        if (!container) { console.error("Container not found"); return; }
 
-            const imgAsset = document.getElementById(imgData.srcId);
-            if (!imgAsset || !imgData.originalWidth || !imgData.originalHeight) {
-                console.warn(`Asset or dimensions missing for ${imgData.srcId}`);
-                return;
-            }
-
-            const curvedImage = document.createElement('a-curvedimage');
-
-            const aspect = imgData.originalWidth / imgData.originalHeight;
-            const imgHeight = IMAGE_WIDTH_ON_CYLINDER / aspect; // Hauteur basée sur la largeur fixe
-            const thetaLength = (IMAGE_WIDTH_ON_CYLINDER / CYLINDER_RADIUS) * (180 / Math.PI);
-
-            // Vérif validité
-            if (isNaN(CYLINDER_RADIUS) || CYLINDER_RADIUS <= 0 || isNaN(imgHeight) || imgHeight <= 0 || isNaN(thetaLength) || thetaLength <= 0) {
-                 console.error(`Invalid geometry for ${imgData.srcId}`); return;
-            }
-
-            curvedImage.setAttribute('src', `#${imgData.srcId}`);
-            curvedImage.setAttribute('radius', CYLINDER_RADIUS);
-            curvedImage.setAttribute('height', imgHeight);
-            curvedImage.setAttribute('theta-length', thetaLength);
-            curvedImage.setAttribute('material', 'shader: flat; transparent: true; side: double;');
-
-            // Position Y spécifique
-            const yPos = BASE_Y_POSITION + imgData.yOffset;
-            curvedImage.setAttribute('position', `0 ${yPos} 0`); // Positionné au centre horizontalement (angle 0)
-
-            // Rotation (pas de rotation nécessaire si toutes sont au centre)
-            curvedImage.setAttribute('rotation', '0 0 0');
-
-            // (Ajouter data-interactive et listeners si besoin pour clics)
-            // curvedImage.setAttribute('data-interactive', '');
-
-            container.appendChild(curvedImage);
-            console.log(`Created curved image for ${imgData.srcId} at Y=${yPos}`);
+        const imgAsset = document.getElementById(imgData.srcId);
+        if (!imgAsset || !imgData.originalWidth || !imgData.originalHeight) {
+            console.warn(`Asset or dimensions missing for ${imgData.srcId}`);
+            return;
         }
 
+        // Créer un a-plane à la place
+        const imagePlane = document.createElement('a-plane'); // <--- CHANGEMENT ICI
+
+        const aspect = imgData.originalWidth / imgData.originalHeight;
+        // Utiliser la largeur fixe pour le plan aussi
+        const planeWidth = IMAGE_WIDTH_ON_CYLINDER; // Réutilisation de la constante
+        const planeHeight = planeWidth / aspect;
+
+        // Vérif validité simple
+        if (isNaN(planeWidth) || planeWidth <= 0 || isNaN(planeHeight) || planeHeight <= 0) {
+             console.error(`Invalid geometry for ${imgData.srcId}`); return;
+        }
+
+        imagePlane.setAttribute('src', `#${imgData.srcId}`);
+        imagePlane.setAttribute('width', planeWidth);   // <--- CHANGEMENT ICI
+        imagePlane.setAttribute('height', planeHeight); // <--- CHANGEMENT ICI
+        imagePlane.setAttribute('material', 'shader: flat; transparent: true; side: double;');
+
+        // Position Y spécifique
+        const yPos = BASE_Y_POSITION + imgData.yOffset;
+        // Position X et Z : On va les placer *devant* la caméra à la distance définie par CYLINDER_RADIUS
+        // ATTENTION: La position d'un plan est son centre.
+        const zPos = -CYLINDER_RADIUS; // Place le plan à la distance du rayon, devant (axe Z négatif)
+        imagePlane.setAttribute('position', `0 ${yPos} ${zPos}`); // <--- CHANGEMENT ICI (X=0, Z=-Rayon)
+
+        // Rotation (Pas de rotation nécessaire pour l'instant)
+        imagePlane.setAttribute('rotation', '0 0 0');
+
+        // (Ajouter data-interactive et listeners si besoin pour clics)
+        // imagePlane.setAttribute('data-interactive', '');
+
+        container.appendChild(imagePlane); // Ajoute le plan
+        console.log(`[PLANE TEST] Created plane for ${imgData.srcId} at Y=${yPos}, Z=${zPos}`); // Log modifié
+    }
         // --- Initialisation ---
         window.addEventListener('load', () => { // Utilise 'load' pour attendre assets
             const sceneEl = document.querySelector('a-scene');
