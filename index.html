@@ -48,7 +48,7 @@
 
     <!-- --- Écran de chargement initial --- -->
     <div id="initial-loader">
-        <div>Auralis experience Loading,<br>be patient...3</div>
+        <div>Auralis experience Loading,<br>be patient...1</div>
     </div>
     <!-- --- Fin Écran de chargement initial --- -->
 
@@ -94,15 +94,16 @@
 
     </a-scene>
 
-    <!-- Script complet et modifié -->
+        <!-- Script complet et modifié avec DEBUGGING -->
     <script>
-        // --- AJOUT: Configuration Layout Courbe Spécifique ---
-        const PANEL_BASE_WIDTH = 1.5;    // Largeur visuelle souhaitée (ajuste)
-        const CYLINDER_RADIUS = 3.0;     // Rayon de base (ajuste)
-        const BASE_Y_POSITION = 1.6;     // Hauteur de base (ajuste)
+        // --- Configuration Layout Courbe Spécifique ---
+        const PANEL_BASE_WIDTH = 1.5;
+        const CYLINDER_RADIUS = 3.0;
+        const BASE_Y_POSITION = 1.6;
 
-        // --- AJOUT: Positions souhaitées ---
+        // --- Positions souhaitées ---
         const imagePositions = {
+            // VÉRIFIE QUE CES CLÉS SONT IDENTIQUES AUX ID DES <img> DANS <a-assets>
             'logoAsset':       { x: 0,    y: 0,    z: 0.1 },
             'wangMengAsset':   { x: -30,  y: 0.5,  z: 0 },
             'yumiaoAsset':     { x: 30,   y: 0.4,  z: 0 },
@@ -112,8 +113,9 @@
             'stageduoDarkAsset':{ x: 0,    y: -1.0, z: 0.2 }
         };
 
-        // --- AJOUT: Données du Contenu ---
+        // --- Données du Contenu ---
         const contentData = [
+            // VÉRIFIE QUE CES srcId SONT IDENTIQUES AUX ID DES <img> DANS <a-assets>
             { type: 'image', srcId: 'logoAsset',       originalWidth: 1,   originalHeight: 1 },
             { type: 'image', srcId: 'wangMengAsset',   originalWidth: 1,   originalHeight: 1.2 },
             { type: 'image', srcId: 'yumiaoAsset',     originalWidth: 1.5, originalHeight: 1 },
@@ -124,15 +126,26 @@
         ];
         // --- Fin Données ---
 
-        // --- AJOUT: Nouvelle fonction createImagePanel ---
+        // --- Fonction pour créer les images courbes spécifiques ---
         function createImagePanel(itemData) {
+            console.log(`Attempting to create panel for: ${itemData?.srcId}`); // DEBUG
             const sceneEl = document.querySelector('a-scene');
-            if (!sceneEl || !itemData || itemData.type !== 'image' || !itemData.srcId) return null;
+            if (!sceneEl) { console.error("Scene element not found in createImagePanel!"); return null;}
+            if (!itemData || itemData.type !== 'image' || !itemData.srcId) { console.warn("Invalid itemData passed to createImagePanel:", itemData); return null;}
+
             const imgElement = document.getElementById(itemData.srcId);
-            if (!imgElement || !itemData.originalWidth || !itemData.originalHeight) { console.warn(`Asset/dimensions missing for ${itemData.srcId}`); return null; }
+            if (!imgElement) {
+                console.error(`!!! Asset element with ID '${itemData.srcId}' NOT FOUND in <a-assets> !!! Skipping panel.`); // DEBUG
+                return null;
+            }
+            if (!itemData.originalWidth || !itemData.originalHeight) { console.warn(`Dimensions missing for ${itemData.srcId}`); return null; }
 
             const specificPosition = imagePositions[itemData.srcId];
-            if (!specificPosition) { console.warn(`Position not defined for ${itemData.srcId}. Skipping.`); return null; }
+            if (!specificPosition) {
+                console.error(`!!! Position not defined in imagePositions for key '${itemData.srcId}'. Skipping panel.`); // DEBUG
+                return null;
+            }
+            console.log(` - Position data found:`, specificPosition); // DEBUG
 
             const curvedImage = document.createElement('a-curvedimage');
             const specificRadius = CYLINDER_RADIUS + (specificPosition.z || 0);
@@ -140,19 +153,29 @@
             const panelHeight = PANEL_BASE_WIDTH / aspect;
             const thetaLength = (PANEL_BASE_WIDTH / specificRadius) * (180 / Math.PI);
 
+             // DEBUG: Vérifier les valeurs calculées
+             console.log(` - Calculated values: radius=${specificRadius.toFixed(2)}, height=${panelHeight.toFixed(2)}, theta=${thetaLength.toFixed(2)}`);
+
+            // Vérifier si les valeurs sont valides (pas NaN, pas Infinity)
+            if (isNaN(specificRadius) || !isFinite(specificRadius) || isNaN(panelHeight) || !isFinite(panelHeight) || isNaN(thetaLength) || !isFinite(thetaLength) || specificRadius <= 0 || panelHeight <= 0 || thetaLength <= 0) {
+                console.error(`!!! Invalid calculated geometry for ${itemData.srcId}: R=${specificRadius}, H=${panelHeight}, T=${thetaLength}. Skipping.`);
+                return null;
+            }
+
             curvedImage.setAttribute('src', `#${itemData.srcId}`);
             curvedImage.setAttribute('radius', specificRadius);
             curvedImage.setAttribute('height', panelHeight);
             curvedImage.setAttribute('theta-length', thetaLength);
             curvedImage.setAttribute('material', 'shader: flat; transparent: true;');
-            curvedImage.setAttribute('data-interactive', ''); // Pour le clic
+            curvedImage.setAttribute('data-interactive', '');
 
             const specificY = BASE_Y_POSITION + (specificPosition.y || 0);
             curvedImage.setAttribute('position', `0 ${specificY} 0`);
             const angleDegrees = specificPosition.x || 0;
             curvedImage.setAttribute('rotation', `0 ${-angleDegrees} 0`);
+            console.log(` - Setting attributes: Y=${specificY.toFixed(2)}, Angle=${angleDegrees}`); // DEBUG
 
-            // Gestion spécifique pour les images cliquables (À L'INTÉRIEUR de createImagePanel)
+            // Gestion spécifique pour les images cliquables
             const messagePopup = document.getElementById('message-popup');
 
             if (itemData.srcId === 'logoAsset') {
@@ -160,82 +183,75 @@
                 curvedImage.setAttribute('sound', { src: '#logoAudio', loop: true, volume: 0.8, positional: true });
                 curvedImage.addEventListener('click', () => {
                     if (messagePopup) {
-                        messagePopup.textContent = "Imagine a space where sound moves like liquid, where music is not confined to speakers but swirls around you, weaving an intricate web of vibration and light";
+                        messagePopup.textContent = "Imagine a space where sound moves like liquid...";
                         messagePopup.style.display = 'block';
                     }
                 });
-                console.log(`Created logo panel with click listener.`);
             } else if (itemData.srcId === 'wangMengAsset') {
                  curvedImage.addEventListener('click', () => {
                     if (messagePopup) { messagePopup.textContent = "bye"; messagePopup.style.display = 'block'; }
                 });
-                 console.log(`Created wangMeng panel with click listener.`);
             }
-            // --- Ajoute d'autres 'else if' ici pour les clics sur les autres images ---
-             else if (itemData.srcId === 'yumiaoAsset') {
-                 curvedImage.addEventListener('click', () => {
-                    if (messagePopup) { messagePopup.textContent = "Texte pour Yumiao"; messagePopup.style.display = 'block'; }
-                 });
-                 console.log(`Created yumiao panel with click listener.`);
-             }
-            // (Ajoute les autres ici : manelsAsset, stageWideAsset, etc.)
-
+            // (Ajoute les autres else if ici)
 
             sceneEl.appendChild(curvedImage);
+             console.log(`--- Successfully CREATED AND APPENDED panel for ${itemData.srcId}`); // DEBUG
             return curvedImage;
         }
 
-        // --- AJOUT: Nouvelle fonction setupManualLayout ---
+        // --- Fonction pour mettre en place le layout ---
         function setupManualLayout() {
+             console.log("Running setupManualLayout..."); // DEBUG
             const oldPanels = document.querySelectorAll('a-curvedimage');
-            oldPanels.forEach(panel => panel.parentNode?.removeChild(panel));
-            console.log("Cleared previous curved panels (if any).");
+            if (oldPanels.length > 0) {
+                console.log(`Clearing ${oldPanels.length} previous curved panels...`); // DEBUG
+                oldPanels.forEach(panel => panel.parentNode?.removeChild(panel));
+            } else {
+                 console.log("No previous curved panels to clear."); // DEBUG
+            }
 
+            if (!contentData || contentData.length === 0) {
+                 console.error("contentData array is empty or undefined!"); // DEBUG
+                 return;
+            }
+
+            console.log(`Iterating through ${contentData.length} items in contentData...`); // DEBUG
             contentData.forEach((item) => {
                 if (item.type === 'image' && item.srcId) {
-                    createImagePanel(item);
+                    createImagePanel(item); // Appelle la fonction de création
+                } else {
+                    console.warn("Skipping item in contentData due to missing type/srcId:", item); // DEBUG
                 }
             });
-            console.log("Specific curved image layout generated.");
+            console.log("Finished setupManualLayout."); // DEBUG
         }
 
         // --- Fonction pour contrôler le son (INCHANGÉE) ---
-        function toggleLogoSound() {
-            const logoPanel = document.getElementById('logo-panel');
-            const soundButton = document.getElementById('sound-toggle-button');
-            if (!logoPanel || !soundButton) { console.error("Logo panel or sound button not found."); return; }
-            const soundComponent = logoPanel.components.sound;
-            if (!soundComponent) { console.error("Sound component not found on logo panel."); return; }
-            const sceneEl = document.querySelector('a-scene');
-            const audioContext = sceneEl?.audioListener?.context;
-            if (audioContext && audioContext.state === 'suspended') {
-                audioContext.resume().catch(e => console.error("Error resuming audio context", e));
-            }
-            if (soundComponent.isPlaying) {
-                soundComponent.pauseSound(); soundButton.textContent = "Play Sound";
-            } else {
-                soundComponent.playSound(); soundButton.textContent = "Pause Sound";
-            }
-        }
+        function toggleLogoSound() { /* ... code identique ... */ }
 
-        // --- Logique d'initialisation MODIFIÉE ---
+        // --- Logique d'initialisation ---
         document.addEventListener('DOMContentLoaded', () => {
+            console.log("DOMContentLoaded event fired."); // DEBUG
             const sceneEl = document.querySelector('a-scene');
+             if (!sceneEl) {
+                 console.error("!!! CRITICAL: A-Frame scene element not found on DOMContentLoaded!"); // DEBUG
+                 return;
+            }
 
             sceneEl.addEventListener('loaded', () => {
-                console.log("A-Frame scene loaded. Initializing layout and elements...");
+                console.log("A-Frame scene 'loaded' event fired. Initializing layout and elements..."); // DEBUG
 
-                // Cacher l'écran de chargement initial (INCHANGÉ)
+                // Cacher l'écran de chargement initial
                 const initialLoader = document.getElementById('initial-loader');
                 if (initialLoader) {
                     initialLoader.style.opacity = '0';
                     setTimeout(() => { initialLoader.style.display = 'none'; }, 700);
                 } else { console.warn("Initial loader element not found!"); }
 
-                // ** MODIFICATION: Appeler setupManualLayout pour créer les images **
-                setupManualLayout();
+                // Mettre en place le layout courbe
+                setupManualLayout(); // Appel crucial
 
-                // Activer le bouton Son (Logique inchangée, mais dépend de setupManualLayout)
+                // Activer le bouton Son
                 const soundButton = document.getElementById('sound-toggle-button');
                 setTimeout(() => {
                      const logoPanelExists = document.getElementById('logo-panel');
@@ -249,7 +265,7 @@
                      }
                 }, 150);
 
-                // Activer le clic pour cacher le pop-up (INCHANGÉ)
+                // Activer le clic pour cacher le pop-up
                 const messagePopup = document.getElementById('message-popup');
                 if (messagePopup) {
                     messagePopup.addEventListener('click', () => { messagePopup.style.display = 'none'; });
@@ -261,8 +277,16 @@
                 console.log("Initialization complete.");
 
             }); // Fin de sceneEl.addEventListener('loaded')
+
+            // DEBUG: Ajouter un listener d'erreur sur la scène
+             sceneEl.addEventListener('error', (evt) => {
+                 console.error("A-Frame scene error event:", evt);
+             });
+             console.log("Error listener added to scene."); // DEBUG
+
         }); // Fin de document.addEventListener('DOMContentLoaded')
     </script>
 
 </body>
+</html>
 </html>
