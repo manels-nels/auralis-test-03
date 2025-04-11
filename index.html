@@ -60,15 +60,19 @@
         color: white;
         padding: 20px 30px; /* Padding un peu plus large */
         border-radius: 8px;  /* Arrondi un peu plus marqué */
-        text-align: center;
-        font-size: 1.2em;
+        text-align: left;
+        font-size: 1.1em;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Police plus moderne */
         cursor: pointer;
-        max-width: 80%;
+        max-width: 90%;
         box-shadow: 0 5px 20px rgba(0,0,0,0.4); /* Ombre portée */
         /* Définition de la transition pour l'animation */
         transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out, visibility 0s linear 0.3s;
         /* Note: La transition sur visibility est décalée pour qu'elle devienne visible seulement quand l'opacité augmente */
+        /* --- AJOUTS POUR LE SCROLLING --- */
+        max-height: 75vh;       /* Limite la hauteur à 75% de la hauteur de la fenêtre */
+        overflow-y: auto;       /* Ajoute une barre de défilement vertical SI nécessaire */
+        /* --- FIN AJOUTS --- */
     }
     /* --- Fin du remplacement #message-popup --- */
 
