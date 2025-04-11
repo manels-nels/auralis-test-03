@@ -1,141 +1,45 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <title>Simple Curved Layout Test</title>
+  <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta name="description" content="Minimal A-Frame + AR.js with 3 specifically placed curved images.">
-
-    <!-- A-Frame Core -->
-    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
-    <!-- AR.js for A-Frame -->
-    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.0/aframe/build/aframe-ar.min.js"></script>
-
-    <style>
-        body { margin: 0; overflow: hidden; }
-        /* Optionnel: Loader simple */
-        #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #111; color: white; z-index: 10000; display: flex; justify-content: center; align-items: center; }
-    </style>
-</head>
-
-<body style='margin : 0px; overflow: hidden;'>
-
-    <!-- Loader simple -->
-    <div id="loader">Loading AR...</div>
-
-    <!-- Scène A-Frame AR -->
+    <title>RA avec Cylindre d'Images</title>
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ar.js@3.4.2/aframe/build/aframe-ar.min.js"></script>
+  </head>
+  <body style="margin: 0; overflow: hidden;">
     <a-scene
-        id="ar-scene"
-        embedded
-        arjs='sourceType: webcam; trackingMethod: best; debugUIEnabled: false;'
-        renderer='logarithmicDepthBuffer: true;'
-        vr-mode-ui='enabled: false'>
+      vr-mode-ui="enabled: false"
+      embedded
+      arjs="sourceType: webcam; debugUIEnabled: false;"
+    >
+      <!-- Caméra AR -->
+      <a-camera position="0 0 0" look-controls-enabled="false"></a-camera>
 
-        <!-- Assets : Précharger les 3 images -->
-        <a-assets timeout="30000">
-             <!-- Assure-toi que les chemins sont corrects -->
-             <img id="logoAsset" src="images/logo.jpg" crossOrigin="anonymous">
-             <img id="stageWideAsset" src="images/stage_wide.jpg" crossOrigin="anonymous">
-             <img id="stageduoBlueAsset" src="images/stage_duo_blue.jpg" crossOrigin="anonymous">
-        </a-assets>
+      <!-- Image 1 sur un cylindre -->
+      <a-curvedimage
+        src="#logo"
+        radius="1.5"
+        theta-length="60"
+        height="1"
+        position="-0.5 0 -2"
+        rotation="0 20 0"
+      ></a-curvedimage>
 
-        <!-- Conteneur pour les images courbes (pour appliquer une rotation globale si besoin) -->
-        <a-entity id="curved-images-container" rotation="0 0 0">
-            <!-- Les images seront ajoutées ici par JavaScript -->
-        </a-entity>
+      <!-- Image 2 sur un cylindre -->
+      <a-curvedimage
+        src="#manels"
+        radius="1.5"
+        theta-length="60"
+        height="1"
+        position="0.5 0 -2"
+        rotation="0 -20 0"
+      ></a-curvedimage>
 
-        <!-- Caméra (Simple) -->
-        <a-camera></a-camera>
-
+      <!-- Déclarations des images -->
+      <a-assets>
+        < img id="logo" src="images/logo.jpg">
+        < img id="manels" src="images/manels.jpg">
+      </a-assets>
     </a-scene>
-
-    <!-- Script -->
-    <script>
-        // --- Configuration ---
-        const IMAGE_WIDTH_ON_CYLINDER = 1.8; // Largeur visuelle souhaitée sur la courbe (ajuste)
-        const CYLINDER_RADIUS = 3.5;       // Distance des images (ajuste)
-        const Y_OFFSET_ABOVE = 1.0;        // Décalage vers le haut par rapport au centre (ajuste)
-        const Y_OFFSET_BELOW = -1.0;       // Décalage vers le bas par rapport au centre (ajuste)
-        const BASE_Y_POSITION = 1.6;       // Hauteur du centre du logo (ajuste)
-
-        // --- Données des images (Asset ID et dimensions originales) ---
-        const imagesToDisplay = [
-            // Centre
-            { srcId: 'logoAsset',       yOffset: 0,         originalWidth: 1,   originalHeight: 1   },
-            // Au-dessus
-            { srcId: 'stageWideAsset',  yOffset: Y_OFFSET_ABOVE, originalWidth: 2,   originalHeight: 1.1 },
-            // En dessous
-            { srcId: 'stageduoBlueAsset', yOffset: Y_OFFSET_BELOW, originalWidth: 1.8, originalHeight: 1.1 }
-        ];
-
-            // --- Fonction pour créer UNE image (MODIFIÉE POUR TEST AVEC <a-plane>) ---
-    function createCurvedImage(imgData) { // Gardons le nom pour l'instant
-        const container = document.getElementById('curved-images-container');
-        if (!container) { console.error("Container not found"); return; }
-
-        const imgAsset = document.getElementById(imgData.srcId);
-        if (!imgAsset || !imgData.originalWidth || !imgData.originalHeight) {
-            console.warn(`Asset or dimensions missing for ${imgData.srcId}`);
-            return;
-        }
-
-        // Créer un a-plane à la place
-        const imagePlane = document.createElement('a-plane'); // <--- CHANGEMENT ICI
-
-        const aspect = imgData.originalWidth / imgData.originalHeight;
-        // Utiliser la largeur fixe pour le plan aussi
-        const planeWidth = IMAGE_WIDTH_ON_CYLINDER; // Réutilisation de la constante
-        const planeHeight = planeWidth / aspect;
-
-        // Vérif validité simple
-        if (isNaN(planeWidth) || planeWidth <= 0 || isNaN(planeHeight) || planeHeight <= 0) {
-             console.error(`Invalid geometry for ${imgData.srcId}`); return;
-        }
-
-        imagePlane.setAttribute('src', `#${imgData.srcId}`);
-        imagePlane.setAttribute('width', planeWidth);   // <--- CHANGEMENT ICI
-        imagePlane.setAttribute('height', planeHeight); // <--- CHANGEMENT ICI
-        imagePlane.setAttribute('material', 'shader: flat; transparent: true; side: double;');
-
-        // Position Y spécifique
-        const yPos = BASE_Y_POSITION + imgData.yOffset;
-        // Position X et Z : On va les placer *devant* la caméra à la distance définie par CYLINDER_RADIUS
-        // ATTENTION: La position d'un plan est son centre.
-        const zPos = -CYLINDER_RADIUS; // Place le plan à la distance du rayon, devant (axe Z négatif)
-        imagePlane.setAttribute('position', `0 ${yPos} ${zPos}`); // <--- CHANGEMENT ICI (X=0, Z=-Rayon)
-
-        // Rotation (Pas de rotation nécessaire pour l'instant)
-        imagePlane.setAttribute('rotation', '0 0 0');
-
-        // (Ajouter data-interactive et listeners si besoin pour clics)
-        // imagePlane.setAttribute('data-interactive', '');
-
-        container.appendChild(imagePlane); // Ajoute le plan
-        console.log(`[PLANE TEST] Created plane for ${imgData.srcId} at Y=${yPos}, Z=${zPos}`); // Log modifié
-    }
-        // --- Initialisation ---
-        window.addEventListener('load', () => { // Utilise 'load' pour attendre assets
-            const sceneEl = document.querySelector('a-scene');
-            if (sceneEl.hasLoaded) {
-                initializeLayout();
-            } else {
-                sceneEl.addEventListener('loaded', initializeLayout);
-            }
-        });
-
-        function initializeLayout() {
-             console.log("Scene loaded, creating layout...");
-             // Cacher loader simple
-             const loader = document.getElementById('loader');
-             if(loader) loader.style.display = 'none';
-
-             // Créer les images
-             imagesToDisplay.forEach(imgData => {
-                 createCurvedImage(imgData);
-             });
-             console.log("Layout creation finished.");
-        }
-    </script>
-
-</body>
+  </body>
 </html>
