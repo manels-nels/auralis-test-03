@@ -267,13 +267,12 @@
         </a-gltf-model>
         
         <!-- Caméra avec raycaster pour détecter les clics -->
-            <a-camera
+                <a-camera
         id="camera"
-        
-        raycaster="objects: [data-interactive]; useWorldCoordinates: true;" 
+        cursor="rayOrigin: mouse; fuse: false;" 
+        raycaster="objects: [data-interactive]; useWorldCoordinates: true; showLine: true;" 
         >
     </a-camera>
-
     </a-scene>
 
     <!-- Script pour gérer le clic ET le son -->
