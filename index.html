@@ -506,57 +506,9 @@
 
             console.log("Initialization complete.");
 
-        }); // Fin de sceneEl.addEventListener('loaded')
-    }); // Fin de document.addEventListener('DOMContentLoaded')
-                    // --- Fin de la modification de l'écouteur du logo ---
+          });
 
-                    // Écouteur pour le clic sur l'image wangmeng -> bye (INCHANGÉ)
-                    clickableWangMeng.addEventListener('click', () => {
-                        console.log("Click detected on the Wang Meng image!");
-                        // AJOUT : Arrêter la frappe du logo si elle est en cours
-                        if (window.typingIntervalId) {
-                           clearInterval(window.typingIntervalId);
-                           window.typingIntervalId = null;
-                           console.log("Typing effect interrupted by clicking other image.");
-                        }
-                        messagePopup.textContent = "bye";
-                        messagePopup.classList.add('visible'); // Afficher le popup pour 'bye'
-                    });
-
-                    // MODIFIER cet écouteur pour le clic sur la div pop-up
-                    messagePopup.addEventListener('click', () => {
-                        // AJOUT DEBUT: Arrêter la frappe si elle est en cours
-                        if (window.typingIntervalId) {
-                            clearInterval(window.typingIntervalId);
-                            window.typingIntervalId = null;
-                            console.log("Typing effect interrupted by closing popup.");
-                        }
-                        // AJOUT FIN
-
-                        console.log("Popup clicked, hiding.");
-                        messagePopup.classList.remove('visible'); // Retire la classe pour animer la disparition (INCHANGÉ)
-                    });
-                    // --- Fin de la modification de l'écouteur du popup ---
-
-                     console.log("Click listeners added for both images and popup.");
-
-                
-
-                 
-
-                // Activer le bouton Son (vérification séparée car il dépend juste du logo - INCHANGÉ)
-                const logoElementExists = document.getElementById('clickable-logo');
-                if (soundButton && logoElementExists) {
-                    console.log("Making sound toggle button visible and attaching listener.");
-                    soundButton.style.display = 'block'; // Rendre le bouton visible
-                    soundButton.addEventListener('click', toggleLogoSound); // Attacher la fonction de contrôle
-                } else {
-                    if (!soundButton) console.error("Sound toggle button element not found!");
-                    if (!logoElementExists) console.error("Logo element not found, cannot activate sound button!");
-                }
-
-            }); // Fin de sceneEl.addEventListener('loaded')
-        }); // Fin de document.addEventListener('DOMContentLoaded')
+            });
     </script>
 
 </body>
