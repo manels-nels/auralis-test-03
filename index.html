@@ -326,15 +326,13 @@
                     console.log("Logo, WangMeng, and popup elements found for click listeners.");
 
                     
-                                        // Écouteur pour le clic sur l'image logo -> bonjour
+                                                        // Écouteur pour le clic sur l'image logo -> bonjour
                 clickableLogo.addEventListener('click', () => {
                     console.log("Click detected on the logo image!");
-                    messagePopup.textContent = "Imagine a space where sound moves like liquid, where music is not confined to speakers but swirls around you, weaving an intricate web of vibration and light
-";
+                    messagePopup.textContent = "Imagine a space where sound moves like liquid, where music is not confined to speakers but swirls around you, weaving an intricate web of vibration and light";
                     // messagePopup.style.display = 'block'; // Ancienne ligne
                     messagePopup.classList.add('visible'); // MODIFICATION ICI: Ajoute la classe pour animer
                 });
-
                     // Écouteur pour le clic sur l'image wangmeng -> bye
                     clickableWangMeng.addEventListener('click', () => {
                         console.log("Click detected on the Wang Meng image!");
