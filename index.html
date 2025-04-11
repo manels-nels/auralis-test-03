@@ -25,6 +25,7 @@
             display: flex; /* Utilise flexbox pour centrer */
             justify-content: center;
             align-items: center;
+            flex-direction: column; /* <-- AJOUT ICI: pour empiler spinner et texte */
             color: white;
             font-size: 1.5em;
             font-family: sans-serif;
@@ -35,6 +36,27 @@
             transition: opacity 0.7s ease-out;
         }
         /* --- Fin Style chargement initial --- */
+
+        /* --- AJOUT DEBUT : Style et animation pour le spinner --- */
+    .loader-spinner {
+        border: 5px solid rgba(255, 255, 255, 0.3); /* Bordure grise semi-transparente */
+        border-top-color: #FFFFFF; /* Couleur blanche pour la partie qui tourne */
+        border-radius: 50%; /* Pour le rendre circulaire */
+        width: 50px;  /* Taille du spinner */
+        height: 50px; /* Taille du spinner */
+        margin-bottom: 25px; /* Espace entre le spinner et le texte */
+        animation: spin 1s linear infinite; /* Applique l'animation */
+    }
+
+    @keyframes spin {
+        from {
+            transform: rotate(0deg);
+        }
+        to {
+            transform: rotate(360deg);
+        }
+    }
+    /* --- AJOUT FIN --- */
         
         /* Style pour le corps et le message pop-up */
         body { margin: 0; overflow: hidden; font-family: sans-serif; }
@@ -114,6 +136,10 @@
 
     <!-- --- NOUVEAU : Écran de chargement initial --- -->
     <div id="initial-loader">
+
+        <!-- AJOUT DEBUT: Élément pour le spinner -->
+    <div class="loader-spinner"></div>
+    <!-- AJOUT FIN -->
         <div>Auralis experience Loading,<br>be patient...</div>
     </div>
     <!-- --- Fin Écran de chargement initial --- -->
