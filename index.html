@@ -1,46 +1,352 @@
 <!DOCTYPE html>
 <html>
-  <head>
+<head>
+    <title>AURALIS Experience </title> <!-- Titre mis à jour -->
     <meta charset="utf-8">
-    <title>RA - Cylindre d'Images</title>
-    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/ar.js@3.4.2/aframe/build/aframe-ar.min.js"></script>
-  </head>
-  <body style="margin: 0; overflow: hidden;">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="description" content="A-Frame + AR.js example with clickable images and a sound toggle button."> <!-- Description mise à jour -->
+
+    <!-- A-Frame Core -->
+    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+    <!-- AR.js for A-Frame -->
+    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.0/aframe/build/aframe-ar.min.js"></script>
+
+    <style>
+        
+                /* --- NOUVEAU : Style pour l'écran de chargement initial --- */
+        #initial-loader {
+            position: fixed; /* Reste fixe même si la page défile (peu probable ici) */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #1a1a2a; /* Fond sombre, cohérent avec tes panneaux */
+            z-index: 10000; /* Au-dessus de tout, y compris le loader AR.js */
+            display: flex; /* Utilise flexbox pour centrer */
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 1.5em;
+            font-family: sans-serif;
+            text-align: center;
+            line-height: 1.4; /* Espacement pour le texte sur deux lignes */
+            /* Transitions pour un fondu enchaîné (optionnel) */
+            opacity: 1;
+            transition: opacity 0.7s ease-out;
+        }
+        /* --- Fin Style chargement initial --- */
+        
+        /* Style pour le corps et le message pop-up */
+        body { margin: 0; overflow: hidden; font-family: sans-serif; }
+
+
+          
+        
+    
+
+        
+        #message-popup {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10; /* Au-dessus de la scène et du bouton son */
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 1.2em;
+            display: none; /* Caché par défaut */
+            cursor: pointer; /* Indique qu'il est cliquable pour fermer */
+        }
+        /* NOUVEAU: Style pour le bouton Son */
+        #sound-toggle-button {
+            position: absolute;
+            bottom: 20px; /* Position en bas */
+            left: 20px;   /* Position à gauche */
+            z-index: 9;   /* Légèrement sous le popup mais au-dessus de la scène */
+            padding: 10px 15px;
+            font-size: 1em;
+            font-family: sans-serif;
+            color: #333;
+            background-color: rgba(255, 255, 255, 0.8);
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            cursor: pointer;
+            display: none; /* Caché par défaut, affiché via JS */
+        }
+        #sound-toggle-button:hover {
+            background-color: rgba(255, 255, 255, 1);
+        }
+    </style>
+</head>
+
+<body style='margin : 0px; overflow: hidden;'>
+
+    <!-- --- NOUVEAU : Écran de chargement initial --- -->
+    <div id="initial-loader">
+        <div>Auralis experience Loading,<br>be patient...</div>
+    </div>
+    <!-- --- Fin Écran de chargement initial --- -->
+
+    <!-- Div HTML pour afficher le message (initialement cachée) -->
+    <div id="message-popup"></div>
+
+    <!-- NOUVEAU: Bouton pour contrôler le son du logo -->
+    <button id="sound-toggle-button">Play Sound</button>
+
+    <!-- Scène A-Frame AR -->
     <a-scene
-      embedded
-      arjs="sourceType: webcam; debugUIEnabled: false;"
-    >
-      <!-- Assets -->
-      <a-assets>
-        < img id="logo" src="images/logo.jpg">
-        < img id="manels" src="images/manels.jpg">
-      </a-assets>
+        id="ar-scene"
+        embedded
+        arjs='sourceType: webcam; trackingMethod: best; debugUIEnabled: false;'
+        renderer='logarithmicDepthBuffer: true;'
+        vr-mode-ui='enabled: false'>
 
-      <!-- Caméra -->
-      <a-camera position="0 1.6 0"></a-camera>
+        <!-- Assets : Précharger les images ET le son -->
+        <a-assets timeout="30000">
+             <!-- Assure-toi que les chemins vers tes images sont corrects -->
+             <img id="logoAsset" src="images/logo.jpg" crossOrigin="anonymous">
+             <img id="wangMengAsset" src="images/wang_meng.jpg" crossOrigin="anonymous">
+            <img id="yumiaoAsset" src="images/yu_miao.jpg" crossOrigin="anonymous">
+             <img id="manelsAsset" src="images/manels.jpg" crossOrigin="anonymous">
+             <img id="stageWideAsset" src="images/stage_wide.jpg" crossOrigin="anonymous">
+             <img id="stageduoBlueAsset" src="images/stage_duo_blue.jpg" crossOrigin="anonymous">
+            <img id="stageduoDarkAsset" src="images/stage_duo_dark.jpg" crossOrigin="anonymous">
+             <!-- Assure-toi que le chemin vers ton audio est correct -->
+             <audio id="logoAudio" src="audio/auralis.mp3" preload="auto" crossOrigin="anonymous"></audio>
 
-      <!-- Cylindre image 1 -->
-      <a-cylinder
-        position="-1 1 -3"
-        radius="1"
-        height="2"
-        theta-length="60"
-        open-ended="true"
-        rotation="0 90 0"
-        material="src: #logo; side: double; repeat: 1 1"
-      ></a-cylinder>
+            <a-asset-item id="jellyfishModel" src="models/meduse.glb" crossOrigin="anonymous"></a-asset-item>
+        </a-assets>
 
-      <!-- Cylindre image 2 -->
-      <a-cylinder
-        position="1 1 -3"
-        radius="1"
-        height="2"
-        theta-length="60"
-        open-ended="true"
-        rotation="0 -90 0"
-        material="src: #manels; side: double; repeat: 1 1"
-      ></a-cylinder>
+        <!-- L'image cliquable en RA (logo) AVEC SON (sans autoplay) -->
+        <a-image
+            id="clickable-logo"
+            src="#logoAsset"
+            position="0 1.5 -2.7"  /* Centre */
+            width="1"
+            height="1"           /* Ajuste si besoin */
+            data-interactive
+            sound="src: #logoAudio; loop: true; volume: 0.8; positional: true" <!-- AUTOPLAY SUPPRIMÉ -->
+            >
+        </a-image>
+
+        <!-- La deuxième image cliquable (wangmeng) SANS SON -->
+        <a-image
+            id="clickable-wangmeng"
+            src="#wangMengAsset"
+            position="1.5 1.5 -2.5" /* Droite */
+            width="1"
+            height="1.2"           /* Ajuste si besoin */
+            data-interactive
+            >
+        </a-image>
+
+        <a-image
+            id="clickable-yumiao"
+            src="#yumiaoAsset"
+            position="-1.5 1.5 -3" /* Droite */
+            width="1.5"
+            height="1"           /* Ajuste si besoin */
+            data-interactive
+            >
+        </a-image>
+
+        <a-image
+            id="clickable-manels"
+            src="#manelsAsset"
+            position="1.5 3 -3.2" /* Droite */
+            width="1"
+            height="1.25"           /* Ajuste si besoin */
+            data-interactive
+            >
+        </a-image>
+
+        <a-image
+            id="clickable-stagewide"
+            src="#stageWideAsset"
+            position="-1.5 0 -2.8" /* Droite */
+            width="2"
+            height="1.1"           /* Ajuste si besoin */
+            data-interactive
+            >
+        </a-image>
+
+        <a-image
+            id="clickable-stageduoblue"
+            src="#stageduoBlueAsset"
+            position="0 3 -3" /* Droite */
+            width="1.8"
+            height="1.1"           /* Ajuste si besoin */
+            data-interactive
+            >
+        </a-image>
+
+        <a-image
+            id="clickable-stageduodark"
+            src="#stageduoDarkAsset"
+            position="1 0 -2.5" /* Droite */
+            width="1.8"
+            height="1.1"           /* Ajuste si besoin */
+            data-interactive
+            >
+        </a-image>
+
+        <!-- Méduse 3D Animée -->
+        <a-gltf-model id="jellyfish"
+                      src="#jellyfishModel"
+                      position="-1 2 -2" scale="0.3 0.3 0.3" rotation="0 0 0"
+                      animation__pos="property: position; from: -1 2 -2; to: 1 1.2 -1.5; dir: alternate; dur: 12000; easing: easeInOutSine; loop: true;"
+                      animation__rot="property: rotation; to: 0 360 0; dur: 20000; easing: linear; loop: true;"
+                      animation-mixer="clip: *; loop: repeat">
+        </a-gltf-model>
+
+
+        <!-- Méduse 3D Animée -->
+        <a-gltf-model id="jellyfish"
+                      src="#jellyfishModel"
+                      position="-1 2 -5" scale="0.2 0.2 0.2" rotation="0 0 0"
+                      animation__pos="property: position; from: 1 2 -4; to: -1 -1.2 -4; dir: alternate; dur: 18000; easing: easeInOutSine; loop: true;"
+                      animation__rot="property: rotation; to: 0 360 0; dur: 20000; easing: linear; loop: true;"
+                      animation-mixer="clip: *; loop: repeat">
+        </a-gltf-model>
+        
+        <!-- Caméra avec raycaster pour détecter les clics -->
+        <a-camera
+            cursor="rayOrigin: mouse; fuse: false;"
+            raycaster="objects: [data-interactive];" /* Ne tester que les objets avec data-interactive */
+            >
+        </a-camera>
+
     </a-scene>
-  </body>
+
+    <!-- Script pour gérer le clic ET le son -->
+    <script>
+        // Fonction pour activer/désactiver le son du logo
+        function toggleLogoSound() {
+            const logoElement = document.getElementById('clickable-logo'); // L'élément a-image
+            const soundButton = document.getElementById('sound-toggle-button');
+
+            if (!logoElement || !soundButton) {
+                console.error("Logo element or sound button not found.");
+                return;
+            }
+            // Accéder au composant son attaché à l'élément
+            const soundComponent = logoElement.components.sound;
+            if (!soundComponent) {
+                 console.error("Sound component not found on logo element.");
+                 return;
+            }
+
+            // Gérer le contexte audio pour mobile (important au premier clic)
+            const sceneEl = document.querySelector('a-scene');
+            const audioContext = sceneEl?.audioListener?.context;
+            if (audioContext && audioContext.state === 'suspended') {
+                console.log("AudioContext suspended, resuming...");
+                audioContext.resume().catch(e => console.error("Error resuming audio context", e));
+            }
+
+            // Basculer Play/Pause
+            if (soundComponent.isPlaying) {
+                console.log("Pausing logo sound.");
+                soundComponent.pauseSound();
+                soundButton.textContent = "Play Sound";
+            } else {
+                console.log("Playing logo sound.");
+                soundComponent.playSound();
+                soundButton.textContent = "Pause Sound";
+            }
+        }
+
+        // Attendre que la scène soit chargée pour être sûr que les éléments existent
+        document.addEventListener('DOMContentLoaded', () => {
+            const sceneEl = document.querySelector('a-scene');
+
+            sceneEl.addEventListener('loaded', () => {
+                console.log("A-Frame scene loaded.");
+
+
+
+                                // --- DEBUT AJOUT : Cacher l'écran de chargement initial ---
+                const initialLoader = document.getElementById('initial-loader');
+                if (initialLoader) {
+                    console.log("Hiding initial page loader.");
+                    // Option 1: Cacher directement
+                    // initialLoader.style.display = 'none';
+
+                    // Option 2: Fondu enchaîné (plus joli si la transition CSS est définie)
+                    initialLoader.style.opacity = '0';
+                    // Attendre la fin de la transition avant de supprimer/cacher complètement
+                    setTimeout(() => {
+                        initialLoader.style.display = 'none';
+                    }, 700); // Doit correspondre à la durée de la transition CSS (0.7s = 700ms)
+
+                } else {
+                    console.warn("Initial loader element not found!");
+                }
+                // --- FIN AJOUT ---
+
+                // Le reste du code de l'écouteur 'loaded' suit ici...
+                // (Récupérer les éléments, ajouter les listeners, activer bouton son, créer méduses)
+
+                
+
+                // Récupérer tous les éléments nécessaires
+                const clickableLogo = document.getElementById('clickable-logo');
+                const clickableWangMeng = document.getElementById('clickable-wangmeng');
+                const messagePopup = document.getElementById('message-popup');
+                const soundButton = document.getElementById('sound-toggle-button'); // Aussi besoin ici pour la vérification
+
+                // Vérification de l'existence des éléments pour les clics image/popup
+                if (clickableLogo && clickableWangMeng && messagePopup) {
+                    console.log("Logo, WangMeng, and popup elements found for click listeners.");
+
+                    // Écouteur pour le clic sur l'image logo -> bonjour
+                    clickableLogo.addEventListener('click', () => {
+                        console.log("Click detected on the logo image!");
+                        messagePopup.textContent = "Imagine a space where sound moves like liquid, where music is not confined to speakers but swirls around you, weaving an intricate web of vibration and light";
+                        messagePopup.style.display = 'block';
+                    });
+
+                    // Écouteur pour le clic sur l'image wangmeng -> bye
+                    clickableWangMeng.addEventListener('click', () => {
+                        console.log("Click detected on the Wang Meng image!");
+                        messagePopup.textContent = "bye";
+                        messagePopup.style.display = 'block';
+                    });
+
+                    // Écouteur pour le clic sur la div pop-up pour la cacher
+                    messagePopup.addEventListener('click', () => {
+                        console.log("Popup clicked, hiding.");
+                        messagePopup.style.display = 'none';
+                    });
+
+                     console.log("Click listeners added for both images and popup.");
+
+                } else {
+                    // Log d'erreur détaillé
+                    if (!clickableLogo) console.error("Clickable logo element (#clickable-logo) not found!");
+                    if (!clickableWangMeng) console.error("Clickable Wang Meng element (#clickable-wangmeng) not found!");
+                    if (!messagePopup) console.error("Message popup element (#message-popup) not found!");
+                }
+
+                 
+
+                // Activer le bouton Son (vérification séparée car il dépend juste du logo)
+                const logoElementExists = document.getElementById('clickable-logo');
+                if (soundButton && logoElementExists) {
+                    console.log("Making sound toggle button visible and attaching listener.");
+                    soundButton.style.display = 'block'; // Rendre le bouton visible
+                    soundButton.addEventListener('click', toggleLogoSound); // Attacher la fonction de contrôle
+                } else {
+                    if (!soundButton) console.error("Sound toggle button element not found!");
+                    if (!logoElementExists) console.error("Logo element not found, cannot activate sound button!");
+                }
+
+            }); // Fin de sceneEl.addEventListener('loaded')
+        }); // Fin de document.addEventListener('DOMContentLoaded')
+    </script>
+
+</body>
 </html>
