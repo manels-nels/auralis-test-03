@@ -181,17 +181,11 @@
         position="0 1.5 -2.7"
         width="1"
         height="1"
-        data-interactive  
+          
         sound="src: #logoAudio; loop: true; volume: 0.8; positional: true"
         >
         
-        <a-plane
-             width="1"  
-             height="1" 
-             position="0 0 0.05" 
-             material="visible: false;" 
-             >
-        </a-plane>
+        
         <!-- AJOUT FIN -->
     </a-image> <!-- Balise fermante ajoutée -->
 
@@ -202,7 +196,6 @@
             position="1.5 1.5 -2.5" 
             width="1"
             height="1.2"           
-            data-interactive
             >
         </a-image>
 
@@ -255,6 +248,26 @@
             data-interactive
             >
         </a-image>
+
+        <a-plane
+        id="logo-collider"        
+        data-target="#clickable-logo" 
+        position="0 1.5 -2.7"     
+        width="1"                 
+        height="1"                
+        material="visible: false;"
+        data-interactive          
+        ></a-plane>
+
+    <a-plane
+        id="wangmeng-collider"
+        data-target="#clickable-wangmeng"
+        position="1.5 1.5 -2.5"    
+        width="1"                 
+        height="1.2"              
+        material="visible: false;"
+        data-interactive
+        ></a-plane>
 
         <!-- Méduse 3D Animée -->
         <a-gltf-model id="jellyfish"
@@ -322,126 +335,85 @@
             }
         }
 
-        // Attendre que la scène soit chargée pour être sûr que les éléments existent
-        document.addEventListener('DOMContentLoaded', () => {
-            const sceneEl = document.querySelector('a-scene');
+        // --- Logique d'initialisation MODIFIÉE ---
+    document.addEventListener('DOMContentLoaded', () => {
+        const sceneEl = document.querySelector('a-scene');
 
-            sceneEl.addEventListener('loaded', () => {
-                console.log("A-Frame scene loaded.");
+        sceneEl.addEventListener('loaded', () => {
+            console.log("A-Frame scene loaded. Initializing interactions...");
+
+            // Cacher l'écran de chargement initial (INCHANGÉ)
+            const initialLoader = document.getElementById('initial-loader');
+            if (initialLoader) {
+                initialLoader.style.opacity = '0';
+                setTimeout(() => { initialLoader.style.display = 'none'; }, 700);
+            } else { console.warn("Initial loader element not found!"); }
 
 
+            // --- MODIFICATION DEBUT: Ajouter les listeners aux COLLIDERS ---
+            const messagePopup = document.getElementById('message-popup');
+            const colliders = document.querySelectorAll('[data-target]'); // Sélectionne tous les colliders
 
-                                // --- DEBUT AJOUT : Cacher l'écran de chargement initial ---
-                const initialLoader = document.getElementById('initial-loader');
-                if (initialLoader) {
-                    console.log("Hiding initial page loader.");
-                    // Option 1: Cacher directement
-                    // initialLoader.style.display = 'none';
+            if (messagePopup && colliders.length > 0) {
+                console.log(`Found ${colliders.length} colliders. Adding listeners...`);
 
-                    // Option 2: Fondu enchaîné (plus joli si la transition CSS est définie)
-                    initialLoader.style.opacity = '0';
-                    // Attendre la fin de la transition avant de supprimer/cacher complètement
-                    setTimeout(() => {
-                        initialLoader.style.display = 'none';
-                    }, 700); // Doit correspondre à la durée de la transition CSS (0.7s = 700ms)
+                colliders.forEach(collider => {
+                    collider.addEventListener('click', (event) => {
+                        const targetId = event.target.getAttribute('data-target'); // Récupère l'ID de l'image cible (#clickable-logo, etc.)
+                        console.log(`Collider clicked! Target: ${targetId}`);
 
-                } else {
-                    console.warn("Initial loader element not found!");
-                }
-                // --- FIN AJOUT ---
-
-                // Le reste du code de l'écouteur 'loaded' suit ici...
-                // (Récupérer les éléments, ajouter les listeners, activer bouton son, créer méduses)
-
-                
-
-                // Récupérer tous les éléments nécessaires
-                const clickableLogo = document.getElementById('clickable-logo');
-                const clickableWangMeng = document.getElementById('clickable-wangmeng');
-                const messagePopup = document.getElementById('message-popup');
-                const soundButton = document.getElementById('sound-toggle-button'); // Aussi besoin ici pour la vérification
-
-                // Vérification de l'existence des éléments pour les clics image/popup
-                if (clickableLogo && clickableWangMeng && messagePopup) {
-                    console.log("Logo, WangMeng, and popup elements found for click listeners.");
-
-                    
-                                                        // Écouteur pour le clic sur l'image logo -> bonjour
-                                   // MODIFIER cet écouteur pour le clic sur l'image logo -> effet machine à écrire
-                    clickableLogo.addEventListener('click', () => {
-                        console.log("Click detected on the logo image! Starting typing effect...");
-                        const messagePopup = document.getElementById('message-popup'); // Récupère le popup ici
-                        const fullText = "Imagine a space where sound moves like liquid, where music is not confined to speakers but swirls around you, weaving an intricate web of vibration and light. Here the past and the Future collide, ancient strings resonate against modern frequencies, and the visual pulse in perfect harmony with a never-shifting soundscape, Welcome to AURALIS";
-                        let charIndex = 0; // Index pour suivre la lettre actuelle
-                        const typingSpeed = 70; // Délai en ms entre chaque lettre (ajuste si besoin)
-
-                        if (messagePopup) {
-                            // 1. Arrêter tout intervalle précédent et vider le texte
-                            if (window.typingIntervalId) {
-                                clearInterval(window.typingIntervalId);
-                            }
-                            messagePopup.textContent = ''; // Vide le texte
-                            messagePopup.scrollTop = 0; // Remet le scroll au début si nécessaire
-
-                            // 2. Afficher le conteneur (avec l'animation CSS)
-                            messagePopup.classList.add('visible');
-
-                            // 3. Démarrer le nouvel intervalle pour ajouter les lettres
-                            window.typingIntervalId = setInterval(() => {
-                                if (charIndex < fullText.length) {
-                                    messagePopup.textContent += fullText.charAt(charIndex);
-                                    charIndex++;
-                                    // Optionnel: Scroller vers le bas pendant la frappe si le texte dépasse
-                                    messagePopup.scrollTop = messagePopup.scrollHeight;
-                                } else {
-                                    clearInterval(window.typingIntervalId);
-                                    window.typingIntervalId = null;
-                                    console.log("Typing effect finished.");
-                                }
-                            }, typingSpeed);
-
-                        } else {
-                            console.error("Message popup element (#message-popup) not found!");
-                        }
-                    });
-                    // --- Fin de la modification de l'écouteur du logo ---
-
-                    // Écouteur pour le clic sur l'image wangmeng -> bye (INCHANGÉ)
-                    clickableWangMeng.addEventListener('click', () => {
-                        console.log("Click detected on the Wang Meng image!");
-                        // AJOUT : Arrêter la frappe du logo si elle est en cours
-                        if (window.typingIntervalId) {
-                           clearInterval(window.typingIntervalId);
-                           window.typingIntervalId = null;
-                           console.log("Typing effect interrupted by clicking other image.");
-                        }
-                        messagePopup.textContent = "bye";
-                        messagePopup.classList.add('visible'); // Afficher le popup pour 'bye'
-                    });
-
-                    // MODIFIER cet écouteur pour le clic sur la div pop-up
-                    messagePopup.addEventListener('click', () => {
-                        // AJOUT DEBUT: Arrêter la frappe si elle est en cours
+                        // Arrêter la frappe si elle est en cours
                         if (window.typingIntervalId) {
                             clearInterval(window.typingIntervalId);
                             window.typingIntervalId = null;
-                            console.log("Typing effect interrupted by closing popup.");
+                            console.log("Typing effect interrupted.");
                         }
-                        // AJOUT FIN
 
-                        console.log("Popup clicked, hiding.");
-                        messagePopup.classList.remove('visible'); // Retire la classe pour animer la disparition (INCHANGÉ)
+                        // Définir le texte basé sur la cible cliquée
+                        let textToShow = "";
+                        if (targetId === '#clickable-logo') {
+                            textToShow = "Imagine a space where sound moves like liquid, where music is not confined to speakers but swirls around you, weaving an intricate web of vibration and light. Here the past and the Future collide, ancient strings resonate against modern frequencies, and the visual pulse in perfect harmony with a never-shifting soundscape, Welcome to AURALIS";
+                            // Démarre l'effet machine à écrire UNIQUEMENT pour le logo
+                            startTypingEffect(messagePopup, textToShow); // Appelle une fonction séparée (voir ci-dessous)
+                        } else if (targetId === '#clickable-wangmeng') {
+                            textToShow = "bye";
+                            messagePopup.textContent = textToShow; // Affichage direct pour les autres
+                            messagePopup.classList.add('visible');
+                        } else if (targetId === '#clickable-yumiao') {
+                            textToShow = "Texte pour Yumiao";
+                            messagePopup.textContent = textToShow;
+                            messagePopup.classList.add('visible');
+                        }
+                        // Ajoutez d'autres 'else if' pour les autres data-target
+                        // else if (targetId === '#clickable-manels') { ... }
+                        else {
+                            console.warn(`No specific text defined for target: ${targetId}`);
+                            messagePopup.textContent = `Clicked on ${targetId}`; // Message par défaut
+                            messagePopup.classList.add('visible');
+                        }
+
                     });
-                    // --- Fin de la modification de l'écouteur du popup ---
+                });
 
-                     console.log("Click listeners added for both images and popup.");
+                // Écouteur pour cacher le popup (INCHANGÉ DANS SA LOGIQUE)
+                messagePopup.addEventListener('click', () => {
+                     // Arrêter la frappe si elle est en cours
+                    if (window.typingIntervalId) {
+                        clearInterval(window.typingIntervalId);
+                        window.typingIntervalId = null;
+                        console.log("Typing effect interrupted by closing popup.");
+                    }
+                    console.log("Popup clicked, hiding.");
+                    messagePopup.classList.remove('visible');
+                });
 
-                } else {
-                    // Log d'erreur détaillé (INCHANGÉ)
-                    if (!clickableLogo) console.error("Clickable logo element (#clickable-logo) not found!");
-                    if (!clickableWangMeng) console.error("Clickable Wang Meng element (#clickable-wangmeng) not found!");
-                    if (!messagePopup) console.error("Message popup element (#message-popup) not found!");
-                }
+                console.log("Click listeners added to colliders and popup.");
+
+            } else {
+                if (!messagePopup) console.error("Message popup element not found!");
+                if (colliders.length === 0) console.warn("No collider elements found with [data-target] attribute.");
+            }
+            // --- MODIFICATION FIN ---
 
                  
 
