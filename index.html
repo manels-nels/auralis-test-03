@@ -304,26 +304,30 @@
         }
         // --- FIN Fonction Typing Effect ---
 
-        // --- Logique d'initialisation MODIFIÉE ---
-        document.addEventListener('DOMContentLoaded', () => {
-            const sceneEl = document.querySelector('a-scene');
+            // --- Logique d'initialisation MODIFIÉE ---
+    document.addEventListener('DOMContentLoaded', () => {
+        const sceneEl = document.querySelector('a-scene');
 
-            sceneEl.addEventListener('loaded', () => {
-                console.log("A-Frame scene loaded. Initializing interactions...");
+        sceneEl.addEventListener('loaded', () => {
+            console.log("A-Frame scene loaded. Waiting a bit before initializing interactions...");
 
-                // Cacher l'écran de chargement initial
-                const initialLoader = document.getElementById('initial-loader');
-                if (initialLoader) {
-                    initialLoader.style.opacity = '0';
-                    setTimeout(() => { initialLoader.style.display = 'none'; }, 700);
-                } else { console.warn("Initial loader element not found!"); }
+            // Cacher l'écran de chargement initial (INCHANGÉ)
+            const initialLoader = document.getElementById('initial-loader');
+            if (initialLoader) {
+                initialLoader.style.opacity = '0';
+                setTimeout(() => { initialLoader.style.display = 'none'; }, 700);
+            } else { console.warn("Initial loader element not found!"); }
+
+            // --- AJOUT: setTimeout pour décaler l'initialisation des interactions ---
+            setTimeout(() => {
+                console.log("Delayed initialization: Adding listeners and activating buttons...");
 
                 // --- Listener de clic sur le curseur/caméra ---
                 const cameraEl = document.getElementById('camera');
                 const messagePopup = document.getElementById('message-popup');
 
                 if (cameraEl && messagePopup) {
-                    console.log("Adding click listener to camera cursor.");
+                    console.log("Adding click listener to camera cursor (delayed).");
                     cameraEl.addEventListener('click', (event) => {
                         const clickedEl = event.detail.intersectedEl;
                         if (clickedEl && clickedEl.hasAttribute('data-interactive')) {
@@ -333,16 +337,15 @@
                             let textToShow = "";
                             if (clickedEl.id === 'logo-collider') {
                                 textToShow = "Imagine a space where sound moves like liquid, where music is not confined to speakers but swirls around you, weaving an intricate web of vibration and light. Here the past and the Future collide, ancient strings resonate against modern frequencies, and the visual pulse in perfect harmony with a never-shifting soundscape, Welcome to AURALIS";
-                                startTypingEffect(messagePopup, textToShow); // Appel de la fonction séparée
+                                startTypingEffect(messagePopup, textToShow);
                             } else if (clickedEl.id === 'wangmeng-collider') {
                                 textToShow = "bye";
                                 messagePopup.textContent = textToShow;
                                 messagePopup.classList.add('visible');
                             }
-                            // Ajoutez d'autres 'else if (clickedEl.id === '...-collider')' ici
+                            // Ajoutez d'autres 'else if' ici
                             else {
                                 console.warn(`Clicked on unhandled interactive element: #${clickedEl.id}`);
-                                // Optionnel: return; pour ne rien afficher
                                 messagePopup.textContent = `Clicked on ${clickedEl.id}`;
                                 messagePopup.classList.add('visible');
                             }
@@ -356,33 +359,42 @@
                 }
                 // --- FIN Listener Caméra ---
 
-                // Écouteur pour cacher le popup (légèrement modifié pour vérifier la cible)
+                // Écouteur pour cacher le popup (aussi décalé)
                 if (messagePopup) {
                     messagePopup.addEventListener('click', (event) => {
-                        if (event.target !== messagePopup) { return; } // Ne ferme que si on clique sur le fond
+                        if (event.target !== messagePopup) { return; }
                         if (window.typingIntervalId) { clearInterval(window.typingIntervalId); window.typingIntervalId = null; console.log("Typing effect interrupted by closing popup."); }
                         console.log("Popup clicked directly, hiding.");
                         messagePopup.classList.remove('visible');
                     });
-                     console.log("Added click listener to hide message popup.");
+                     console.log("Added click listener to hide message popup (delayed).");
                 }
 
-                // Activer le bouton Son
+                // Activer le bouton Son (aussi décalé)
                 const soundButton = document.getElementById('sound-toggle-button');
                 const logoElementExists = document.getElementById('clickable-logo'); // Vérifie l'image visible
                 if (soundButton && logoElementExists) {
-                    console.log("Making sound toggle button visible and attaching listener.");
+                    console.log("Making sound toggle button visible and attaching listener (delayed).");
                     soundButton.style.display = 'block';
                     soundButton.addEventListener('click', toggleLogoSound);
                 } else {
-                    if (!soundButton) console.error("Sound toggle button element not found!");
+                    if (!soundButton) console.error("Sound toggle button not found!");
+                    // Note: #clickable-logo devrait exister même si on a supprimé son data-interactive
                     if (!logoElementExists) console.error("Logo element (#clickable-logo) not found, cannot activate sound button!");
                 }
 
-                console.log("Initialization complete.");
+                console.log("Delayed initialization complete.");
 
-            }); // Fin de sceneEl.addEventListener('loaded')
-        }); // Fin de document.addEventListener('DOMContentLoaded')
-    </script>
+            }, 500); // <-- Délai en millisecondes (commence avec 500ms, ajuste si besoin)
+            // --- FIN AJOUT setTimeout ---
+
+        }); // Fin de sceneEl.addEventListener('loaded')
+    }); // Fin de document.addEventListener('DOMContentLoaded')
+
+     // --- Fonction séparée pour l'effet machine à écrire (INCHANGÉE) ---
+    function startTypingEffect(popupElement, text) { /* ... code identique ... */ }
+    // --- Fonction toggleLogoSound (INCHANGÉE) ---
+    function toggleLogoSound() { /* ... code identique ... */ }
+</script>
 </body>
 </html>
