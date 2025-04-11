@@ -48,19 +48,19 @@
         <!-- Le carré rouge cliquable -->
         <a-plane
             id="clickable-square"
-            position="0 1.6 -3"  <!-- Un peu plus haut (hauteur des yeux approx) et devant -->
-            width="1.5"          <!-- Taille du carré -->
-            height="1.5"         <!-- Taille du carré -->
-            color="#FF0000"      <!-- Couleur rouge -->
-            material="shader: flat; side: double;" <!-- Rendu simple, visible des deux côtés -->
-            data-interactive     <!-- INDISPENSABLE pour le raycaster -->
+            position="0 1.6 -3"  
+            width="1.5"          
+            height="1.5"         
+            color="#FF0000"      
+            material="shader: flat; side: double;" 
+            data-interactive     
             >
         </a-plane>
 
         <!-- Caméra avec le système de clic standard A-Frame -->
         <a-camera
-            cursor="rayOrigin: mouse; fuse: false;" <!-- Traduit clic/tap en événement -->
-            raycaster="objects: [data-interactive]; far: 20;" <!-- Cible les objets interactifs -->
+            cursor="rayOrigin: mouse; fuse: false;" 
+            raycaster="objects: [data-interactive]; far: 20;" 
             >
             <!-- Pour voir le rayon (décommenter si besoin) -->
             <!-- raycaster="objects: [data-interactive]; far: 20; showLine: true;" -->
