@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>AR Simple Click Test</title>
+    <title>AR Simple Click Test (Manual Raycast)</title> <!-- Titre mis à jour -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta name="description" content="Minimal A-Frame + AR.js: Click the red square.">
+    <meta name="description" content="Minimal A-Frame + AR.js: Clicking a red square via manual raycast.">
 
     <!-- A-Frame Core -->
     <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
@@ -13,26 +13,18 @@
 
     <style>
         body { margin: 0; overflow: hidden; font-family: sans-serif; }
-        /* Message de feedback simple */
         #feedback-message {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.75);
-            color: white;
-            padding: 8px 15px;
-            border-radius: 4px;
-            font-size: 14px;
-            display: none; /* Caché au début */
-            z-index: 10;
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.75); color: white; padding: 8px 15px; border-radius: 4px;
+            font-size: 14px; display: none; z-index: 10;
         }
+        #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #111; color: white; z-index: 10000; display: flex; justify-content: center; align-items: center; }
     </style>
 </head>
 
 <body style='margin: 0px; overflow: hidden;'>
 
-    <!-- Message de feedback -->
+    <div id="loader">Loading AR...</div>
     <div id="feedback-message">Square Clicked!</div>
 
     <!-- Scène A-Frame AR -->
@@ -43,60 +35,149 @@
         renderer='logarithmicDepthBuffer: true;'
         vr-mode-ui='enabled: false'>
 
-        <!-- Pas besoin d'assets pour un simple carré coloré -->
-
-        <!-- Le carré rouge cliquable -->
+        <!-- Le carré rouge (pas besoin de data-interactive) -->
         <a-plane
-            id="clickable-square"
-            position="0 1.6 -3"  
-            width="1.5"          
-            height="1.5"         
-            color="#FF0000"      
-            material="shader: flat; side: double;" 
-            data-interactive     
+            id="clickable-square" <!-- On garde l'ID pour le récupérer en JS -->
+            position="0 1.6 -3"
+            width="1.5"
+            height="1.5"
+            color="#FF0000"
+            material="shader: flat; side: double;"
             >
         </a-plane>
 
-        <!-- Caméra avec le système de clic standard A-Frame -->
-        <a-camera
-            cursor="rayOrigin: mouse; fuse: false;" 
-            raycaster="objects: [data-interactive]; far: 20;" 
-            >
-            <!-- Pour voir le rayon (décommenter si besoin) -->
-            <!-- raycaster="objects: [data-interactive]; far: 20; showLine: true;" -->
+        <!-- Caméra SANS cursor/raycaster, mais avec ID -->
+        <a-camera id="camera">
         </a-camera>
 
     </a-scene>
 
-    <!-- Script minimal pour gérer le clic -->
+    <!-- Script avec Raycasting Manuel -->
     <script>
-        // Attend que le DOM et A-Frame soient prêts
+        // Initialisation Raycaster Manuel et Helpers
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        let threeCamera;
+        let clickableMeshes = []; // On ne mettra que le maillage du carré ici
+
+        // Helper pour trouver l'entité A-Frame parente (même si on n'a qu'un objet)
+        function findParentEntity(object) {
+            let current = object;
+            while (current) {
+                if (current.el && current.el.isEntity) return current.el;
+                current = current.parent;
+            }
+            return null;
+        }
+
+        // Fonction de gestion du Tap/Clic Écran
+        function handleScreenTap(event) {
+            if (!threeCamera || clickableMeshes.length === 0) {
+                 // console.log("Camera or meshes not ready."); // Debug
+                 return;
+            }
+
+            let touchX, touchY;
+            if (event.changedTouches && event.changedTouches.length > 0) {
+                touchX = event.changedTouches[0].clientX;
+                touchY = event.changedTouches[0].clientY;
+            } else if (event.clientX !== undefined) {
+                touchX = event.clientX;
+                touchY = event.clientY;
+            } else { return; }
+
+            mouse.x = (touchX / window.innerWidth) * 2 - 1;
+            mouse.y = - (touchY / window.innerHeight) * 2 + 1;
+
+            // Utiliser la caméra THREE.js obtenue
+            raycaster.setFromCamera(mouse, threeCamera);
+
+            // Tester l'intersection UNIQUEMENT avec le maillage du carré
+            const intersects = raycaster.intersectObjects(clickableMeshes, false);
+
+            if (intersects.length > 0) {
+                // On a touché quelque chose dans notre liste (le carré)
+                const intersectedObject = intersects[0].object;
+                const parentEntity = findParentEntity(intersectedObject);
+
+                // Vérifier si c'est bien notre carré rouge
+                if (parentEntity && parentEntity.id === 'clickable-square') {
+                    console.log(`Manual Raycast intersected: ${parentEntity.id}`);
+                    const feedbackMessage = document.getElementById('feedback-message');
+                    if (feedbackMessage) {
+                         feedbackMessage.style.display = 'block';
+                         setTimeout(() => { feedbackMessage.style.display = 'none'; }, 1500);
+                    }
+                } else if (parentEntity){
+                     console.log(`Manual Raycast intersected something else: ${parentEntity.id}`);
+                } else {
+                     console.log("Manual Raycast intersected a mesh with no parent entity?");
+                }
+            } else {
+                 // console.log("Manual Raycast: No intersection with target meshes."); // Debug
+            }
+        }
+
+        // Logique d'initialisation
         document.addEventListener('DOMContentLoaded', () => {
             const sceneEl = document.querySelector('a-scene');
 
             sceneEl.addEventListener('loaded', () => {
-                console.log("AR Scene Loaded.");
-                const redSquare = document.getElementById('clickable-square');
-                const feedbackMessage = document.getElementById('feedback-message');
+                console.log("AR Scene Loaded. Initializing Manual Raycasting Setup...");
 
-                if (redSquare && feedbackMessage) {
-                    // Attacher l'écouteur directement à l'entité A-Frame
-                    redSquare.addEventListener('click', function (event) {
-                        console.log("Click event detected on #clickable-square!");
-                        console.log("Intersection details (from event):", event.detail.intersection); // Infos de debug
+                const initialLoader = document.getElementById('loader');
+                if (initialLoader) { initialLoader.style.display = 'none'; }
 
-                        // Afficher le message
-                        feedbackMessage.style.display = 'block';
-                        // Le cacher après un court instant
-                        setTimeout(() => {
-                            feedbackMessage.style.display = 'none';
-                        }, 2000); // 2 secondes
-                    });
-                    console.log("Click listener added to #clickable-square.");
-                } else {
-                    if (!redSquare) console.error("Element #clickable-square not found!");
-                    if (!feedbackMessage) console.error("Element #feedback-message not found!");
-                }
+                const cameraEntity = document.getElementById('camera');
+                const redSquareElement = document.getElementById('clickable-square'); // L'élément a-plane
+
+                // 1. Obtenir la caméra THREE.js
+                if (cameraEntity) {
+                     const getThreeCam = () => {
+                        if(!threeCamera && cameraEntity.components.camera?.camera) {
+                             threeCamera = cameraEntity.components.camera.camera;
+                              console.log("THREE.js Camera obtained.");
+                              // Ajouter les listeners une fois la caméra prête
+                              window.addEventListener('click', handleScreenTap);
+                              window.addEventListener('touchend', handleScreenTap);
+                              console.log("Screen listeners added.");
+                        } else if (!threeCamera) {
+                            setTimeout(getThreeCam, 200); // Réessayer
+                        }
+                     }
+                     getThreeCam();
+                } else { console.error("Camera entity #camera not found!"); }
+
+                // 2. Obtenir le maillage du carré rouge
+                if (redSquareElement) {
+                    const addMesh = (mesh) => {
+                        if (mesh && !clickableMeshes.includes(mesh)) {
+                            console.log("Red square mesh obtained, adding to clickableMeshes.");
+                            clickableMeshes.push(mesh);
+                        }
+                    };
+                    if (redSquareElement.object3DMap?.mesh) {
+                         addMesh(redSquareElement.object3DMap.mesh);
+                    } else {
+                         redSquareElement.addEventListener('object3dset', function listener(evt) {
+                             if (evt.detail.type === 'mesh') { addMesh(evt.detail.object); }
+                         }, { once: true });
+                    }
+                } else { console.error("Red square element #clickable-square not found!"); }
+
+                 // 3. Ajouter le listener pour fermer le popup (même s'il n'est pas utilisé par le carré pour l'instant)
+                 const messagePopup = document.getElementById('feedback-message'); // Cible le bon ID
+                 if (messagePopup) {
+                     messagePopup.addEventListener('click', (event) => {
+                         if (event.target !== messagePopup) { return; }
+                         console.log("Feedback message clicked, hiding.");
+                         messagePopup.style.display = 'none';
+                     });
+                     console.log("Click listener added to hide feedback message.");
+                 }
+
+
+                console.log("Initialization complete.");
             });
         });
     </script>
