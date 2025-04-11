@@ -1,31 +1,48 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>AR Projection Debug Test (No Loader)</title> <!-- Titre mis à jour -->
+    <title>AR Simple Click Test (Button on Hover - NO LOADER)</title> <!-- Titre mis à jour -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta name="description" content="Minimal A-Frame + AR.js: Visualizing projected center of a plane (No Loader).">
+    <meta name="description" content="Minimal A-Frame + AR.js: Clicking HTML button on hover. NO LOADER.">
 
     <!-- A-Frame Core -->
     <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
     <!-- AR.js for A-Frame -->
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.0/aframe/build/aframe-ar.min.js"></script>
-    <!-- THREE.js est inclus par A-Frame, mais on le référence explicitement -->
-    <script> window.THREE = AFRAME.THREE; </script>
 
     <style>
         body { margin: 0; overflow: hidden; font-family: sans-serif; }
-        /* Style pour le point de debug */
-        #debug-dot {
+         /* Message de feedback simple */
+        #feedback-message {
             position: absolute;
-            width: 10px; height: 10px;
-            background-color: lime; /* Vert vif */
-            border-radius: 50%; /* Rond */
-            z-index: 20; /* Au-dessus de la scène */
-            pointer-events: none; /* Ne pas interférer avec les clics */
+            bottom: 95px; /* Positionné au-dessus du bouton d'action */
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.75);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 14px;
             display: none; /* Caché au début */
-            border: 1px solid black; /* Optionnel: bordure */
+            z-index: 10;
         }
+         /* Style pour le bouton d'action */
+         #square-action-button {
+            position: absolute;
+            bottom: 20px; /* Position fixe en bas */
+            left: 50%;
+            transform: translateX(-50%); /* Centré horizontalement */
+            z-index: 10; /* Même niveau que le feedback */
+            display: none; /* Caché au début */
+            padding: 12px 20px; /* Plus grand */
+            background: white;
+            border: 1px solid #555;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        /* PAS DE STYLE POUR LE LOADER */
     </style>
 </head>
 
@@ -33,8 +50,9 @@
 
     <!-- PAS DE LOADER ICI -->
 
-    <!-- Élément pour visualiser le point projeté -->
-    <div id="debug-dot"></div>
+    <div id="feedback-message">Button Clicked!</div>
+    <!-- Bouton HTML pour l'action -->
+    <button id="square-action-button">Action on Square</button>
 
     <!-- Scène A-Frame AR -->
     <a-scene
@@ -44,119 +62,78 @@
         renderer='logarithmicDepthBuffer: true;'
         vr-mode-ui='enabled: false'>
 
-        <!-- Le carré rouge cible -->
+        <!-- Le carré rouge (AVEC data-interactive) -->
         <a-plane
-            id="target-square" 
+            id="target-square"
             position="0 1.6 -3"
             width="1.5"
             height="1.5"
             color="#FF0000"
             material="shader: flat; side: double;"
-            > <!-- Pas d'attributs interactifs -->
+            data-interactive 
+            >
         </a-plane>
 
-        <!-- Caméra SANS cursor/raycaster, mais avec ID -->
-        <a-camera id="camera">
+        <!-- Caméra AVEC cursor et raycaster -->
+        <a-camera
+            id="camera"
+            cursor="rayOrigin: mouse; fuse: false;" 
+            raycaster="objects: [data-interactive];" 
+            >
         </a-camera>
 
     </a-scene>
 
-    <!-- Script pour la visualisation du point projeté -->
+    <!-- Script pour gérer le survol et le clic bouton -->
     <script>
-        // Variables globales
-        let threeCamera;
-        let targetObject;
-        const vector = new THREE.Vector3();
-        const debugDot = document.getElementById('debug-dot');
-        let rafId = null;
-
-        // Fonction pour mettre à jour la position du point de debug
-        function updateDebugDot() {
-            rafId = requestAnimationFrame(updateDebugDot); // Boucle d'animation
-
-            if (threeCamera && targetObject && targetObject.visible && debugDot) {
-                targetObject.getWorldPosition(vector);
-                const checkVector = vector.clone().applyMatrix4(threeCamera.matrixWorldInverse);
-
-                if (checkVector.z > 0) { // Derrière la caméra
-                    if (debugDot.style.display !== 'none') debugDot.style.display = 'none';
-                    return;
-                }
-
-                targetObject.getWorldPosition(vector); // Re-obtenir car modifié par applyMatrix4
-                vector.project(threeCamera); // Projeter
-
-                const screenX = (vector.x * 0.5 + 0.5) * window.innerWidth;
-                const screenY = (vector.y * -0.5 + 0.5) * window.innerHeight;
-
-                // Positionner le point
-                debugDot.style.left = `${screenX - 5}px`;
-                debugDot.style.top = `${screenY - 5}px`;
-                if (debugDot.style.display !== 'block') debugDot.style.display = 'block';
-
-            } else if (debugDot && debugDot.style.display !== 'none') {
-                debugDot.style.display = 'none'; // Cacher si non prêt
-            }
-        }
-
-        // Initialisation
         document.addEventListener('DOMContentLoaded', () => {
             const sceneEl = document.querySelector('a-scene');
 
             sceneEl.addEventListener('loaded', () => {
-                console.log("AR Scene Loaded. Setting up debug dot visualization...");
+                console.log("AR Scene Loaded. Setting up hover/button interaction...");
 
-                // PAS DE CODE POUR LE LOADER ICI
+                const targetSquare = document.getElementById('target-square');
+                const actionButton = document.getElementById('square-action-button');
+                const feedbackMessage = document.getElementById('feedback-message');
+                // PAS DE RÉFÉRENCE AU LOADER ICI
 
-                const cameraEntity = document.getElementById('camera');
-                const targetElement = document.getElementById('target-square'); // Utilise le nouvel ID simple
+                // PAS DE CODE POUR CACHER LE LOADER ICI
 
-                // Fonction pour essayer d'initialiser
-                let initAttempts = 0;
-                const MAX_ATTEMPTS = 25;
-                function tryInitialize() {
-                    initAttempts++;
-                    if (!threeCamera && cameraEntity?.components.camera?.camera) {
-                        threeCamera = cameraEntity.components.camera.camera;
-                        console.log("THREE.js Camera obtained for debug.");
-                    }
-                    if (!targetObject && targetElement?.object3D) {
-                        targetObject = targetElement.object3D;
-                        console.log("Target object3D obtained for debug.");
-                    }
+                // Vérifier si les éléments existent
+                if (targetSquare && actionButton && feedbackMessage) {
 
-                    if (threeCamera && targetObject) {
-                        console.log("Camera and Target ready. Starting debug dot update loop.");
-                        if (rafId) cancelAnimationFrame(rafId);
-                        rafId = requestAnimationFrame(updateDebugDot); // Démarrer la boucle de mise à jour
-                    } else if (initAttempts < MAX_ATTEMPTS) {
-                        setTimeout(tryInitialize, 200);
-                    } else {
-                        console.error("Failed to initialize camera or target object!");
-                        if(rafId) cancelAnimationFrame(rafId);
-                    }
-                }
+                    // Action lorsque le BOUTON HTML est cliqué
+                    actionButton.addEventListener('click', () => {
+                        console.log("Action button clicked!");
+                        feedbackMessage.textContent = "Button Clicked!";
+                        feedbackMessage.style.display = 'block';
+                        // Changer couleur carré pour confirmation
+                        targetSquare.setAttribute('color', '#' + Math.floor(Math.random()*16777215).toString(16));
+                        setTimeout(() => { feedbackMessage.style.display = 'none'; }, 1500);
+                    });
 
-                // Lancer la première tentative d'initialisation
-                if (cameraEntity && targetElement) {
-                     tryInitialize();
+                    // Afficher le bouton HTML quand le curseur ENTRE sur le carré A-Frame
+                    targetSquare.addEventListener('mouseenter', () => {
+                        console.log("Mouse entered target square, showing button.");
+                        actionButton.style.display = 'block';
+                    });
+
+                    // Cacher le bouton HTML quand le curseur QUITTE le carré A-Frame
+                    targetSquare.addEventListener('mouseleave', () => {
+                        console.log("Mouse left target square, hiding button.");
+                        actionButton.style.display = 'none';
+                    });
+
+                    console.log("Listeners added for hover and button click.");
+
                 } else {
-                     if (!cameraEntity) console.error("Camera entity #camera not found!");
-                     if (!targetElement) console.error("Target element #target-square not found!");
+                    if (!targetSquare) console.error("Element #target-square not found!");
+                    if (!actionButton) console.error("Element #square-action-button not found!");
+                    if (!feedbackMessage) console.error("Element #feedback-message not found!");
                 }
-
-                 console.log("Debug initialization set up.");
-            });
-
-             // Gérer pause/reprise
-             sceneEl.addEventListener('pause', () => {
-                 if (rafId) { cancelAnimationFrame(rafId); rafId = null; console.log("Scene paused, debug dot stopped."); }
-             });
-             sceneEl.addEventListener('play', () => {
-                 if (!rafId && threeCamera && targetObject) { rafId = requestAnimationFrame(updateDebugDot); console.log("Scene resumed, debug dot restarted."); }
-             });
-
-        });
+                 console.log("Initialization finished.");
+            }); // Fin loaded
+        }); // Fin DOMContentLoaded
     </script>
 
 </body>
