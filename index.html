@@ -430,18 +430,34 @@
                             textToShow = "bye";
                             messagePopup.textContent = textToShow; // Affichage direct pour les autres
                             messagePopup.classList.add('visible');
-                        } else if (targetId === '#clickable-yumiao') {
-                            textToShow = "Texte pour Yumiao";
-                            messagePopup.textContent = textToShow;
-                            messagePopup.classList.add('visible');
-                        }
-                        // Ajoutez d'autres 'else if' pour les autres data-target
-                        // else if (targetId === '#clickable-manels') { ... }
-                        else {
-                            console.warn(`No specific text defined for target: ${targetId}`);
-                            messagePopup.textContent = `Clicked on ${targetId}`; // Message par défaut
-                            messagePopup.classList.add('visible');
-                        }
+                                            // ... (if pour logoAsset et wangMengAsset existent déjà) ...
+                    } else if (targetId === '#clickable-yumiao') {
+                        textToShow = "Texte pour Yumiao";
+                        messagePopup.textContent = textToShow;
+                        messagePopup.classList.add('visible');
+                    } else if (targetId === '#clickable-manels') {
+                        textToShow = "Texte pour Manels";
+                        messagePopup.textContent = textToShow;
+                        messagePopup.classList.add('visible');
+                    } else if (targetId === '#clickable-stagewide') {
+                        textToShow = "Texte pour Stage Wide";
+                        messagePopup.textContent = textToShow;
+                        messagePopup.classList.add('visible');
+                    } else if (targetId === '#clickable-stageduoblue') {
+                        textToShow = "Texte pour Stage Duo Blue";
+                        messagePopup.textContent = textToShow;
+                        messagePopup.classList.add('visible');
+                    } else if (targetId === '#clickable-stageduodark') {
+                        textToShow = "Texte pour Stage Duo Dark";
+                        messagePopup.textContent = textToShow;
+                        messagePopup.classList.add('visible');
+                    }
+                    // Le 'else' final reste pour les cas non définis
+                    else {
+                        console.warn(`No specific text defined for target: ${targetId}`);
+                        messagePopup.textContent = `Clicked on ${targetId.substring(1)}`; // Enlève le #
+                        messagePopup.classList.add('visible');
+                    }
 
                     });
                 });
