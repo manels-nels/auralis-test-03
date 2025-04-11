@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>AURALIS Experience </title> <!-- Titre mis à jour -->
+    <title>AR Plane Click Test</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta name="description" content="A-Frame + AR.js example with clickable images and a sound toggle button."> <!-- Description mise à jour -->
+    <meta name="description" content="Minimal A-Frame + AR.js test: Clicking a red plane.">
 
     <!-- A-Frame Core -->
     <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
@@ -12,143 +12,20 @@
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.0/aframe/build/aframe-ar.min.js"></script>
 
     <style>
-        
-                /* --- NOUVEAU : Style pour l'écran de chargement initial --- */
-        #initial-loader {
-            position: fixed; /* Reste fixe même si la page défile (peu probable ici) */
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #1a1a2a; /* Fond sombre, cohérent avec tes panneaux */
-            z-index: 10000; /* Au-dessus de tout, y compris le loader AR.js */
-            display: flex; /* Utilise flexbox pour centrer */
-            justify-content: center;
-            align-items: center;
-            flex-direction: column; /* <-- AJOUT ICI: pour empiler spinner et texte */
-            color: white;
-            font-size: 1.5em;
-            font-family: sans-serif;
-            text-align: center;
-            line-height: 1.4; /* Espacement pour le texte sur deux lignes */
-            /* Transitions pour un fondu enchaîné (optionnel) */
-            opacity: 1;
-            transition: opacity 0.7s ease-out;
-        }
-        /* --- Fin Style chargement initial --- */
-
-        /* --- AJOUT DEBUT : Style et animation pour le spinner --- */
-    .loader-spinner {
-        border: 5px solid rgba(255, 255, 255, 0.3); /* Bordure grise semi-transparente */
-        border-top-color: #FFFFFF; /* Couleur blanche pour la partie qui tourne */
-        border-radius: 50%; /* Pour le rendre circulaire */
-        width: 50px;  /* Taille du spinner */
-        height: 50px; /* Taille du spinner */
-        margin-bottom: 25px; /* Espace entre le spinner et le texte */
-        animation: spin 1s linear infinite; /* Applique l'animation */
-    }
-
-    @keyframes spin {
-        from {
-            transform: rotate(0deg);
-        }
-        to {
-            transform: rotate(360deg);
-        }
-    }
-    /* --- AJOUT FIN --- */
-        
-        /* Style pour le corps et le message pop-up */
-        body { margin: 0; overflow: hidden; font-family: sans-serif; }
-
-
-          
-        
-    
-
-        
-            /* REMPLACER l'ancien #message-popup par celui-ci */
-    #message-popup {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        /* Début: centrage et état initial (caché et légèrement réduit) */
-        transform: translate(-50%, -50%) scale(0.8);
-        opacity: 0;
-        visibility: hidden; /* Cache complètement et empêche les interactions */
-        /* Fin: état initial */
-        z-index: 10001; /* Assure qu'il est au-dessus */
-        background-color: rgba(30, 30, 50, 0.85); /* Fond un peu plus stylé */
-        color: white;
-        padding: 20px 30px; /* Padding un peu plus large */
-        border-radius: 8px;  /* Arrondi un peu plus marqué */
-        text-align: left;
-        font-size: 1.1em;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Police plus moderne */
-        cursor: pointer;
-        width: 90%;
-        box-sizing: border-box;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.4); /* Ombre portée */
-        /* Définition de la transition pour l'animation */
-        transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out, visibility 0s linear 0.3s;
-        /* Note: La transition sur visibility est décalée pour qu'elle devienne visible seulement quand l'opacité augmente */
-        /* --- AJOUTS POUR LE SCROLLING --- */
-        max-height: 75vh;       /* Limite la hauteur à 75% de la hauteur de la fenêtre */
-        overflow-y: auto;       /* Ajoute une barre de défilement vertical SI nécessaire */
-        /* --- FIN AJOUTS --- */
-    }
-    /* --- Fin du remplacement #message-popup --- */
-
-
-            /* --- AJOUT : Nouvelle classe pour l'état visible du popup --- */
-    #message-popup.visible {
-        opacity: 1;
-        visibility: visible;
-        transform: translate(-50%, -50%) scale(1); /* Retour à l'échelle normale */
-        /* Inverser le délai de la transition visibility pour la disparition */
-        transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out, visibility 0s linear 0s;
-    }
-    /* --- FIN AJOUT --- */
-        
-        /* NOUVEAU: Style pour le bouton Son */
-        #sound-toggle-button {
-            position: absolute;
-            bottom: 20px; /* Position en bas */
-            left: 20px;   /* Position à gauche */
-            z-index: 9;   /* Légèrement sous le popup mais au-dessus de la scène */
-            padding: 10px 15px;
-            font-size: 1em;
-            font-family: sans-serif;
-            color: #333;
-            background-color: rgba(255, 255, 255, 0.8);
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            cursor: pointer;
-            display: none; /* Caché par défaut, affiché via JS */
-        }
-        #sound-toggle-button:hover {
-            background-color: rgba(255, 255, 255, 1);
+        body { margin: 0; overflow: hidden; }
+         /* Style simple pour le message (optionnel) */
+        #click-message {
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.7); color: white; padding: 5px 10px; border-radius: 3px;
+            font-family: sans-serif; font-size: 14px; display: none; z-index: 10;
         }
     </style>
 </head>
 
 <body style='margin : 0px; overflow: hidden;'>
 
-    <!-- --- NOUVEAU : Écran de chargement initial --- -->
-    <div id="initial-loader">
-
-        <!-- AJOUT DEBUT: Élément pour le spinner -->
-    <div class="loader-spinner"></div>
-    <!-- AJOUT FIN -->
-        <div>Auralis experience Loading,<br>be patient...</div>
-    </div>
-    <!-- --- Fin Écran de chargement initial --- -->
-
-    <!-- Div HTML pour afficher le message (initialement cachée) -->
-    <div id="message-popup"></div>
-
-    <!-- NOUVEAU: Bouton pour contrôler le son du logo -->
-    <button id="sound-toggle-button">Play Sound</button>
+    <!-- Message indiquant le clic (caché au début) -->
+    <div id="click-message">Clicked the Red Square!</div>
 
     <!-- Scène A-Frame AR -->
     <a-scene
@@ -158,357 +35,57 @@
         renderer='logarithmicDepthBuffer: true;'
         vr-mode-ui='enabled: false'>
 
-        <!-- Assets : Précharger les images ET le son -->
-        <a-assets timeout="30000">
-             <!-- Assure-toi que les chemins vers tes images sont corrects -->
-             <img id="logoAsset" src="images/logo.jpg" crossOrigin="anonymous">
-             <img id="wangMengAsset" src="images/wang_meng.jpg" crossOrigin="anonymous">
-            <img id="yumiaoAsset" src="images/yu_miao.jpg" crossOrigin="anonymous">
-             <img id="manelsAsset" src="images/manels.jpg" crossOrigin="anonymous">
-             <img id="stageWideAsset" src="images/stage_wide.jpg" crossOrigin="anonymous">
-             <img id="stageduoBlueAsset" src="images/stage_duo_blue.jpg" crossOrigin="anonymous">
-            <img id="stageduoDarkAsset" src="images/stage_duo_dark.jpg" crossOrigin="anonymous">
-             <!-- Assure-toi que le chemin vers ton audio est correct -->
-             <audio id="logoAudio" src="audio/auralis.mp3" preload="auto" crossOrigin="anonymous"></audio>
+        <!-- Pas d'assets nécessaires pour ce test -->
 
-            <a-asset-item id="jellyfishModel" src="models/meduse.glb" crossOrigin="anonymous"></a-asset-item>
-        </a-assets>
-
-        <a-image
-            id="clickable-logo"
-            src="#logoAsset"
-            position="0 1.5 -2.7"  
-            width="1"
-            height="1"           
-            
-            sound="src: #logoAudio; loop: true; volume: 0.8; positional: true" <!-- AUTOPLAY SUPPRIMÉ -->
+        <!-- Le carré rouge cliquable -->
+        <a-plane
+            id="red-square"
+            position="0 1.5 -3"  <!-- Position devant la caméra -->
+            width="1.5"          <!-- Taille du carré -->
+            height="1.5"         <!-- Taille du carré -->
+            color="red"          <!-- Couleur rouge -->
+            material="shader: flat; side: double;" <!-- Simple rendu, visible des deux côtés -->
+            data-interactive     <!-- Essentiel pour le raycaster -->
             >
-        </a-image>
+            <!-- Pas besoin de plan enfant pour ce test simple -->
+        </a-plane>
 
-        <!-- La deuxième image cliquable (wangmeng) SANS SON -->
-        <a-image
-            id="clickable-wangmeng"
-            src="#wangMengAsset"
-            position="1.5 1.5 -2.5" 
-            width="1"
-            height="1.2"           
-            
+        <!-- Caméra avec cursor et raycaster -->
+        <a-camera
+            cursor="rayOrigin: mouse; fuse: false;"
+            raycaster="objects: [data-interactive]; far: 20;" <!-- Ajout de 'far' pour être sûr -->
             >
-        </a-image>
+            <!-- showLine: true peut être ajouté au raycaster pour visualiser -->
+            <!-- raycaster="objects: [data-interactive]; far: 20; showLine: true;" -->
+        </a-camera>
 
-        <a-image
-            id="clickable-yumiao"
-            src="#yumiaoAsset"
-            position="-1.5 1.5 -3" 
-            width="1.5"
-            height="1"           
-           
-            >
-        </a-image>
-
-        <a-image
-            id="clickable-manels"
-            src="#manelsAsset"
-            position="1.5 3 -3.2" 
-            width="1"
-            height="1.25"           
-            
-            >
-        </a-image>
-
-        <a-image
-            id="clickable-stagewide"
-            src="#stageWideAsset"
-            position="-1.5 0 -2.8" 
-            width="2"
-            height="1.1"           
-            
-            >
-        </a-image>
-
-        <a-image
-            id="clickable-stageduoblue"
-            src="#stageduoBlueAsset"
-            position="0 3 -3" 
-            width="1.8"
-            height="1.1"           
-            
-            >
-        </a-image>
-
-        <a-image
-            id="clickable-stageduodark"
-            src="#stageduoDarkAsset"
-            position="1 0 -2.5" 
-            width="1.8"
-            height="1.1"           
-            
-            >
-        </a-image>
-
-        <!-- Méduse 3D Animée -->
-        <a-gltf-model id="jellyfish"
-                      src="#jellyfishModel"
-                      position="-1 2 -2" scale="0.3 0.3 0.3" rotation="0 0 0"
-                      animation__pos="property: position; from: -1 2 -2; to: 1 1.2 -1.5; dir: alternate; dur: 12000; easing: easeInOutSine; loop: true;"
-                      animation__rot="property: rotation; to: 0 360 0; dur: 20000; easing: linear; loop: true;"
-                      animation-mixer="clip: *; loop: repeat">
-        </a-gltf-model>
-
-
-        <!-- Méduse 3D Animée -->
-        <a-gltf-model id="jellyfish"
-                      src="#jellyfishModel"
-                      position="-1 2 -5" scale="0.2 0.2 0.2" rotation="0 0 0"
-                      animation__pos="property: position; from: 1 2 -4; to: -1 -1.2 -4; dir: alternate; dur: 18000; easing: easeInOutSine; loop: true;"
-                      animation__rot="property: rotation; to: 0 360 0; dur: 20000; easing: linear; loop: true;"
-                      animation-mixer="clip: *; loop: repeat">
-        </a-gltf-model>
-        
-        <!-- Caméra avec raycaster pour détecter les clics -->
-            <a-camera
-        id="camera" 
-        
-        >
-    </a-camera>
     </a-scene>
 
-    <!-- Script pour gérer le clic ET le son -->
+    <!-- Script minimal pour gérer le clic -->
     <script>
-
-            // --- AJOUT DEBUT: Initialisation Raycaster Manuel et Helpers ---
-    const raycaster = new THREE.Raycaster();
-    const mouse = new THREE.Vector2(); // Coordonnées normalisées du clic/touch
-    let threeCamera; // Référence à la caméra Three.js (sera définie plus tard)
-    let clickableMeshes = []; // Tableau pour stocker les maillages THREE.js cliquables
-
-    // Helper pour trouver l'entité A-Frame parente
-    function findParentEntity(object) {
-        let current = object;
-        while (current) {
-            if (current.el && current.el.isEntity) {
-                return current.el;
-            }
-            current = current.parent;
-        }
-        return null;
-    }
-
-            // --- AJOUT DEBUT: Fonction de gestion du Tap/Clic Écran ---
-    function handleScreenTap(event) {
-        if (!threeCamera || clickableMeshes.length === 0) return;
-
-        let touchX, touchY;
-        if (event.changedTouches && event.changedTouches.length > 0) {
-            touchX = event.changedTouches[0].clientX;
-            touchY = event.changedTouches[0].clientY;
-        } else if (event.clientX !== undefined) {
-            touchX = event.clientX;
-            touchY = event.clientY;
-        } else { return; }
-
-        mouse.x = (touchX / window.innerWidth) * 2 - 1;
-        mouse.y = - (touchY / window.innerHeight) * 2 + 1;
-        raycaster.setFromCamera(mouse, threeCamera);
-        const intersects = raycaster.intersectObjects(clickableMeshes, false);
-
-        if (intersects.length > 0) {
-            const intersectedObject = intersects[0].object;
-            const parentEntity = findParentEntity(intersectedObject);
-
-            if (parentEntity) {
-                console.log(`Manual Raycast intersected: ${parentEntity.id}`);
-                const messagePopup = document.getElementById('message-popup');
-                if (!messagePopup) { console.error("Popup not found in handleScreenTap"); return; }
-
-                 if (window.typingIntervalId) { clearInterval(window.typingIntervalId); window.typingIntervalId = null; console.log("Typing effect interrupted."); }
-
-                let textToShow = "";
-                // ---- Définir le texte pour chaque image cliquée ----
-                if (parentEntity.id === 'clickable-logo') {
-                    textToShow = "Imagine a space where sound moves like liquid, where music is not confined to speakers but swirls around you, weaving an intricate web of vibration and light. Here the past and the Future collide, ancient strings resonate against modern frequencies, and the visual pulse in perfect harmony with a never-shifting soundscape, Welcome to AURALIS";
-                    startTypingEffect(messagePopup, textToShow); // Effet machine à écrire
-                } else if (parentEntity.id === 'clickable-wangmeng') {
-                    textToShow = "bye";
-                    messagePopup.textContent = textToShow; // Affichage direct
-                    messagePopup.classList.add('visible');
-                } else if (parentEntity.id === 'clickable-yumiao') {
-                     textToShow = "Texte pour Yumiao";
-                     messagePopup.textContent = textToShow;
-                     messagePopup.classList.add('visible');
-                } else if (parentEntity.id === 'clickable-manels') {
-                     textToShow = "Texte pour Manels";
-                     messagePopup.textContent = textToShow;
-                     messagePopup.classList.add('visible');
-                } else if (parentEntity.id === 'clickable-stagewide') {
-                     textToShow = "Texte pour Stage Wide";
-                     messagePopup.textContent = textToShow;
-                     messagePopup.classList.add('visible');
-                } else if (parentEntity.id === 'clickable-stageduoblue') {
-                     textToShow = "Texte pour Stage Duo Blue";
-                     messagePopup.textContent = textToShow;
-                     messagePopup.classList.add('visible');
-                } else if (parentEntity.id === 'clickable-stageduodark') {
-                     textToShow = "Texte pour Stage Duo Dark";
-                     messagePopup.textContent = textToShow;
-                     messagePopup.classList.add('visible');
-                }
-                // --------------------------------------------------
-                else {
-                    // Cas par défaut si non défini ci-dessus
-                    textToShow = `Clicked on ${parentEntity.id}`;
-                    messagePopup.textContent = textToShow;
-                    messagePopup.classList.add('visible');
-                }
-            }
-        }
-    }
-    // --- AJOUT FIN ---
-
-     // Fonction séparée pour l'effet machine à écrire
-    function startTypingEffect(popupElement, text) {
-        let charIndex = 0;
-        const typingSpeed = 40; // Ajuste la vitesse
-        if (!popupElement) return; // Sécurité
-        popupElement.textContent = '';
-        popupElement.scrollTop = 0;
-        popupElement.classList.add('visible');
-        if (window.typingIntervalId) { clearInterval(window.typingIntervalId); }
-        window.typingIntervalId = setInterval(() => {
-            if (charIndex < text.length) {
-                popupElement.textContent += text.charAt(charIndex);
-                charIndex++;
-                popupElement.scrollTop = popupElement.scrollHeight;
-            } else {
-                clearInterval(window.typingIntervalId);
-                window.typingIntervalId = null;
-                // console.log("Typing effect finished."); // Optionnel
-            }
-        }, typingSpeed);
-    }
-    // --- AJOUT FIN ---
-        // Fonction pour activer/désactiver le son du logo
-        function toggleLogoSound() {
-            const logoElement = document.getElementById('clickable-logo'); // L'élément a-image
-            const soundButton = document.getElementById('sound-toggle-button');
-
-            if (!logoElement || !soundButton) {
-                console.error("Logo element or sound button not found.");
-                return;
-            }
-            // Accéder au composant son attaché à l'élément
-            const soundComponent = logoElement.components.sound;
-            if (!soundComponent) {
-                 console.error("Sound component not found on logo element.");
-                 return;
-            }
-
-            // Gérer le contexte audio pour mobile (important au premier clic)
-            const sceneEl = document.querySelector('a-scene');
-            const audioContext = sceneEl?.audioListener?.context;
-            if (audioContext && audioContext.state === 'suspended') {
-                console.log("AudioContext suspended, resuming...");
-                audioContext.resume().catch(e => console.error("Error resuming audio context", e));
-            }
-
-            // Basculer Play/Pause
-            if (soundComponent.isPlaying) {
-                console.log("Pausing logo sound.");
-                soundComponent.pauseSound();
-                soundButton.textContent = "Play Sound";
-            } else {
-                console.log("Playing logo sound.");
-                soundComponent.playSound();
-                soundButton.textContent = "Pause Sound";
-            }
-        }
-
-        // Attendre que la scène soit chargée pour être sûr que les éléments existent
         document.addEventListener('DOMContentLoaded', () => {
             const sceneEl = document.querySelector('a-scene');
 
-                    sceneEl.addEventListener('loaded', () => {
-            console.log("A-Frame scene loaded. Initializing Manual Raycasting Setup...");
+            sceneEl.addEventListener('loaded', () => {
+                console.log("AR Scene Loaded. Adding listener.");
+                const redSquare = document.getElementById('red-square');
+                const clickMessage = document.getElementById('click-message');
 
-            // Cacher l'écran de chargement initial (INCHANGÉ)
-            const initialLoader = document.getElementById('initial-loader');
-            if (initialLoader) {
-                initialLoader.style.opacity = '0';
-                setTimeout(() => { initialLoader.style.display = 'none'; }, 700);
-            } else { console.warn("Initial loader element not found!"); }
-
-            // --- NOUVEAU CONTENU POUR L'INITIALISATION MANUELLE ---
-            const messagePopup = document.getElementById('message-popup');
-            const cameraEntity = document.getElementById('camera');
-
-            // 1. Obtenir la référence à la caméra Three.js
-            if (cameraEntity) {
-                 const getThreeCam = () => {
-                    if(!threeCamera && cameraEntity.components.camera?.camera) {
-                         threeCamera = cameraEntity.components.camera.camera;
-                          console.log("THREE.js Camera reference obtained.");
-                          window.addEventListener('click', handleScreenTap);
-                          window.addEventListener('touchend', handleScreenTap);
-                          console.log("Screen tap/click listeners added.");
-                    } else if (!threeCamera) {
-                        // console.warn("Camera component not ready yet, retrying..."); // Optionnel: peut être verbeux
-                        setTimeout(getThreeCam, 200);
-                    }
-                 }
-                 getThreeCam();
-            } else { console.error("A-Frame camera entity with ID 'camera' not found!"); }
-
-            // 2. Récupérer les maillages des images et les stocker
-            const imageIds = ['clickable-logo', 'clickable-wangmeng', 'clickable-yumiao', 'clickable-manels', 'clickable-stagewide', 'clickable-stageduoblue', 'clickable-stageduodark'];
-            imageIds.forEach(id => {
-                const el = document.getElementById(id);
-                if (el) {
-                    const addMesh = (mesh) => {
-                        if (mesh && !clickableMeshes.includes(mesh)) {
-                            console.log(`Mesh ready for ${id}, adding to clickableMeshes.`);
-                            clickableMeshes.push(mesh);
-                        }
-                    };
-                     if (el.object3DMap?.mesh) { addMesh(el.object3DMap.mesh); }
-                     else {
-                        // console.log(`Mesh for ${id} not ready, listening for object3dset...`); // Optionnel
-                         el.addEventListener('object3dset', function listener(evt) {
-                             if (evt.detail.type === 'mesh') { addMesh(evt.detail.object); }
-                         }, { once: true });
-                     }
-                } else { console.error(`Element ${id} not found! Cannot add to clickable meshes.`); }
+                if (redSquare && clickMessage) {
+                    redSquare.addEventListener('click', () => {
+                        console.log("Red square clicked!");
+                        // Affiche le message brièvement
+                        clickMessage.style.display = 'block';
+                        setTimeout(() => {
+                            clickMessage.style.display = 'none';
+                        }, 1500); // Cache après 1.5 secondes
+                    });
+                    console.log("Click listener added to red square.");
+                } else {
+                    console.error("Could not find red square or message element.");
+                }
             });
-            // --- FIN NOUVEAU CONTENU ---
-
-
-            // Écouteur pour cacher le popup (INCHANGÉ mais replacé après la nouvelle logique)
-            if (messagePopup) {
-                messagePopup.addEventListener('click', (event) => {
-                    if (event.target !== messagePopup) { return; }
-                    if (window.typingIntervalId) { clearInterval(window.typingIntervalId); window.typingIntervalId = null; console.log("Typing effect interrupted by closing popup."); }
-                    console.log("Popup clicked directly, hiding.");
-                    messagePopup.classList.remove('visible');
-                });
-                 console.log("Added click listener to hide message popup.");
-            }
-
-            // Activer le bouton Son (INCHANGÉ)
-            const soundButton = document.getElementById('sound-toggle-button');
-            const logoElementExists = document.getElementById('clickable-logo');
-            if (soundButton && logoElementExists) {
-                console.log("Making sound toggle button visible and attaching listener.");
-                soundButton.style.display = 'block';
-                soundButton.addEventListener('click', toggleLogoSound);
-            } else {
-                if (!soundButton) console.error("Sound toggle button element not found!");
-                if (!logoElementExists) console.error("Logo element (#clickable-logo) not found, cannot activate sound button!");
-            }
-
-            console.log("Initialization complete.");
-
-          });
-
-            });
+        });
     </script>
 
 </body>
