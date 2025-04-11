@@ -174,17 +174,26 @@
             <a-asset-item id="jellyfishModel" src="models/meduse.glb" crossOrigin="anonymous"></a-asset-item>
         </a-assets>
 
-        <!-- L'image cliquable en RA (logo) AVEC SON (sans autoplay) -->
-        <a-image
-            id="clickable-logo"
-            src="#logoAsset"
-            position="0 1.5 -2.7"  /* Centre */
-            width="1"
-            height="1"           /* Ajuste si besoin */
-            data-interactive
-            sound="src: #logoAudio; loop: true; volume: 0.8; positional: true" <!-- AUTOPLAY SUPPRIMÉ -->
-            >
-        </a-image>
+            <!-- L'image cliquable en RA (logo) AVEC SON (sans autoplay) -->
+    <a-image
+        id="clickable-logo"
+        src="#logoAsset"
+        position="0 1.5 -2.7"
+        width="1"
+        height="1"
+        data-interactive  <!-- data-interactive RESTE ICI -->
+        sound="src: #logoAudio; loop: true; volume: 0.8; positional: true"
+        >
+        <!-- AJOUT DEBUT : Plan invisible pour le raycasting -->
+        <a-plane
+             width="1"  <!-- Même largeur que le parent -->
+             height="1" <!-- Même hauteur que le parent -->
+             position="0 0 0.01" <!-- Légèrement devant l'image -->
+             material="visible: false;" <!-- Invisible -->
+             >
+        </a-plane>
+        <!-- AJOUT FIN -->
+    </a-image> <!-- Balise fermante ajoutée -->
 
         <!-- La deuxième image cliquable (wangmeng) SANS SON -->
         <a-image
