@@ -1,22 +1,52 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>AR Simplest Click Test</title>
+    <title>AR Simple Click Test (Screen Proximity)</title> <!-- Titre mis à jour -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta name="description" content="Bare minimum A-Frame + AR.js: Clicking a red square via manual raycast.">
+    <meta name="description" content="Minimal A-Frame + AR.js: Clicking a red square via screen proximity check.">
 
     <!-- A-Frame Core -->
     <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
     <!-- AR.js for A-Frame -->
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.0/aframe/build/aframe-ar.min.js"></script>
+    <!-- THREE.js est inclus par A-Frame, mais on le référence explicitement -->
+    <script> window.THREE = AFRAME.THREE; </script>
 
     <style>
-        body { margin: 0; overflow: hidden; }
+        body { margin: 0; overflow: hidden; font-family: sans-serif; }
+        /* Message de feedback */
+        #feedback-message {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.75);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 4px;
+            font-size: 14px;
+            display: none; /* Caché au début */
+            z-index: 10;
+            cursor: pointer; /* Permet de le fermer en cliquant dessus */
+        }
+        /* Loader simple */
+        #loader {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #111; color: white; z-index: 10000;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 1.5em; text-align: center;
+             /* Optional: fade out */
+             opacity: 1;
+             transition: opacity 0.5s ease-out;
+        }
     </style>
 </head>
 
 <body style='margin: 0px; overflow: hidden;'>
+
+    <div id="loader">Loading AR...</div>
+    <div id="feedback-message">Square Clicked!</div>
 
     <!-- Scène A-Frame AR -->
     <a-scene
@@ -26,7 +56,7 @@
         renderer='logarithmicDepthBuffer: true;'
         vr-mode-ui='enabled: false'>
 
-        <!-- Le carré rouge (pas d'attributs superflus) -->
+        <!-- Le carré rouge (PAS d'attributs interactifs A-Frame) -->
         <a-plane
             id="clickable-square"
             position="0 1.6 -3"
@@ -43,95 +73,146 @@
 
     </a-scene>
 
-    <!-- Script minimal avec Raycasting Manuel -->
+    <!-- Script avec Raycasting Manuel basé sur l'écran -->
     <script>
-        // Initialisation Raycaster Manuel et Helpers
-        const raycaster = new THREE.Raycaster();
-        const mouse = new THREE.Vector2();
-        let threeCamera;
-        let clickableMeshes = []; // Uniquement le carré ici
+        // Variables globales pour la détection
+        let threeCamera;    // Référence caméra THREE.js
+        let targetObject;   // Référence objet 3D du carré
+        const vector = new THREE.Vector3(); // Pour les calculs de projection
+        const clickThresholdPixels = 75;  // Seuil de clic en pixels (AJUSTE SI BESOIN)
+        let listenerAdded = false; // Pour éviter d'ajouter le listener plusieurs fois
 
-        // Helper pour trouver l'entité A-Frame parente
-        function findParentEntity(object) {
-            let current = object;
-            while (current) {
-                if (current.el && current.el.isEntity) return current.el;
-                current = current.parent;
-            }
-            return null;
-        }
+        // Helper pour trouver l'entité A-Frame (peut être simplifié si on a déjà la réf)
+        // function findParentEntity(object) { ... } // Pas strictement nécessaire si on a la réf directe
 
         // Fonction de gestion du Tap/Clic Écran
         function handleScreenTap(event) {
-            if (!threeCamera || clickableMeshes.length === 0) return;
+            // Vérifier si la caméra et l'objet cible sont prêts
+            if (!threeCamera || !targetObject || !targetObject.visible) {
+                // console.log("Camera or target not ready or not visible.");
+                return;
+            }
 
             let touchX, touchY;
+            // Obtenir les coordonnées du point de contact sur l'écran
             if (event.changedTouches && event.changedTouches.length > 0) {
                 touchX = event.changedTouches[0].clientX;
                 touchY = event.changedTouches[0].clientY;
             } else if (event.clientX !== undefined) {
                 touchX = event.clientX;
                 touchY = event.clientY;
-            } else { return; }
+            } else { return; } // Événement non géré
 
-            mouse.x = (touchX / window.innerWidth) * 2 - 1;
-            mouse.y = - (touchY / window.innerHeight) * 2 + 1;
-            raycaster.setFromCamera(mouse, threeCamera);
-            const intersects = raycaster.intersectObjects(clickableMeshes, false);
+            // --- Calcul de la Projection 2D ---
+            // Obtenir la position MONDIALE (actualisée) du centre de l'objet
+            targetObject.getWorldPosition(vector);
+            // Projeter ce point 3D en coordonnées écran 2D via la caméra
+            vector.project(threeCamera);
 
-            if (intersects.length > 0) {
-                const parentEntity = findParentEntity(intersects[0].object);
-                if (parentEntity && parentEntity.id === 'clickable-square') {
-                    console.log(`Manual Raycast intersected: ${parentEntity.id} - SUCCESS!`);
-                    // Action simple: Change la couleur du carré au clic
-                    parentEntity.setAttribute('color', '#' + Math.floor(Math.random()*16777215).toString(16));
+            // Convertir les coordonnées normalisées (-1 à +1) en pixels
+            const screenX = (vector.x * 0.5 + 0.5) * window.innerWidth;
+            const screenY = (vector.y * -0.5 + 0.5) * window.innerHeight;
+
+            // --- Calcul de la Distance 2D ---
+            const distanceX = touchX - screenX;
+            const distanceY = touchY - screenY;
+            const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
+
+            console.log(`Tap: (${touchX.toFixed(0)}, ${touchY.toFixed(0)}), Target Projection: (${screenX.toFixed(0)}, ${screenY.toFixed(0)}), Distance: ${distance.toFixed(1)}px`);
+
+            // --- Vérification du Seuil ---
+            const feedbackMessage = document.getElementById('feedback-message');
+            if (distance < clickThresholdPixels) {
+                console.log("Click is WITHIN threshold! Changing color.");
+                // Action : Changer la couleur du carré
+                const targetElement = document.getElementById('clickable-square'); // Récupère l'élément A-Frame
+                if (targetElement) {
+                     targetElement.setAttribute('color', '#' + Math.floor(Math.random()*16777215).toString(16));
                 }
+                // Afficher feedback (optionnel)
+                if(feedbackMessage) {
+                    feedbackMessage.style.display = 'block';
+                    setTimeout(() => { feedbackMessage.style.display = 'none'; }, 1500);
+                }
+            } else {
+                console.log("Click is OUTSIDE threshold.");
             }
         }
+
+        // Fonction pour ajouter le listener d'écran une fois prêt
+        function addScreenTapListener() {
+             if (listenerAdded || !threeCamera || !targetObject) return; // Sécurité
+             console.log("Adding screen tap listener for proximity check.");
+             window.addEventListener('click', handleScreenTap);
+             window.addEventListener('touchend', handleScreenTap);
+             listenerAdded = true;
+        }
+
 
         // Logique d'initialisation
         document.addEventListener('DOMContentLoaded', () => {
             const sceneEl = document.querySelector('a-scene');
 
             sceneEl.addEventListener('loaded', () => {
-                console.log("AR Scene Loaded. Setting up manual raycast...");
+                console.log("AR Scene Loaded. Setting up screen proximity check...");
 
+                const initialLoader = document.getElementById('loader');
                 const cameraEntity = document.getElementById('camera');
-                const redSquareElement = document.getElementById('clickable-square');
+                const targetElement = document.getElementById('clickable-square');
+                const feedbackMessage = document.getElementById('feedback-message');
 
-                // 1. Obtenir la caméra THREE.js
-                if (cameraEntity) {
-                     const getThreeCam = () => {
-                        if(!threeCamera && cameraEntity.components.camera?.camera) {
-                             threeCamera = cameraEntity.components.camera.camera;
-                              console.log("THREE.js Camera obtained.");
-                              window.addEventListener('click', handleScreenTap);
-                              window.addEventListener('touchend', handleScreenTap);
-                              console.log("Screen listeners added.");
-                        } else if (!threeCamera) { setTimeout(getThreeCam, 200); }
-                     }
-                     getThreeCam();
-                } else { console.error("Camera entity #camera not found!"); }
+                // Cacher le loader
+                if (initialLoader) {
+                    initialLoader.style.opacity = '0';
+                    setTimeout(() => { initialLoader.style.display = 'none'; }, 500); // Délai réduit
+                }
 
-                // 2. Obtenir le maillage du carré rouge
-                if (redSquareElement) {
-                    const addMesh = (mesh) => {
-                        if (mesh && !clickableMeshes.includes(mesh)) {
-                            console.log("Red square mesh obtained.");
-                            clickableMeshes.push(mesh);
-                        }
-                    };
-                    if (redSquareElement.object3DMap?.mesh) { addMesh(redSquareElement.object3DMap.mesh); }
-                    else {
-                         redSquareElement.addEventListener('object3dset', (evt) => {
-                             if (evt.detail.type === 'mesh') { addMesh(evt.detail.object); }
-                         }, { once: true });
+                // Fonction pour essayer d'initialiser
+                let initAttempts = 0;
+                const MAX_ATTEMPTS = 25; // Essayer pendant 5 secondes max (25 * 200ms)
+                function tryInitialize() {
+                    initAttempts++;
+                    // Essayer d'obtenir la caméra
+                    if (!threeCamera && cameraEntity?.components.camera?.camera) {
+                        threeCamera = cameraEntity.components.camera.camera;
+                        console.log("THREE.js Camera obtained.");
                     }
-                } else { console.error("Red square element #clickable-square not found!"); }
+                    // Essayer d'obtenir l'objet 3D
+                    if (!targetObject && targetElement?.object3D) {
+                         // On prend directement l'object3D, pas besoin du maillage enfant pour la position
+                        targetObject = targetElement.object3D;
+                        console.log("Target object3D obtained.");
+                    }
 
-                console.log("Initialization finished.");
-            });
-        });
+                    // Si les deux sont prêts, ajouter le listener
+                    if (threeCamera && targetObject) {
+                        addScreenTapListener();
+                        console.log("Initialization complete.");
+                    } else if (initAttempts < MAX_ATTEMPTS) {
+                        // Si pas prêt, réessayer après un délai
+                         setTimeout(tryInitialize, 200);
+                    } else {
+                         console.error("Failed to initialize camera or target object after multiple attempts!");
+                    }
+                }
+
+                // Lancer la première tentative d'initialisation
+                if (cameraEntity && targetElement) {
+                     tryInitialize();
+                } else {
+                     if (!cameraEntity) console.error("Camera entity #camera not found!");
+                     if (!targetElement) console.error("Target element #clickable-square not found!");
+                }
+
+                 // Listener pour fermer le message
+                if (feedbackMessage) {
+                    feedbackMessage.addEventListener('click', () => {
+                        feedbackMessage.style.display = 'none';
+                    });
+                }
+
+            }); // Fin loaded
+        }); // Fin DOMContentLoaded
     </script>
 
 </body>
