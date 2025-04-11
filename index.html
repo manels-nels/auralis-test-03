@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>AR Projection Debug Test</title> <!-- Titre mis à jour -->
+    <title>AR Projection Debug Test (No Loader)</title> <!-- Titre mis à jour -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta name="description" content="Minimal A-Frame + AR.js: Visualizing projected center of a plane.">
+    <meta name="description" content="Minimal A-Frame + AR.js: Visualizing projected center of a plane (No Loader).">
 
     <!-- A-Frame Core -->
     <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
@@ -15,16 +15,6 @@
 
     <style>
         body { margin: 0; overflow: hidden; font-family: sans-serif; }
-        /* Loader simple */
-        #loader {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #111; color: white; z-index: 10000;
-            display: flex; justify-content: center; align-items: center;
-            font-size: 1.5em; text-align: center;
-             /* Optional: fade out */
-             opacity: 1;
-             transition: opacity 0.5s ease-out;
-        }
         /* Style pour le point de debug */
         #debug-dot {
             position: absolute;
@@ -34,15 +24,15 @@
             z-index: 20; /* Au-dessus de la scène */
             pointer-events: none; /* Ne pas interférer avec les clics */
             display: none; /* Caché au début */
-            /* Optionnel: petite bordure pour mieux voir */
-            border: 1px solid black;
+            border: 1px solid black; /* Optionnel: bordure */
         }
     </style>
 </head>
 
 <body style='margin: 0px; overflow: hidden;'>
 
-    <div id="loader">Loading AR...</div>
+    <!-- PAS DE LOADER ICI -->
+
     <!-- Élément pour visualiser le point projeté -->
     <div id="debug-dot"></div>
 
@@ -54,11 +44,9 @@
         renderer='logarithmicDepthBuffer: true;'
         vr-mode-ui='enabled: false'>
 
-        <!-- Pas d'assets image/audio nécessaires pour ce test -->
-
         <!-- Le carré rouge cible -->
         <a-plane
-            id="clickable-square" 
+            id="target-square" 
             position="0 1.6 -3"
             width="1.5"
             height="1.5"
@@ -67,7 +55,7 @@
             > <!-- Pas d'attributs interactifs -->
         </a-plane>
 
-        <!-- Caméra avec ID -->
+        <!-- Caméra SANS cursor/raycaster, mais avec ID -->
         <a-camera id="camera">
         </a-camera>
 
@@ -80,46 +68,34 @@
         let targetObject;
         const vector = new THREE.Vector3();
         const debugDot = document.getElementById('debug-dot');
-        let rafId = null; // Pour contrôler requestAnimationFrame
+        let rafId = null;
 
         // Fonction pour mettre à jour la position du point de debug
         function updateDebugDot() {
-            // Demander la prochaine frame avant de faire les calculs
-            rafId = requestAnimationFrame(updateDebugDot);
+            rafId = requestAnimationFrame(updateDebugDot); // Boucle d'animation
 
             if (threeCamera && targetObject && targetObject.visible && debugDot) {
-                // Obtenir la position mondiale de l'objet cible
                 targetObject.getWorldPosition(vector);
+                const checkVector = vector.clone().applyMatrix4(threeCamera.matrixWorldInverse);
 
-                // Créer une copie pour la vérification de visibilité
-                const checkVector = vector.clone();
-                // Vérifier si l'objet est "derrière" la caméra
-                checkVector.applyMatrix4(threeCamera.matrixWorldInverse);
-
-                if (checkVector.z > 0) { // Si z est positif dans l'espace caméra, c'est derrière
-                    if (debugDot.style.display !== 'none') {
-                        debugDot.style.display = 'none'; // Cache le point
-                    }
-                    return; // Arrêter ici pour cette frame
+                if (checkVector.z > 0) { // Derrière la caméra
+                    if (debugDot.style.display !== 'none') debugDot.style.display = 'none';
+                    return;
                 }
 
-                // Si l'objet est devant, continuer la projection
-                // (vector contient toujours la position monde originale)
-                vector.project(threeCamera);
+                targetObject.getWorldPosition(vector); // Re-obtenir car modifié par applyMatrix4
+                vector.project(threeCamera); // Projeter
 
-                // Convertir en pixels écran
                 const screenX = (vector.x * 0.5 + 0.5) * window.innerWidth;
                 const screenY = (vector.y * -0.5 + 0.5) * window.innerHeight;
 
-                // Positionner le point de debug (ajusté pour son centre)
-                debugDot.style.left = `${screenX - 5}px`; // 5 = rayon du point
+                // Positionner le point
+                debugDot.style.left = `${screenX - 5}px`;
                 debugDot.style.top = `${screenY - 5}px`;
-                if (debugDot.style.display !== 'block') {
-                     debugDot.style.display = 'block'; // Afficher le point
-                }
+                if (debugDot.style.display !== 'block') debugDot.style.display = 'block';
 
             } else if (debugDot && debugDot.style.display !== 'none') {
-                debugDot.style.display = 'none'; // Cache le point si pas prêt
+                debugDot.style.display = 'none'; // Cacher si non prêt
             }
         }
 
@@ -130,42 +106,34 @@
             sceneEl.addEventListener('loaded', () => {
                 console.log("AR Scene Loaded. Setting up debug dot visualization...");
 
-                const initialLoader = document.getElementById('loader');
-                const cameraEntity = document.getElementById('camera');
-                const targetElement = document.getElementById('clickable-square');
+                // PAS DE CODE POUR LE LOADER ICI
 
-                if(initialLoader) {
-                     initialLoader.style.opacity = '0';
-                     setTimeout(() => { initialLoader.style.display = 'none'; }, 500);
-                 }
+                const cameraEntity = document.getElementById('camera');
+                const targetElement = document.getElementById('target-square'); // Utilise le nouvel ID simple
 
                 // Fonction pour essayer d'initialiser
                 let initAttempts = 0;
                 const MAX_ATTEMPTS = 25;
                 function tryInitialize() {
                     initAttempts++;
-                    // Essayer d'obtenir la caméra
                     if (!threeCamera && cameraEntity?.components.camera?.camera) {
                         threeCamera = cameraEntity.components.camera.camera;
                         console.log("THREE.js Camera obtained for debug.");
                     }
-                    // Essayer d'obtenir l'objet 3D
                     if (!targetObject && targetElement?.object3D) {
                         targetObject = targetElement.object3D;
                         console.log("Target object3D obtained for debug.");
                     }
 
-                    // Si les deux sont prêts, démarrer la boucle de mise à jour du point
                     if (threeCamera && targetObject) {
                         console.log("Camera and Target ready. Starting debug dot update loop.");
-                        if (rafId) cancelAnimationFrame(rafId); // Annule un potentiel ancien loop
-                        rafId = requestAnimationFrame(updateDebugDot);
+                        if (rafId) cancelAnimationFrame(rafId);
+                        rafId = requestAnimationFrame(updateDebugDot); // Démarrer la boucle de mise à jour
                     } else if (initAttempts < MAX_ATTEMPTS) {
-                        // Si pas prêt, réessayer après un délai
-                         setTimeout(tryInitialize, 200);
+                        setTimeout(tryInitialize, 200);
                     } else {
-                         console.error("Failed to initialize camera or target object after multiple attempts!");
-                         if(rafId) cancelAnimationFrame(rafId); // Nettoyage
+                        console.error("Failed to initialize camera or target object!");
+                        if(rafId) cancelAnimationFrame(rafId);
                     }
                 }
 
@@ -174,29 +142,21 @@
                      tryInitialize();
                 } else {
                      if (!cameraEntity) console.error("Camera entity #camera not found!");
-                     if (!targetElement) console.error("Target element #clickable-square not found!");
+                     if (!targetElement) console.error("Target element #target-square not found!");
                 }
 
-                console.log("Debug initialization set up.");
-            }); // Fin loaded
+                 console.log("Debug initialization set up.");
+            });
 
-             // Arrêter la boucle d'animation si la scène est pausée (bonne pratique)
+             // Gérer pause/reprise
              sceneEl.addEventListener('pause', () => {
-                 if (rafId) {
-                     cancelAnimationFrame(rafId);
-                     rafId = null;
-                     console.log("Scene paused, debug dot update stopped.");
-                 }
+                 if (rafId) { cancelAnimationFrame(rafId); rafId = null; console.log("Scene paused, debug dot stopped."); }
              });
-             // Redémarrer si la scène reprend (si nécessaire)
              sceneEl.addEventListener('play', () => {
-                 if (!rafId && threeCamera && targetObject) { // Ne redémarre que si tout est prêt
-                     rafId = requestAnimationFrame(updateDebugDot);
-                     console.log("Scene resumed, debug dot update restarted.");
-                 }
+                 if (!rafId && threeCamera && targetObject) { rafId = requestAnimationFrame(updateDebugDot); console.log("Scene resumed, debug dot restarted."); }
              });
 
-        }); // Fin DOMContentLoaded
+        });
     </script>
 
 </body>
