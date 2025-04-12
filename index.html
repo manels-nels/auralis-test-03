@@ -5,33 +5,35 @@
   </head>
   <body style="margin: 0; overflow: hidden;">
     <a-scene embedded arjs>
-      <!-- Carré devant l'utilisateur -->
-      <a-plane 
-        position="0 0 -1" 
-        rotation="0 0 0" 
-        width="0.2" 
-        height="0.2" 
-        color="green"
-        id="clickable"
-        event-set__click="_event: click; color: red">
-      </a-plane>
+      
+      <!-- Marker Hiro -->
+      <a-marker preset="hiro">
+        <!-- Carré vert dans la scène -->
+        <a-plane 
+          id="clickable"
+          position="0 0 0"
+          width="1" 
+          height="1" 
+          color="green"
+          class="clickable">
+        </a-plane>
 
-      <!-- Texte affiché après clic -->
-      <a-entity 
-        id="bonjour-text" 
-        visible="false"
-        position="0 0.5 -1"
-        text="value: bonjour; color: red; align: center;">
-      </a-entity>
+        <!-- Texte caché au départ -->
+        <a-entity 
+          id="bonjour-text" 
+          visible="false"
+          position="0 0.6 0"
+          text="value: bonjour; color: red; align: center;">
+        </a-entity>
+      </a-marker>
 
-      <a-camera-static></a-camera-static>
+      <a-entity camera></a-entity>
     </a-scene>
 
     <script>
-      const square = document.querySelector('#clickable');
-      const text = document.querySelector('#bonjour-text');
-      square.addEventListener('click', () => {
-        text.setAttribute('visible', 'true');
+      // Gestion du clic sur toute la surface du carré
+      document.querySelector('#clickable').addEventListener('click', function () {
+        document.querySelector('#bonjour-text').setAttribute('visible', 'true');
       });
     </script>
   </body>
