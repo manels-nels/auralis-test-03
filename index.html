@@ -20,14 +20,17 @@ display: none; /* Initialement caché */
 <body>
 <div id="info">Bonjour</div>
 <script src="https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.155.0/examples/jsm/libs/lil-gui.min.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/three@0.155.0/examples/jsm/libs/lil-gui.module.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.155.0/examples/jsm/libs/stats.module.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.155.0/examples/jsm/webxr/ARButton.js"></script>
-<script>
-    function init() {
-        let scene, camera, renderer, square, raycaster, textElement;
-        const cameraPosition = new THREE.Vector3(0, 0, -0.5);
+<script type="module" src="https://cdn.jsdelivr.net/npm/three@0.155.0/examples/jsm/webxr/ARButton.js"></script>
+<script type="module">
+    import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.module.js';
+    import { ARButton } from 'https://cdn.jsdelivr.net/npm/three@0.155.0/examples/jsm/webxr/ARButton.js';
 
+    let scene, camera, renderer, square, raycaster, textElement;
+    const cameraPosition = new THREE.Vector3(0, 0, -0.5);
+
+    function init() {
         scene = new THREE.Scene();
         camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
         camera.position.copy(cameraPosition);
@@ -57,70 +60,68 @@ display: none; /* Initialement caché */
         renderer.domElement.addEventListener('mousedown', onMouseDown);
 
         window.addEventListener('resize', onWindowResize);
-
-        function onWindowResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        }
-
-        function handleIntersection(x, y) {
-            const rect = renderer.domElement.getBoundingClientRect();
-            const normalizedX = (x - rect.left) / rect.width * 2 - 1;
-            const normalizedY = - (y - rect.top) / rect.height * 2 + 1;
-
-            pointer.x = normalizedX;
-            pointer.y = normalizedY;
-
-            raycaster.setFromCamera(pointer, camera);
-
-            const intersects = raycaster.intersectObjects([square]);
-
-            if (intersects.length > 0) {
-                textElement.style.display = 'block';
-                setTimeout(() => {
-                    textElement.style.display = 'none';
-                }, 2000);
-            }
-        }
-
-        function onTouchStart(event) {
-            event.preventDefault();
-            if (event.touches.length > 0) {
-                handleIntersection(event.touches.item(0).clientX, event.touches.item(0).clientY);
-            }
-        }
-
-        function onMouseDown(event) {
-            event.preventDefault();
-            handleIntersection(event.clientX, event.clientY);
-        }
-
-        function animate() {
-            renderer.setAnimationLoop(render);
-        }
-
-        function render(timestamp, frame) {
-            if (frame) {
-                const referenceSpace = renderer.xr.getReferenceSpace();
-                const viewerPose = frame.getViewerPose(referenceSpace);
-
-                if (viewerPose) {
-                    const head = viewerPose.transform;
-                    const offset = new THREE.Vector3(0, 0, -0.5);
-                    offset.applyQuaternion(head.orientation);
-                    square.position.copy(head.position).add(offset);
-                    square.quaternion.copy(head.orientation);
-                }
-            }
-            renderer.render(scene, camera);
-        }
-
-        animate();
     }
 
-    // Appeler init une fois que la page est chargée
-    window.onload = init;
+    function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    function handleIntersection(x, y) {
+        const rect = renderer.domElement.getBoundingClientRect();
+        const normalizedX = (x - rect.left) / rect.width * 2 - 1;
+        const normalizedY = - (y - rect.top) / rect.height * 2 + 1;
+
+        pointer.x = normalizedX;
+        pointer.y = normalizedY;
+
+        raycaster.setFromCamera(pointer, camera);
+
+        const intersects = raycaster.intersectObjects([square]);
+
+        if (intersects.length > 0) {
+            textElement.style.display = 'block';
+            setTimeout(() => {
+                textElement.style.display = 'none';
+            }, 2000);
+        }
+    }
+
+    function onTouchStart(event) {
+        event.preventDefault();
+        if (event.touches.length > 0) {
+            handleIntersection(event.touches.item(0).clientX, event.touches.item(0).clientY);
+        }
+    }
+
+    function onMouseDown(event) {
+        event.preventDefault();
+        handleIntersection(event.clientX, event.clientY);
+    }
+
+    function animate() {
+        renderer.setAnimationLoop(render);
+    }
+
+    function render(timestamp, frame) {
+        if (frame) {
+            const referenceSpace = renderer.xr.getReferenceSpace();
+            const viewerPose = frame.getViewerPose(referenceSpace);
+
+            if (viewerPose) {
+                const head = viewerPose.transform;
+                const offset = new THREE.Vector3(0, 0, -0.5);
+                offset.applyQuaternion(head.orientation);
+                square.position.copy(head.position).add(offset);
+                square.quaternion.copy(head.orientation);
+            }
+        }
+        renderer.render(scene, camera);
+    }
+
+    init();
+    animate();
 </script>
 
 </body>
