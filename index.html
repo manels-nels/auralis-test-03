@@ -1,84 +1,38 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <title>WebXR AR - Carré cliquable</title>
-  <style>
-    body { margin: 0; overflow: hidden; }
-    canvas { display: block; }
-  </style>
-</head>
-<body>
-  <script type="module">
-    import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js';
-    import { ARButton } from 'https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/webxr/ARButton.js';
+<html>
+  <head>
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.min.js"></script>
+  </head>
+  <body style="margin: 0; overflow: hidden;">
+    <a-scene embedded arjs>
+      <!-- Carré devant l'utilisateur -->
+      <a-plane 
+        position="0 0 -1" 
+        rotation="0 0 0" 
+        width="1" 
+        height="1" 
+        color="green"
+        id="clickable"
+        event-set__click="_event: click; color: red">
+      </a-plane>
 
-    let camera, scene, renderer;
-    let square;
-    const raycaster = new THREE.Raycaster();
-    const tapPosition = new THREE.Vector2();
+      <!-- Texte affiché après clic -->
+      <a-entity 
+        id="bonjour-text" 
+        visible="false"
+        position="0 0.5 -1"
+        text="value: bonjour; color: red; align: center;">
+      </a-entity>
 
-    init();
-    animate();
+      <a-camera-static></a-camera-static>
+    </a-scene>
 
-    function init() {
-      scene = new THREE.Scene();
-
-      camera = new THREE.PerspectiveCamera();
-
-      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.xr.enabled = true;
-      document.body.appendChild(renderer.domElement);
-
-      // Bouton AR
-      document.body.appendChild(ARButton.createButton(renderer, { requiredFeatures: ['hit-test'] }));
-
-      // Carré flottant
-      const geometry = new THREE.PlaneGeometry(0.3, 0.3);
-      const material = new THREE.MeshBasicMaterial({ color: 0x00ff00, side: THREE.DoubleSide });
-      square = new THREE.Mesh(geometry, material);
-      square.position.set(0, 0, -1); // 1m devant la caméra
-      square.rotation.x = -0.2; // Légèrement incliné
-      scene.add(square);
-
-      // Taper sur l’écran
-      window.addEventListener('click', onClick);
-    }
-
-    function onClick(event) {
-      tapPosition.x = (event.clientX / window.innerWidth) * 2 - 1;
-      tapPosition.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-      raycaster.setFromCamera(tapPosition, camera);
-      const intersects = raycaster.intersectObject(square);
-
-      if (intersects.length > 0) {
-        console.log("bonjour");
-        showText("bonjour", intersects[0].point);
-      }
-    }
-
-    function showText(msg, position) {
-      const loader = new THREE.FontLoader();
-      loader.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.json', function (font) {
-        const geometry = new THREE.TextGeometry(msg, {
-          font: font,
-          size: 0.05,
-          height: 0.01,
-        });
-        const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-        const textMesh = new THREE.Mesh(geometry, material);
-        textMesh.position.copy(position);
-        scene.add(textMesh);
+    <script>
+      const square = document.querySelector('#clickable');
+      const text = document.querySelector('#bonjour-text');
+      square.addEventListener('click', () => {
+        text.setAttribute('visible', 'true');
       });
-    }
-
-    function animate() {
-      renderer.setAnimationLoop(() => {
-        renderer.render(scene, camera);
-      });
-    }
-  </script>
-</body>
+    </script>
+  </body>
 </html>
