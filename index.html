@@ -1,123 +1,93 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Carré Cliquable AR</title>
-<style>
-body { margin: 0; overflow: hidden; }
-#info {
-position: absolute;
-top: 10px;
-width: 100%;
-text-align: center;
-color: white;
-z-index: 1;
-display: none; /* Initialement caché */
-}
-</style>
+  <meta charset="UTF-8">
+  <title>WebXR - Carré cliquable</title>
+  <style>
+    body { margin: 0; overflow: hidden; }
+    canvas { display: block; }
+  </style>
 </head>
 <body>
-<div id="info">Bonjour</div>
-<script src="https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.155.0/examples/jsm/webxr/ARButton.js"></script>
-<script>
-    let scene, camera, renderer, square, raycaster, textElement;
-    const cameraPosition = new THREE.Vector3(0, 0, -0.5);
+  <script type="module">
+    import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js';
+    import { VRButton } from 'https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/webxr/VRButton.js';
 
-    function init() {
-        scene = new THREE.Scene();
-        camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
-        camera.position.copy(cameraPosition);
-
-        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        renderer.setPixelRatio(window.devicePixelRatio);
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.xr.enabled = true;
-        document.body.appendChild(renderer.domElement);
-
-        document.body.appendChild(ARButton.createButton(renderer, { requiredFeatures: ['hit-test'] }));
-
-        const geometry = new THREE.PlaneGeometry(0.2, 0.2);
-        const material = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide, transparent: true, opacity: 0.8 });
-        square = new THREE.Mesh(geometry, material);
-        scene.add(square);
-
-        square.position.copy(cameraPosition).add(new THREE.Vector3(0, 0, 0.1));
-        square.lookAt(camera.position);
-
-        raycaster = new THREE.Raycaster();
-        const pointer = new THREE.Vector2();
-
-        textElement = document.getElementById('info');
-
-        renderer.domElement.addEventListener('touchstart', onTouchStart, { passive: false });
-        renderer.domElement.addEventListener('mousedown', onMouseDown);
-
-        window.addEventListener('resize', onWindowResize);
-    }
-
-    function onWindowResize() {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-    }
-
-    function handleIntersection(x, y) {
-        const rect = renderer.domElement.getBoundingClientRect();
-        const normalizedX = (x - rect.left) / rect.width * 2 - 1;
-        const normalizedY = - (y - rect.top) / rect.height * 2 + 1;
-
-        pointer.x = normalizedX;
-        pointer.y = normalizedY;
-
-        raycaster.setFromCamera(pointer, camera);
-
-        const intersects = raycaster.intersectObjects([square]);
-
-        if (intersects.length > 0) {
-            textElement.style.display = 'block';
-            setTimeout(() => {
-                textElement.style.display = 'none';
-            }, 2000);
-        }
-    }
-
-    function onTouchStart(event) {
-        event.preventDefault();
-        if (event.touches.length > 0) {
-            handleIntersection(event.touches.item(0).clientX, event.touches.item(0).clientY);
-        }
-    }
-
-    function onMouseDown(event) {
-        event.preventDefault();
-        handleIntersection(event.clientX, event.clientY);
-    }
-
-    function animate() {
-        renderer.setAnimationLoop(render);
-    }
-
-    function render(timestamp, frame) {
-        if (frame) {
-            const referenceSpace = renderer.xr.getReferenceSpace();
-            const viewerPose = frame.getViewerPose(referenceSpace);
-
-            if (viewerPose) {
-                const head = viewerPose.transform;
-                const offset = new THREE.Vector3(0, 0, -0.5);
-                offset.applyQuaternion(head.orientation);
-                square.position.copy(head.position).add(offset);
-                square.quaternion.copy(head.orientation);
-            }
-        }
-        renderer.render(scene, camera);
-    }
+    let camera, scene, renderer;
+    let square;
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2(); // Unused but necessary placeholder for the interface
 
     init();
     animate();
-</script>
-Use code with caution.
+
+    function init() {
+      // Scène
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x202020);
+
+      // Caméra
+      camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 100);
+      camera.position.z = 1;
+
+      // Lumière
+      const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
+      light.position.set(0.5, 1, 0.25);
+      scene.add(light);
+
+      // Carré (plan)
+      const geometry = new THREE.PlaneGeometry(0.5, 0.5);
+      const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+      square = new THREE.Mesh(geometry, material);
+      square.position.set(0, 1.5, -2); // Juste devant l'utilisateur
+      scene.add(square);
+
+      // Renderer
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.xr.enabled = true;
+      document.body.appendChild(renderer.domElement);
+      document.body.appendChild(VRButton.createButton(renderer));
+
+      // Contrôles cliquables dans WebXR
+      renderer.domElement.addEventListener('click', onClick);
+
+      window.addEventListener('resize', onWindowResize);
+    }
+
+    function onClick(event) {
+      const session = renderer.xr.getSession();
+      if (session) {
+        const viewerPose = renderer.xr.getCamera(camera);
+        const direction = new THREE.Vector3(0, 0, -1).applyQuaternion(viewerPose.quaternion);
+        raycaster.set(viewerPose.position, direction);
+        const intersects = raycaster.intersectObject(square);
+        if (intersects.length > 0) {
+          console.log("bonjour");
+        }
+      } else {
+        // Mode non-VR pour test sur navigateur
+        raycaster.setFromCamera(mouse, camera);
+        const intersects = raycaster.intersectObject(square);
+        if (intersects.length > 0) {
+          console.log("bonjour");
+        }
+      }
+    }
+
+    function onWindowResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    function animate() {
+      renderer.setAnimationLoop(render);
+    }
+
+    function render() {
+      renderer.render(scene, camera);
+    }
+  </script>
 </body>
 </html>
