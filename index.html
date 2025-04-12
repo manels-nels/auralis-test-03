@@ -1,140 +1,128 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
-    <title>AR Simple Click Test (Button on Hover - NO LOADER)</title> <!-- Titre mis à jour -->
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta name="description" content="Minimal A-Frame + AR.js: Clicking HTML button on hover. NO LOADER.">
-
-    <!-- A-Frame Core -->
-    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
-    <!-- AR.js for A-Frame -->
-    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.0/aframe/build/aframe-ar.min.js"></script>
-
-    <style>
-        body { margin: 0; overflow: hidden; font-family: sans-serif; }
-         /* Message de feedback simple */
-        #feedback-message {
-            position: absolute;
-            bottom: 95px; /* Positionné au-dessus du bouton d'action */
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.75);
-            color: white;
-            padding: 5px 10px;
-            border-radius: 3px;
-            font-size: 14px;
-            display: none; /* Caché au début */
-            z-index: 10;
-        }
-         /* Style pour le bouton d'action */
-         #square-action-button {
-            position: absolute;
-            bottom: 20px; /* Position fixe en bas */
-            left: 50%;
-            transform: translateX(-50%); /* Centré horizontalement */
-            z-index: 10; /* Même niveau que le feedback */
-            display: none; /* Caché au début */
-            padding: 12px 20px; /* Plus grand */
-            background: white;
-            border: 1px solid #555;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        /* PAS DE STYLE POUR LE LOADER */
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Carré Cliquable AR</title>
+<style>
+body { margin: 0; overflow: hidden; }
+#info {
+position: absolute;
+top: 10px;
+width: 100%;
+text-align: center;
+color: white;
+z-index: 1;
+display: none; /* Initialement caché */
+}
+</style>
 </head>
+<body>
+<div id="info">Bonjour</div>
+<script async src="https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.min.js"></script>
+<script async src="https://cdn.jsdelivr.net/npm/three@0.155.0/examples/js/libs/lil-gui.min.js"></script>
+<script async src="https://cdn.jsdelivr.net/npm/three@0.155.0/examples/js/libs/stats.module.js"></script>
+<script async src="https://cdn.jsdelivr.net/npm/three@0.155.0/examples/js/webxr/ARButton.js"></script>
+<script>
+    let scene, camera, renderer, square, raycaster, textElement;
+    const cameraPosition = new THREE.Vector3(0, 0, -0.5); // Position initiale du carré devant l'utilisateur
 
-<body style='margin: 0px; overflow: hidden;'>
+    init();
+    animate();
 
-    <!-- PAS DE LOADER ICI -->
+    function init() {
+        scene = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
+        camera.position.copy(cameraPosition);
 
-    <div id="feedback-message">Button Clicked!</div>
-    <!-- Bouton HTML pour l'action -->
-    <button id="square-action-button">Action on Square</button>
+        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.xr.enabled = true;
+        document.body.appendChild(renderer.domElement);
 
-    <!-- Scène A-Frame AR -->
-    <a-scene
-        id="ar-scene"
-        embedded
-        arjs='sourceType: webcam; trackingMethod: best; debugUIEnabled: false;'
-        renderer='logarithmicDepthBuffer: true;'
-        vr-mode-ui='enabled: false'>
+        document.body.appendChild(ARButton.createButton(renderer, { requiredFeatures: ['hit-test'] }));
 
-        <!-- Le carré rouge (AVEC data-interactive) -->
-        <a-plane
-            id="target-square"
-            position="0 1.6 -3"
-            width="1.5"
-            height="1.5"
-            color="#FF0000"
-            material="shader: flat; side: double;"
-            data-interactive 
-            >
-        </a-plane>
+        // Création du carré
+        const geometry = new THREE.PlaneGeometry(0.2, 0.2);
+        const material = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide, transparent: true, opacity: 0.8 });
+        square = new THREE.Mesh(geometry, material);
+        scene.add(square);
 
-        <!-- Caméra AVEC cursor et raycaster -->
-        <a-camera
-            id="camera"
-            cursor="rayOrigin: mouse; fuse: false;" 
-            raycaster="objects: [data-interactive];" 
-            >
-        </a-camera>
+        // Positionnement initial du carré
+        square.position.copy(cameraPosition).add(new THREE.Vector3(0, 0, 0.1)); // Léger décalage vers l'avant
+        square.lookAt(camera.position); // Faire face à la caméra initialement
 
-    </a-scene>
+        raycaster = new THREE.Raycaster();
+        const pointer = new THREE.Vector2();
 
-    <!-- Script pour gérer le survol et le clic bouton -->
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const sceneEl = document.querySelector('a-scene');
+        // Récupération de l'élément texte
+        textElement = document.getElementById('info');
 
-            sceneEl.addEventListener('loaded', () => {
-                console.log("AR Scene Loaded. Setting up hover/button interaction...");
+        // Gestion du clic
+        renderer.domElement.addEventListener('touchstart', onTouchStart);
+        renderer.domElement.addEventListener('mousedown', onMouseDown);
 
-                const targetSquare = document.getElementById('target-square');
-                const actionButton = document.getElementById('square-action-button');
-                const feedbackMessage = document.getElementById('feedback-message');
-                // PAS DE RÉFÉRENCE AU LOADER ICI
+        window.addEventListener('resize', onWindowResize);
+    }
 
-                // PAS DE CODE POUR CACHER LE LOADER ICI
+    function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    }
 
-                // Vérifier si les éléments existent
-                if (targetSquare && actionButton && feedbackMessage) {
+    function handleIntersection(x, y) {
+        pointer.x = (x / renderer.domElement.clientWidth) * 2 - 1;
+        pointer.y = - (y / renderer.domElement.clientHeight) * 2 + 1;
 
-                    // Action lorsque le BOUTON HTML est cliqué
-                    actionButton.addEventListener('click', () => {
-                        console.log("Action button clicked!");
-                        feedbackMessage.textContent = "Button Clicked!";
-                        feedbackMessage.style.display = 'block';
-                        // Changer couleur carré pour confirmation
-                        targetSquare.setAttribute('color', '#' + Math.floor(Math.random()*16777215).toString(16));
-                        setTimeout(() => { feedbackMessage.style.display = 'none'; }, 1500);
-                    });
+        raycaster.setFromCamera(pointer, camera);
 
-                    // Afficher le bouton HTML quand le curseur ENTRE sur le carré A-Frame
-                    targetSquare.addEventListener('mouseenter', () => {
-                        console.log("Mouse entered target square, showing button.");
-                        actionButton.style.display = 'block';
-                    });
+        const intersects = raycaster.intersectObjects([square]);
 
-                    // Cacher le bouton HTML quand le curseur QUITTE le carré A-Frame
-                    targetSquare.addEventListener('mouseleave', () => {
-                        console.log("Mouse left target square, hiding button.");
-                        actionButton.style.display = 'none';
-                    });
+        if (intersects.length > 0) {
+            // Le carré a été touché/cliqué
+            textElement.style.display = 'block';
+            setTimeout(() => {
+                textElement.style.display = 'none'; // Faire disparaître après un délai
+            }, 2000);
+        }
+    }
 
-                    console.log("Listeners added for hover and button click.");
+    function onTouchStart(event) {
+        event.preventDefault();
+        if (event.touches.length > 0) {
+            handleIntersection(event.touchesIndex !== undefined ? event.touchesIndex : event.touches.item(0).clientX, event.touches.item(0).clientY);
+        }
+    }
 
-                } else {
-                    if (!targetSquare) console.error("Element #target-square not found!");
-                    if (!actionButton) console.error("Element #square-action-button not found!");
-                    if (!feedbackMessage) console.error("Element #feedback-message not found!");
-                }
-                 console.log("Initialization finished.");
-            }); // Fin loaded
-        }); // Fin DOMContentLoaded
-    </script>
+    function onMouseDown(event) {
+        event.preventDefault();
+        handleIntersection(event.clientX, event.clientY);
+    }
 
+    function animate() {
+        renderer.setAnimationLoop(render);
+    }
+
+    function render(timestamp, frame) {
+        if (frame) {
+            const referenceSpace = renderer.xr.getReferenceSpace();
+            const viewerPose = frame.getViewerPose(referenceSpace);
+
+            if (viewerPose) {
+                // Mettre à jour la position du carré pour qu'il reste devant la caméra
+                const head = viewerPose.transform;
+                const offset = new THREE.Vector3(0, 0, -0.5); // Distance devant la caméra
+                offset.applyQuaternion(head.orientation);
+                square.position.copy(head.position).add(offset);
+                square.quaternion.copy(head.orientation); // Faire face à la caméra
+            }
+        }
+
+        renderer.render(scene, camera);
+    }
+</script>
+Use code with caution.
 </body>
 </html>
