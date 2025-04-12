@@ -19,20 +19,9 @@ display: none; /* Initialement caché */
 </head>
 <body>
 <div id="info">Bonjour</div>
-<script type="importmap">
-{
-"imports": {
-"three": "https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.module.js",
-"three/examples/jsm/libs/stats.module.js": "https://cdn.jsdelivr.net/npm/three@0.155.0/examples/jsm/libs/stats.module.js",
-"three/examples/jsm/webxr/ARButton.js": "https://cdn.jsdelivr.net/npm/three@0.155.0/examples/jsm/webxr/ARButton.js"
-}
-}
-</script>
-<script type="module">
-    import * as THREE from 'three';
-    import { ARButton } from 'three/examples/jsm/webxr/ARButton.js';
-    import Stats from 'three/examples/jsm/libs/stats.module.js';
-
+<script src="https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.155.0/examples/js/webxr/ARButton.js"></script>
+<script>
     let scene, camera, renderer, square, raycaster, textElement;
     const cameraPosition = new THREE.Vector3(0, 0, -0.5);
 
