@@ -19,16 +19,13 @@ display: none; /* Initialement caché */
 </head>
 <body>
 <div id="info">Bonjour</div>
-<script async src="https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.min.js"></script>
-<script async src="https://cdn.jsdelivr.net/npm/three@0.155.0/examples/js/libs/lil-gui.min.js"></script>
-<script async src="https://cdn.jsdelivr.net/npm/three@0.155.0/examples/js/libs/stats.module.js"></script>
-<script async src="https://cdn.jsdelivr.net/npm/three@0.155.0/examples/js/webxr/ARButton.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.155.0/examples/js/libs/lil-gui.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.155.0/examples/js/libs/stats.module.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.155.0/examples/js/webxr/ARButton.js"></script>
 <script>
     let scene, camera, renderer, square, raycaster, textElement;
     const cameraPosition = new THREE.Vector3(0, 0, -0.5); // Position initiale du carré devant l'utilisateur
-
-    init();
-    animate();
 
     function init() {
         scene = new THREE.Scene();
@@ -73,8 +70,12 @@ display: none; /* Initialement caché */
     }
 
     function handleIntersection(x, y) {
-        pointer.x = (x / renderer.domElement.clientWidth) * 2 - 1;
-        pointer.y = - (y / renderer.domElement.clientHeight) * 2 + 1;
+        const rect = renderer.domElement.getBoundingClientRect();
+        const normalizedX = (x - rect.left) / rect.width * 2 - 1;
+        const normalizedY = - (y - rect.top) / rect.height * 2 + 1;
+
+        pointer.x = normalizedX;
+        pointer.y = normalizedY;
 
         raycaster.setFromCamera(pointer, camera);
 
@@ -92,7 +93,7 @@ display: none; /* Initialement caché */
     function onTouchStart(event) {
         event.preventDefault();
         if (event.touches.length > 0) {
-            handleIntersection(event.touchesIndex !== undefined ? event.touchesIndex : event.touches.item(0).clientX, event.touches.item(0).clientY);
+            handleIntersection(event.touches.item(0).clientX, event.touches.item(0).clientY);
         }
     }
 
@@ -111,18 +112,19 @@ display: none; /* Initialement caché */
             const viewerPose = frame.getViewerPose(referenceSpace);
 
             if (viewerPose) {
-                // Mettre à jour la position du carré pour qu'il reste devant la caméra
                 const head = viewerPose.transform;
-                const offset = new THREE.Vector3(0, 0, -0.5); // Distance devant la caméra
+                const offset = new THREE.Vector3(0, 0, -0.5);
                 offset.applyQuaternion(head.orientation);
                 square.position.copy(head.position).add(offset);
-                square.quaternion.copy(head.orientation); // Faire face à la caméra
+                square.quaternion.copy(head.orientation);
             }
         }
-
         renderer.render(scene, camera);
     }
+
+    init(); // Appeler init() une fois que les scripts sont (normalement) chargés
+    animate();
 </script>
-Use code with caution.
+
 </body>
 </html>
