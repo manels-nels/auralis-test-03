@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>WebXR - Carré cliquable</title>
+  <title>WebXR AR - Carré cliquable</title>
   <style>
     body { margin: 0; overflow: hidden; }
     canvas { display: block; }
@@ -11,82 +11,73 @@
 <body>
   <script type="module">
     import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js';
-    import { VRButton } from 'https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/webxr/VRButton.js';
+    import { ARButton } from 'https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/webxr/ARButton.js';
 
     let camera, scene, renderer;
     let square;
     const raycaster = new THREE.Raycaster();
-    const mouse = new THREE.Vector2(); // Unused but necessary placeholder for the interface
+    const tapPosition = new THREE.Vector2();
 
     init();
     animate();
 
     function init() {
-      // Scène
       scene = new THREE.Scene();
-      scene.background = new THREE.Color(0x202020);
 
-      // Caméra
-      camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 100);
-      camera.position.z = 1;
+      camera = new THREE.PerspectiveCamera();
 
-      // Lumière
-      const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
-      light.position.set(0.5, 1, 0.25);
-      scene.add(light);
-
-      // Carré (plan)
-      const geometry = new THREE.PlaneGeometry(0.5, 0.5);
-      const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-      square = new THREE.Mesh(geometry, material);
-      square.position.set(0, 1.5, -2); // Juste devant l'utilisateur
-      scene.add(square);
-
-      // Renderer
-      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.xr.enabled = true;
       document.body.appendChild(renderer.domElement);
-      document.body.appendChild(VRButton.createButton(renderer));
 
-      // Contrôles cliquables dans WebXR
-      renderer.domElement.addEventListener('click', onClick);
+      // Bouton AR
+      document.body.appendChild(ARButton.createButton(renderer, { requiredFeatures: ['hit-test'] }));
 
-      window.addEventListener('resize', onWindowResize);
+      // Carré flottant
+      const geometry = new THREE.PlaneGeometry(0.3, 0.3);
+      const material = new THREE.MeshBasicMaterial({ color: 0x00ff00, side: THREE.DoubleSide });
+      square = new THREE.Mesh(geometry, material);
+      square.position.set(0, 0, -1); // 1m devant la caméra
+      square.rotation.x = -0.2; // Légèrement incliné
+      scene.add(square);
+
+      // Taper sur l’écran
+      window.addEventListener('click', onClick);
     }
 
     function onClick(event) {
-      const session = renderer.xr.getSession();
-      if (session) {
-        const viewerPose = renderer.xr.getCamera(camera);
-        const direction = new THREE.Vector3(0, 0, -1).applyQuaternion(viewerPose.quaternion);
-        raycaster.set(viewerPose.position, direction);
-        const intersects = raycaster.intersectObject(square);
-        if (intersects.length > 0) {
-          console.log("bonjour");
-        }
-      } else {
-        // Mode non-VR pour test sur navigateur
-        raycaster.setFromCamera(mouse, camera);
-        const intersects = raycaster.intersectObject(square);
-        if (intersects.length > 0) {
-          console.log("bonjour");
-        }
+      tapPosition.x = (event.clientX / window.innerWidth) * 2 - 1;
+      tapPosition.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+      raycaster.setFromCamera(tapPosition, camera);
+      const intersects = raycaster.intersectObject(square);
+
+      if (intersects.length > 0) {
+        console.log("bonjour");
+        showText("bonjour", intersects[0].point);
       }
     }
 
-    function onWindowResize() {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
+    function showText(msg, position) {
+      const loader = new THREE.FontLoader();
+      loader.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.json', function (font) {
+        const geometry = new THREE.TextGeometry(msg, {
+          font: font,
+          size: 0.05,
+          height: 0.01,
+        });
+        const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+        const textMesh = new THREE.Mesh(geometry, material);
+        textMesh.position.copy(position);
+        scene.add(textMesh);
+      });
     }
 
     function animate() {
-      renderer.setAnimationLoop(render);
-    }
-
-    function render() {
-      renderer.render(scene, camera);
+      renderer.setAnimationLoop(() => {
+        renderer.render(scene, camera);
+      });
     }
   </script>
 </body>
