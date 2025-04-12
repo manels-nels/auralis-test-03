@@ -23,7 +23,6 @@ display: none; /* Initialement caché */
 {
 "imports": {
 "three": "https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.module.js",
-"three/examples/jsm/libs/lil-gui.module.js": "https://cdn.jsdelivr.net/npm/three@0.155.0/examples/jsm/libs/lil-gui.module.js",
 "three/examples/jsm/libs/stats.module.js": "https://cdn.jsdelivr.net/npm/three@0.155.0/examples/jsm/libs/stats.module.js",
 "three/examples/jsm/webxr/ARButton.js": "https://cdn.jsdelivr.net/npm/three@0.155.0/examples/jsm/webxr/ARButton.js"
 }
@@ -33,7 +32,6 @@ display: none; /* Initialement caché */
     import * as THREE from 'three';
     import { ARButton } from 'three/examples/jsm/webxr/ARButton.js';
     import Stats from 'three/examples/jsm/libs/stats.module.js';
-    import { GUI } from 'three/examples/jsm/libs/lil-gui.module.js';
 
     let scene, camera, renderer, square, raycaster, textElement;
     const cameraPosition = new THREE.Vector3(0, 0, -0.5);
@@ -64,7 +62,7 @@ display: none; /* Initialement caché */
 
         textElement = document.getElementById('info');
 
-        renderer.domElement.addEventListener('touchstart', onTouchStart, { passive: false }); // Ajout de passive: false car preventDefault est utilisé
+        renderer.domElement.addEventListener('touchstart', onTouchStart, { passive: false });
         renderer.domElement.addEventListener('mousedown', onMouseDown);
 
         window.addEventListener('resize', onWindowResize);
@@ -97,7 +95,7 @@ display: none; /* Initialement caché */
     }
 
     function onTouchStart(event) {
-        event.preventDefault(); // Prevent default touch behavior for click detection
+        event.preventDefault();
         if (event.touches.length > 0) {
             handleIntersection(event.touches.item(0).clientX, event.touches.item(0).clientY);
         }
