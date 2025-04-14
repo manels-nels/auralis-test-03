@@ -249,12 +249,7 @@
             >
         </a-image>
 
-        <a-box
-        color="red"
-        position="1 1.5 -1" 
-        scale="0.2 0.2 0.2"
-        clickable-cube
-        ></a-box>
+        <a-box color="red" position="0 1.5 -2.2" scale="0.2 0.2 0.2" clickable-cube geometry="primitive: box; width: 0.2; height: 0.2; depth: 0.2"></a-box>
 
         <!-- Méduse 3D Animée -->
         <a-gltf-model id="jellyfish"
@@ -477,7 +472,7 @@
             const colors = ['red', 'green', 'blue'];
             let colorIndex = 0;
 
-            el.addEventListener('click', function () {
+            el.addEventListener('mousedown', function () {
                 colorIndex = (colorIndex + 1) % colors.length;
                 el.setAttribute('material', 'color', colors [colorIndex]);
                 console.log('Cube touched, color changed to:', colors [colorIndex]);
