@@ -158,16 +158,11 @@
         renderer='logarithmicDepthBuffer: true;'
         vr-mode-ui='enabled: false'>
 
-         <a-entity id="cursor" cursor="rayOrigin: mouse; objects: .clickable"></a-entity>
+        
 
         
         <!-- Caméra avec raycaster pour détecter les clics -->
-        <a-camera
-            cursor="rayOrigin: entity; rayOriginEntity: #cursor;"
-            raycaster="objects: [data-interactive], [clickable-cube];"
-             /* Ne tester que les objets avec data-interactive */
-            >
-        </a-camera>
+        <a-camera cursor="rayOrigin: mouse; fuse: false; objects: .clickable" raycaster="objects: [data-interactive], .clickable;" >
 
         <!-- Assets : Précharger les images ET le son -->
         <a-assets timeout="30000">
