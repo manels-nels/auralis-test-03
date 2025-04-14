@@ -171,6 +171,8 @@
              <!-- Assure-toi que le chemin vers ton audio est correct -->
              <audio id="logoAudio" src="audio/auralis.mp3" preload="auto" crossOrigin="anonymous"></audio>
 
+            <a-asset-item id="sphere" src="models/sphere.glb" crossOrigin="anonymous"></a-asset-item>
+
             <a-asset-item id="jellyfishModel" src="models/meduse.glb" crossOrigin="anonymous"></a-asset-item>
         </a-assets>
 
@@ -261,6 +263,14 @@
         <a-gltf-model id="jellyfish"
                       src="#jellyfishModel"
                       position="-1 2 -5" scale="0.2 0.2 0.2" rotation="0 0 0"
+                      animation__pos="property: position; from: 1 2 -4; to: -1 -1.2 -4; dir: alternate; dur: 18000; easing: easeInOutSine; loop: true;"
+                      animation__rot="property: rotation; to: 0 360 0; dur: 20000; easing: linear; loop: true;"
+                      animation-mixer="clip: *; loop: repeat">
+        </a-gltf-model>
+
+        <a-gltf-model id="sphere"
+                      src="#jellyfishModel"
+                      position="-1 2 -1" scale="0.2 0.2 0.2" rotation="0 0 0"
                       animation__pos="property: position; from: 1 2 -4; to: -1 -1.2 -4; dir: alternate; dur: 18000; easing: easeInOutSine; loop: true;"
                       animation__rot="property: rotation; to: 0 360 0; dur: 20000; easing: linear; loop: true;"
                       animation-mixer="clip: *; loop: repeat">
