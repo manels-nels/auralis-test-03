@@ -253,6 +253,7 @@
         color="red"
         position="1 1.5 -1" 
         scale="0.2 0.2 0.2"
+        clickable-cube
         ></a-box>
 
         <!-- Méduse 3D Animée -->
@@ -285,7 +286,8 @@
         <!-- Caméra avec raycaster pour détecter les clics -->
         <a-camera
             cursor="rayOrigin: mouse; fuse: false;"
-            raycaster="objects: [data-interactive];" /* Ne tester que les objets avec data-interactive */
+            raycaster="objects: [data-interactive], [clickable-cube];"
+             /* Ne tester que les objets avec data-interactive */
             >
         </a-camera>
 
@@ -463,7 +465,19 @@
                     if (!logoElementExists) console.error("Logo element not found, cannot activate sound button!");
                 }
 
+                AFRAME.registerComponent('clickable-cube', {
+        init: function () {
+            const el = this.el;
+            const colors = ['red', 'green', 'blue'];
+            let colorIndex = 0;
+
+            el.addEventListener('click', function () {
+                colorIndex = (colorIndex + 1) % colors.length;
+                el.setAttribute('material', 'color', colors [colorIndex]);
+                console.log('Cube touched, color changed to:', colors [colorIndex]);
+                
             }); // Fin de sceneEl.addEventListener('loaded')
+            }
         }); // Fin de document.addEventListener('DOMContentLoaded')
     </script>
 
