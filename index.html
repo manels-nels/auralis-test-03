@@ -283,10 +283,13 @@
                       animation__rot="property: rotation; to: 0 360 0; dur: 20000; easing: linear; loop: true;"
                       animation-mixer="clip: *; loop: repeat">
         </a-gltf-model>
+
+        <a-entity id="cursor" cursor="rayOrigin: mouse"></a-entity>
+
         
         <!-- Caméra avec raycaster pour détecter les clics -->
         <a-camera
-            cursor="rayOrigin: mouse; fuse: false;"
+            cursor="rayOrigin: entity; rayOriginEntity: #cursor;"
             raycaster="objects: [data-interactive], [clickable-cube];"
              /* Ne tester que les objets avec data-interactive */
             >
