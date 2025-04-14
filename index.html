@@ -20,10 +20,19 @@ z-index: -1;
 <div id="ar-container">
 <canvas id="ar-canvas"></canvas>
 </div>
+<script async src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+<script async src="https://unpkg.com/three@0.160.0/examples/jsm/webxr/ARButton.js"></script>
+<script async src="https://unpkg.com/three@0.160.0/examples/jsm/misc/Raycaster.js"></script>
+<script async src="https://unpkg.com/three@0.160.0/src/math/Vector2.js"></script>
+
 <script type="module">
-    import * as THREE from 'three';
-    import { ARButton } from 'three/examples/jsm/webxr/ARButton.js';
-    import { Raycaster, Vector2 } from 'three';
+    import * as THREE from './build/three.module.js'; // Now we can try a local import if you prefer, after CDN loads it
+    import { ARButton } from './jsm/webxr/ARButton.js';
+    import { Raycaster } from './jsm/misc/Raycaster.js';
+    import { Vector2 } from './src/math/Vector2.js';
+
+    // ... (rest of your JavaScript code) ...
+
 
     let scene, camera, renderer, cube, raycaster, pointer;
 
