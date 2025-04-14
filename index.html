@@ -465,7 +465,13 @@
                     if (!logoElementExists) console.error("Logo element not found, cannot activate sound button!");
                 }
 
-                AFRAME.registerComponent('clickable-cube', {
+                
+           
+            }); // Fin de sceneEl.addEventListener('loaded')
+            
+        }); // Fin de document.addEventListener('DOMContentLoaded')
+
+        AFRAME.registerComponent('clickable-cube', {
         init: function () {
             const el = this.el;
             const colors = ['red', 'green', 'blue'];
@@ -475,10 +481,9 @@
                 colorIndex = (colorIndex + 1) % colors.length;
                 el.setAttribute('material', 'color', colors [colorIndex]);
                 console.log('Cube touched, color changed to:', colors [colorIndex]);
-             }}}   
-            }); // Fin de sceneEl.addEventListener('loaded')
-            
-        }); // Fin de document.addEventListener('DOMContentLoaded')
+                 });
+        }
+    });
     </script>
 
 </body>
