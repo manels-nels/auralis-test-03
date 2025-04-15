@@ -175,6 +175,14 @@
                 <a-asset-item id="sphere" src="models/sphere.glb" crossOrigin="anonymous"></a-asset-item>
         </a-assets>
 
+
+        <a-entity
+    id="info-text"
+    text="value: INFO; align: center; color: white; width: 2;"
+    position="0 0.6 -0.5"  
+    data-interactive
+    >
+</a-entity>
         <!-- L'image cliquable en RA (logo) AVEC SON (sans autoplay) -->
         <a-image
             id="clickable-logo"
@@ -328,7 +336,7 @@
             sceneEl.addEventListener('loaded', () => {
                 console.log("A-Frame scene loaded.");
 
-
+const infoText = document.getElementById('info-text'); // NEW: Get the INFO text element
 
                                 // --- DEBUT AJOUT : Cacher l'écran de chargement initial ---
                 const initialLoader = document.getElementById('initial-loader');
@@ -362,10 +370,15 @@
                 const soundButton = document.getElementById('sound-toggle-button'); // Aussi besoin ici pour la vérification
 
                 // Vérification de l'existence des éléments pour les clics image/popup
-                if (clickableLogo && clickableWangMeng && messagePopup && sphereModel) {
+                if (clickableLogo && clickableWangMeng && messagePopup && sphereModel && infoText) {
                     console.log("Logo, WangMeng, Sphere model and popup elements found for click listeners.");
 
-                    
+                    // NEW: Click listener for INFO text
+infoText.addEventListener('click', () => {
+    console.log("Click detected on the INFO text!");
+    messagePopup.textContent = "bonjour"; // Display "bonjour"
+    messagePopup.classList.add('visible'); // Show the popup
+});
                                                         // Écouteur pour le clic sur l'image logo -> bonjour
                                    // MODIFIER cet écouteur pour le clic sur l'image logo -> effet machine à écrire
 sphereModel.addEventListener('click', () => {
