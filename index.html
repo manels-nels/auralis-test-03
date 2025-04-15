@@ -368,6 +368,13 @@
                     
                                                         // Écouteur pour le clic sur l'image logo -> bonjour
                                    // MODIFIER cet écouteur pour le clic sur l'image logo -> effet machine à écrire
+sphereModel.addEventListener('click', () => {
+                    console.log("Sphere clicked!");
+                    messagePopup.textContent = "Hello";
+                    messagePopup.classList.add('visible');
+}
+
+                    
                     clickableLogo.addEventListener('click', () => {
                         console.log("Click detected on the logo image! Starting typing effect...");
                         const messagePopup = document.getElementById('message-popup'); // Récupère le popup ici
