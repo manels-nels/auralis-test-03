@@ -13,6 +13,10 @@ test
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.0/aframe/build/aframe-ar.min.js"></script>
 
     <style>
+        a-image {
+    width: 1 !important; 
+    height: 1 !important;
+            }
         
                 /* --- NOUVEAU : Style pour l'écran de chargement initial --- */
         #initial-loader {
@@ -173,6 +177,8 @@ test
              <audio id="logoAudio" src="audio/auralis.mp3" preload="auto" crossOrigin="anonymous"></audio>
 
             <a-asset-item id="jellyfishModel" src="models/meduse.glb" crossOrigin="anonymous"></a-asset-item>
+
+            
         </a-assets>
 
         <!-- L'image cliquable en RA (logo) AVEC SON (sans autoplay) -->
