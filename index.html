@@ -172,9 +172,7 @@
              <audio id="logoAudio" src="audio/auralis.mp3" preload="auto" crossOrigin="anonymous"></audio>
 
             <a-asset-item id="jellyfishModel" src="models/meduse.glb" crossOrigin="anonymous"></a-asset-item>
-                <a-asset-item id="sphere" src="models/sphere.glb" crossOrigin="anonymous"></a-asset-item>
         </a-assets>
-
 
         <a-entity
     id="info-text"
@@ -183,6 +181,7 @@
     data-interactive
     >
 </a-entity>
+
         <!-- L'image cliquable en RA (logo) AVEC SON (sans autoplay) -->
         <a-image
             id="clickable-logo"
@@ -190,7 +189,7 @@
             position="0 1.5 -2.7"  
             width="1"
             height="1"           
-            data-interactive
+            
             sound="src: #logoAudio; loop: true; volume: 0.8; positional: true" <!-- AUTOPLAY SUPPRIMÉ -->
             >
         </a-image>
@@ -274,18 +273,11 @@
                       animation__rot="property: rotation; to: 0 360 0; dur: 20000; easing: linear; loop: true;"
                       animation-mixer="clip: *; loop: repeat">
         </a-gltf-model>
-
-            <a-gltf-model id="sphere"
-                      src="#sphere"
-                      position="-1 2 -1" scale="0.2 0.2 0.2" rotation="0 0 0"
-                      data-interactive
-                      class="clickable-sphere">
-        </a-gltf-model>
         
         <!-- Caméra avec raycaster pour détecter les clics -->
         <a-camera
             cursor="rayOrigin: mouse; fuse: false;"
-            raycaster="objects: [data-interactive], .clickable-sphere;" /* Ne tester que les objets avec data-interactive */
+            raycaster="objects: [data-interactive];" /* Ne tester que les objets avec data-interactive */
             >
         </a-camera>
 
@@ -336,7 +328,7 @@
             sceneEl.addEventListener('loaded', () => {
                 console.log("A-Frame scene loaded.");
 
-const infoText = document.getElementById('info-text'); // NEW: Get the INFO text element
+
 
                                 // --- DEBUT AJOUT : Cacher l'écran de chargement initial ---
                 const initialLoader = document.getElementById('initial-loader');
@@ -363,15 +355,14 @@ const infoText = document.getElementById('info-text'); // NEW: Get the INFO text
                 
 
                 // Récupérer tous les éléments nécessaires
-                const clickableLogo = document.getElementById('clickable-logo');
+                const infoText = document.getElementById('info-text'); // NEW: Get the INFO text element
                 const clickableWangMeng = document.getElementById('clickable-wangmeng');
-                const sphereModel = document.getElementById('sphere-model');
-                const messagePopup = document.getElementById('message-popup');
+                
                 const soundButton = document.getElementById('sound-toggle-button'); // Aussi besoin ici pour la vérification
 
                 // Vérification de l'existence des éléments pour les clics image/popup
-                if (clickableLogo && clickableWangMeng && messagePopup && sphereModel && infoText) {
-                    console.log("Logo, WangMeng, Sphere model and popup elements found for click listeners.");
+                if (clickableWangMeng && messagePopup) {
+                    console.log("WangMeng, and infoTexte elements found for click listeners.");
 
                     // NEW: Click listener for INFO text
 infoText.addEventListener('click', () => {
@@ -379,61 +370,11 @@ infoText.addEventListener('click', () => {
     messagePopup.textContent = "bonjour"; // Display "bonjour"
     messagePopup.classList.add('visible'); // Show the popup
 });
+
+                    
                                                         // Écouteur pour le clic sur l'image logo -> bonjour
                                    // MODIFIER cet écouteur pour le clic sur l'image logo -> effet machine à écrire
-sphereModel.addEventListener('click', () => {
-                    console.log("Sphere clicked!");
-                    messagePopup.textContent = "Hello";
-                    messagePopup.classList.add('visible');
-                    if (window.typingIntervalId) {
-                           clearInterval(window.typingIntervalId);
-                           window.typingIntervalId = null;
-                           console.log("Typing effect interrupted by clicking other image.");
-                        }
-                        messagePopup.textContent = "bye";
-                        messagePopup.classList.add('visible'); // Afficher le popup pour 'bye'
-                    });
-
-
-                
-
-                             
-                    clickableLogo.addEventListener('click', () => {
-                        console.log("Click detected on the logo image! Starting typing effect...");
-                        const messagePopup = document.getElementById('message-popup'); // Récupère le popup ici
-                        const fullText = "Imagine a space where sound moves like liquid, where music is not confined to speakers but swirls around you, weaving an intricate web of vibration and light. Here the past and the Future collide, ancient strings resonate against modern frequencies, and the visual pulse in perfect harmony with a never-shifting soundscape, Welcome to AURALIS";
-                        let charIndex = 0; // Index pour suivre la lettre actuelle
-                        const typingSpeed = 70; // Délai en ms entre chaque lettre (ajuste si besoin)
-
-                        if (messagePopup) {
-                            // 1. Arrêter tout intervalle précédent et vider le texte
-                            if (window.typingIntervalId) {
-                                clearInterval(window.typingIntervalId);
-                            }
-                            messagePopup.textContent = ''; // Vide le texte
-                            messagePopup.scrollTop = 0; // Remet le scroll au début si nécessaire
-
-                            // 2. Afficher le conteneur (avec l'animation CSS)
-                            messagePopup.classList.add('visible');
-
-                            // 3. Démarrer le nouvel intervalle pour ajouter les lettres
-                            window.typingIntervalId = setInterval(() => {
-                                if (charIndex < fullText.length) {
-                                    messagePopup.textContent += fullText.charAt(charIndex);
-                                    charIndex++;
-                                    // Optionnel: Scroller vers le bas pendant la frappe si le texte dépasse
-                                    messagePopup.scrollTop = messagePopup.scrollHeight;
-                                } else {
-                                    clearInterval(window.typingIntervalId);
-                                    window.typingIntervalId = null;
-                                    console.log("Typing effect finished.");
-                                }
-                            }, typingSpeed);
-
-                        } else {
-                            console.error("Message popup element (#message-popup) not found!");
-                        }
-                    });
+                    
                     // --- Fin de la modification de l'écouteur du logo ---
 
                     // Écouteur pour le clic sur l'image wangmeng -> bye (INCHANGÉ)
@@ -468,7 +409,7 @@ sphereModel.addEventListener('click', () => {
 
                 } else {
                     // Log d'erreur détaillé (INCHANGÉ)
-                    if (!clickableLogo) console.error("Clickable logo element (#clickable-logo) not found!");
+                    
                     if (!clickableWangMeng) console.error("Clickable Wang Meng element (#clickable-wangmeng) not found!");
                     if (!messagePopup) console.error("Message popup element (#message-popup) not found!");
                 }
@@ -484,6 +425,7 @@ sphereModel.addEventListener('click', () => {
                 } else {
                     if (!soundButton) console.error("Sound toggle button element not found!");
                     if (!logoElementExists) console.error("Logo element not found, cannot activate sound button!");
+                    if (!infoText) console.error("INFO text element (#info-text) not found!"); // NEW: Log for infoText
                 }
 
             }); // Fin de sceneEl.addEventListener('loaded')
