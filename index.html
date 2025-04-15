@@ -1,4 +1,3 @@
-test
 <!DOCTYPE html>
 <html>
 <head>
@@ -13,10 +12,6 @@ test
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.0/aframe/build/aframe-ar.min.js"></script>
 
     <style>
-        a-image {
-    width: 4 !important; 
-    height: 4 !important;
-            }
         
                 /* --- NOUVEAU : Style pour l'écran de chargement initial --- */
         #initial-loader {
@@ -177,17 +172,15 @@ test
              <audio id="logoAudio" src="audio/auralis.mp3" preload="auto" crossOrigin="anonymous"></audio>
 
             <a-asset-item id="jellyfishModel" src="models/meduse.glb" crossOrigin="anonymous"></a-asset-item>
-
-            
         </a-assets>
 
         <!-- L'image cliquable en RA (logo) AVEC SON (sans autoplay) -->
         <a-image
             id="clickable-logo"
             src="#logoAsset"
-            position="0 1.5 -8"  
-            width="2"
-            height="2"           
+            position="0 1.5 -2.7"  
+            width="1"
+            height="1"           
             data-interactive
             sound="src: #logoAudio; loop: true; volume: 0.8; positional: true" <!-- AUTOPLAY SUPPRIMÉ -->
             >
@@ -454,31 +447,6 @@ test
                     if (!logoElementExists) console.error("Logo element not found, cannot activate sound button!");
                 }
 
-                const DELAI_AJUSTEMENT_ZONE_CLIQUABLE = 1500; // Par exemple, 1.5 secondes
-
-    setTimeout(() => {
-        console.log("Tentative de mise à jour des tailles des images pour la zone cliquable après délai...");
-
-        const imagesCliquables = document.querySelectorAll('a-image[data-interactive]'); // Sélectionne toutes les images cliquables
-
-        imagesCliquables.forEach(image => {
-            // Récupérez ici les dimensions finales souhaitées pour chaque image (si elles sont différentes)
-            // Ou utilisez une taille unique si toutes les images doivent avoir la même taille finale
-            const largeurFinale = image.getAttribute('width'); // Récupère la largeur déjà définie dans le HTML (ou une nouvelle valeur)
-            const hauteurFinale = image.getAttribute('height'); // Récupère la hauteur déjà définie dans le HTML (ou une nouvelle valeur)
-
-            // Mettez à jour les attributs width et height de l'image en JavaScript
-            image.setAttribute('width', largeurFinale);
-            image.setAttribute('height', hauteurFinale);
-
-            console.log(`Image ${image.id} : taille mise à jour à largeur=${largeurFinale}, hauteur=${hauteurFinale}`);
-        });
-
-        console.log("Mise à jour des tailles des images terminée.");
-
-    }, DELAI_AJUSTEMENT_ZONE_CLIQUABLE);
-
-                
             }); // Fin de sceneEl.addEventListener('loaded')
         }); // Fin de document.addEventListener('DOMContentLoaded')
     </script>
