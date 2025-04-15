@@ -454,6 +454,31 @@ test
                     if (!logoElementExists) console.error("Logo element not found, cannot activate sound button!");
                 }
 
+                const DELAI_AJUSTEMENT_ZONE_CLIQUABLE = 1500; // Par exemple, 1.5 secondes
+
+    setTimeout(() => {
+        console.log("Tentative de mise à jour des tailles des images pour la zone cliquable après délai...");
+
+        const imagesCliquables = document.querySelectorAll('a-image[data-interactive]'); // Sélectionne toutes les images cliquables
+
+        imagesCliquables.forEach(image => {
+            // Récupérez ici les dimensions finales souhaitées pour chaque image (si elles sont différentes)
+            // Ou utilisez une taille unique si toutes les images doivent avoir la même taille finale
+            const largeurFinale = image.getAttribute('width'); // Récupère la largeur déjà définie dans le HTML (ou une nouvelle valeur)
+            const hauteurFinale = image.getAttribute('height'); // Récupère la hauteur déjà définie dans le HTML (ou une nouvelle valeur)
+
+            // Mettez à jour les attributs width et height de l'image en JavaScript
+            image.setAttribute('width', largeurFinale);
+            image.setAttribute('height', hauteurFinale);
+
+            console.log(`Image ${image.id} : taille mise à jour à largeur=${largeurFinale}, hauteur=${hauteurFinale}`);
+        });
+
+        console.log("Mise à jour des tailles des images terminée.");
+
+    }, DELAI_AJUSTEMENT_ZONE_CLIQUABLE);
+
+                
             }); // Fin de sceneEl.addEventListener('loaded')
         }); // Fin de document.addEventListener('DOMContentLoaded')
     </script>
