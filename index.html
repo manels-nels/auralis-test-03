@@ -372,9 +372,19 @@ sphereModel.addEventListener('click', () => {
                     console.log("Sphere clicked!");
                     messagePopup.textContent = "Hello";
                     messagePopup.classList.add('visible');
-}
+                    if (window.typingIntervalId) {
+                           clearInterval(window.typingIntervalId);
+                           window.typingIntervalId = null;
+                           console.log("Typing effect interrupted by clicking other image.");
+                        }
+                        messagePopup.textContent = "bye";
+                        messagePopup.classList.add('visible'); // Afficher le popup pour 'bye'
+                    });
 
-                    
+
+                
+
+                             
                     clickableLogo.addEventListener('click', () => {
                         console.log("Click detected on the logo image! Starting typing effect...");
                         const messagePopup = document.getElementById('message-popup'); // Récupère le popup ici
