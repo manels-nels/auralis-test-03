@@ -270,13 +270,14 @@
             <a-gltf-model id="sphere"
                       src="#sphere"
                       position="-1 2 -1" scale="0.2 0.2 0.2" rotation="0 0 0"
-                      >
+                      data-interactive
+                      class="clickable-sphere">
         </a-gltf-model>
         
         <!-- Caméra avec raycaster pour détecter les clics -->
         <a-camera
             cursor="rayOrigin: mouse; fuse: false;"
-            raycaster="objects: [data-interactive];" /* Ne tester que les objets avec data-interactive */
+            raycaster="objects: [data-interactive], .clickable-sphere;" /* Ne tester que les objets avec data-interactive */
             >
         </a-camera>
 
@@ -356,12 +357,13 @@
                 // Récupérer tous les éléments nécessaires
                 const clickableLogo = document.getElementById('clickable-logo');
                 const clickableWangMeng = document.getElementById('clickable-wangmeng');
+                const sphereModel = document.getElementById('sphere-model');
                 const messagePopup = document.getElementById('message-popup');
                 const soundButton = document.getElementById('sound-toggle-button'); // Aussi besoin ici pour la vérification
 
                 // Vérification de l'existence des éléments pour les clics image/popup
-                if (clickableLogo && clickableWangMeng && messagePopup) {
-                    console.log("Logo, WangMeng, and popup elements found for click listeners.");
+                if (clickableLogo && clickableWangMeng && messagePopup && sphereModel) {
+                    console.log("Logo, WangMeng, Sphere model and popup elements found for click listeners.");
 
                     
                                                         // Écouteur pour le clic sur l'image logo -> bonjour
