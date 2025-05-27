@@ -75,21 +75,23 @@
         if (messageText) {
             messageText.setAttribute('visible', 'false');
             console.log('Explicitly set mindarMessageText to invisible on load.');
+        } else {
+            console.error("#mindarMessageText element not found for initial hide.");
         }
 
-        if (clickablePlane && messageText) {
-          clickablePlane.addEventListener('click', (event) => {
-            console.log('Clickable plane hit with MindAR!');
-            messageText.setAttribute('visible', 'true');
-            // Optional: Hide message again after a few seconds
-            setTimeout(() => {
-              messageText.setAttribute('visible', 'false');
-            }, 3000);
-          });
-        } else {
-          if (!clickablePlane) console.error(".clickable element not found");
-          if (!messageText) console.error("#mindarMessageText element not found");
-        }
+        // if (clickablePlane && messageText) {
+        //   clickablePlane.addEventListener('click', (event) => {
+        //     console.log('Clickable plane hit with MindAR!');
+        //     messageText.setAttribute('visible', 'true');
+        //     // Optional: Hide message again after a few seconds
+        //     setTimeout(() => {
+        //       messageText.setAttribute('visible', 'false');
+        //     }, 3000);
+        //   });
+        // } else {
+        //   if (!clickablePlane) console.error(".clickable element not found");
+        //   if (!messageText) console.error("#mindarMessageText element not found");
+        // }
 
         // Optional: Listen for target found/lost events for debugging
         const targetEntity = document.querySelector('[mindar-image-target]');
@@ -100,6 +102,61 @@
             targetEntity.addEventListener('targetLost', event => {
                 console.log("MindAR Target Lost");
             });
+        } else {
+            console.error("MindAR target entity not found. Check selector '[mindar-image-target]'.");
+        }
+
+        // Add new mousedown listener for manual raycaster check
+        // Ensure canvas is ready before adding listener, or use sceneEl as fallback for listener.
+        // A-Frame scenes usually have a canvas attached.
+        if (sceneEl.canvas) {
+            sceneEl.canvas.addEventListener('mousedown', (event) => {
+                console.log('Canvas mousedown event detected.');
+
+                if (!clickablePlane) {
+                    console.error(".clickable plane not found for click check.");
+                    return;
+                }
+                if (!messageText) {
+                    console.error("#mindarMessageText not found for click check.");
+                    return;
+                }
+
+                const cameraEl = sceneEl.camera && sceneEl.camera.el;
+                if (!cameraEl) {
+                    console.error("Camera element not found.");
+                    return;
+                }
+
+                const raycasterComponent = cameraEl.components.raycaster;
+                if (!raycasterComponent) {
+                    console.error("Raycaster component not found on camera.");
+                    return;
+                }
+
+                // Force refresh of collidable objects
+                raycasterComponent.refreshObjects();
+
+                const intersectedEls = raycasterComponent.intersectedEls;
+
+                if (intersectedEls.includes(clickablePlane)) {
+                    console.log('Manual raycaster check: Hit .clickable plane!');
+                    messageText.setAttribute('visible', 'true');
+                    setTimeout(() => {
+                        messageText.setAttribute('visible', 'false');
+                    }, 3000);
+                } else {
+                    if (intersectedEls.length > 0) {
+                        console.log('Manual raycaster check: Clicked, but target not in list. Intersected IDs:', intersectedEls.map(el => el.id || el.tagName));
+                    } else {
+                        console.log('Manual raycaster check: Clicked, but no A-Frame raycaster intersection.');
+                    }
+                }
+            });
+        } else {
+            console.error("sceneEl.canvas not found, cannot attach mousedown listener for manual raycast check.");
+            // As an alternative, could try adding to sceneEl itself, though canvas is more direct for mouse events.
+            // sceneEl.addEventListener('mousedown', callback); 
         }
       });
     </script>
