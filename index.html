@@ -44,59 +44,147 @@
             visible="false">
         </a-text>
 
-        <a-camera raycaster="objects: #test-image;" cursor="rayOrigin: mouse; fuse: false;"></a-camera>
+        <a-camera></a-camera>
 
     </a-scene>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const sceneEl = document.querySelector('a-scene');
-            const testImage = document.getElementById('test-image');
-            const messageText = document.getElementById('message-text');
+   document.addEventListener('DOMContentLoaded', () => {
+       const sceneEl = document.querySelector('a-scene');
+       const testImageEntity = document.getElementById('test-image');
+       const messageTextEntity = document.getElementById('message-text');
 
-            sceneEl.addEventListener('loaded', () => {
-                console.log("AR Click Test Scene loaded.");
+       let threeCamera;
+       let threeTestImageObject3D;
+       let raycaster; // Declare here
+       let ndcVector; // Declare here
 
-                // Click listener for testImage (remains the same)
-                if (testImage && messageText) {
-                    testImage.addEventListener('click', () => {
-                        console.log("Test image clicked!");
-                        messageText.setAttribute('value', 'hello');
-                        messageText.setAttribute('visible', 'true');
+       sceneEl.addEventListener('loaded', () => {
+           console.log("AR Click Test Scene loaded.");
+           raycaster = new THREE.Raycaster(); // Initialize here
+           ndcVector = new THREE.Vector2();   // Initialize here
+           console.log("THREE.Raycaster and THREE.Vector2 initialized.");
+       });
 
-                        // Optional: Hide message again after a few seconds
-                        setTimeout(() => {
-                            messageText.setAttribute('visible', 'false');
-                        }, 3000);
-                    });
-                } else {
-                    if (!testImage) console.error("#test-image not found");
-                    if (!messageText) console.error("#message-text not found");
-                }
-            });
+       sceneEl.addEventListener('arjs-video-loaded', () => {
+           console.log("arjs-video-loaded event fired.");
 
-            sceneEl.addEventListener('arjs-video-loaded', () => {
-                console.log("arjs-video-loaded event fired.");
-                if (testImage && messageText) {
-                    testImage.setAttribute('position', { x: 0, y: 1.2, z: -2 });
-                    messageText.setAttribute('position', { x: 0, y: 1.95, z: -2 });
-                    // console.log("Image and text positions reset via arjs-video-loaded."); // Combined below
-                }
+           if (testImageEntity) {
+               testImageEntity.setAttribute('position', { x: 0, y: 1.2, z: -2 });
+               // Ensure the THREE.Object3D is available
+               if (testImageEntity.object3D) {
+                   threeTestImageObject3D = testImageEntity.object3D;
+                   console.log("Three.js object for test-image captured.");
+                   if (threeTestImageObject3D) { // Check if it's truly assigned
+                       console.log("Assigned threeTestImageObject3D - UUID:", threeTestImageObject3D.uuid, "Name:", threeTestImageObject3D.name);
+                   }
+               } else {
+                   // Fallback if object3D not ready, might need to wait for entity's 'loaded' event
+                   testImageEntity.addEventListener('loaded', () => {
+                       threeTestImageObject3D = testImageEntity.object3D;
+                       console.log("Three.js object for test-image captured after entity load.");
+                       if (threeTestImageObject3D) { // Check if it's truly assigned
+                           console.log("Assigned threeTestImageObject3D (entity loaded) - UUID:", threeTestImageObject3D.uuid, "Name:", threeTestImageObject3D.name);
+                       }
+                   });
+               }
+           }
+           if (messageTextEntity) {
+               messageTextEntity.setAttribute('position', { x: 0, y: 1.95, z: -2 });
+           }
+           console.log("Image and text positions reset via arjs-video-loaded.");
 
-                const cameraEl = sceneEl.camera.el;
-                if (cameraEl) {
-                    const raycasterComponent = cameraEl.components.raycaster;
-                    if (raycasterComponent) {
-                        raycasterComponent.refreshObjects();
-                        console.log("Positions reset and raycaster refreshed after arjs-video-loaded.");
-                    } else {
-                        console.warn("Raycaster component not found on camera for arjs-video-loaded refresh.");
-                    }
-                } else {
-                    console.warn("Camera element not found for arjs-video-loaded refresh.");
-                }
-            });
-        });
-    </script>
+           // Get the THREE.Camera used by A-Frame/AR.js
+           // sceneEl.camera is the A-Frame entity. sceneEl.camera.el.object3D is the camera group.
+           // The actual perspective camera is usually a child of that.
+           // Or, if AR.js uses its own, it might be elsewhere.
+           // A safer bet for the default A-Frame camera component:
+           if (sceneEl.camera && sceneEl.camera.el && sceneEl.camera.el.components.camera) {
+                threeCamera = sceneEl.camera.el.components.camera.camera;
+                console.log("Three.js camera captured.");
+           } else {
+               console.error("Could not get Three.js camera from A-Frame camera component.");
+               return;
+           }
+
+           // Canvas sync (previous attempt, keep it for now)
+           console.log("Attempting to synchronize A-Frame canvas size...");
+           const canvas = sceneEl.canvas;
+           if (canvas) {
+               canvas.style.width = '100%';
+               canvas.style.height = '100%';
+           }
+           sceneEl.resize(); 
+           console.log("sceneEl.resize() called.");
+           // No A-Frame raycaster to refresh anymore.
+       });
+
+       // Add touch event listener to the scene's canvas
+       if (sceneEl.canvas) {
+           sceneEl.canvas.addEventListener('touchstart', (event) => {
+               event.preventDefault(); // Prevent scrolling/other default actions
+
+               if (!threeCamera || !threeTestImageObject3D || !raycaster || !ndcVector) { // Check all required vars
+                   console.warn("Dependencies for raycasting not ready (camera, target, raycaster, or ndcVector).");
+                   return;
+               }
+
+               const touch = event.touches[0];
+               const rect = sceneEl.canvas.getBoundingClientRect();
+
+               const x = (touch.clientX - rect.left) / rect.width;
+               const y = (touch.clientY - rect.top) / rect.height;
+
+               ndcVector.x = x * 2 - 1;
+               ndcVector.y = -y * 2 + 1;
+
+               console.log("--- TouchStart Event ---");
+               console.log("Raw Touch Coords: clientX =", touch.clientX, ", clientY =", touch.clientY);
+               console.log("Canvas BoundingRect:", JSON.stringify(rect));
+               console.log("Normalized Coords (before NDC): x =", x, ", y =", y);
+               console.log("NDC Coords: ndcVector.x =", ndcVector.x, ", ndcVector.y =", ndcVector.y);
+
+               raycaster.setFromCamera(ndcVector, threeCamera);
+
+               if (threeCamera) {
+                   console.log("Raycasting Camera UUID:", threeCamera.uuid);
+                   // console.log("Raycasting Camera Projection Matrix:", threeCamera.projectionMatrix.elements);
+               }
+               if (threeTestImageObject3D) {
+                   console.log("Target Object UUID:", threeTestImageObject3D.uuid, "Name:", threeTestImageObject3D.name);
+                   console.log("Target Object Visible:", threeTestImageObject3D.visible);
+                   // console.log("Target Object World Matrix:", threeTestImageObject3D.matrixWorld.elements);
+                   if (threeTestImageObject3D.children.length > 0) {
+                       console.log("Target Object Child 0 Name:", threeTestImageObject3D.children[0].name, "Type:", threeTestImageObject3D.children[0].type);
+                       console.log("Target Object Child 0 Visible:", threeTestImageObject3D.children[0].visible);
+                   } else {
+                       console.log("Target Object has no children. It should be the mesh itself.");
+                   }
+               }
+
+               const intersects = raycaster.intersectObject(threeTestImageObject3D, true); // Recursive check
+
+               if (intersects.length > 0) {
+                   console.log("Manual Raycast: Hit the test image!", "Number of intersections:", intersects.length);
+                   console.log("Intersected at point:", JSON.stringify(intersects[0].point));
+                   console.log("Intersected object name:", intersects[0].object.name);
+                   if (messageTextEntity) {
+                       messageTextEntity.setAttribute('value', 'hello (manual)');
+                       messageTextEntity.setAttribute('visible', 'true');
+                       setTimeout(() => {
+                           messageTextEntity.setAttribute('visible', 'false');
+                       }, 3000);
+                   }
+               } else {
+                   console.log("Manual Raycast: No hit.");
+                   // Optionally, hide message if no hit, or let it timeout
+               }
+           }, false); // Use capture phase: false
+       } else {
+           console.error("A-Frame canvas not found to attach touch listener.");
+       }
+
+   });
+   </script>
 </body>
 </html>
