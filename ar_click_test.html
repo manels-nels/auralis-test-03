@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AR Click Test</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.0/aframe/build/aframe-ar.min.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        #message-text {
+            font-family: sans-serif;
+            text-align: center;
+            color: white;
+        }
+    </style>
+</head>
+<body style='margin : 0px; overflow: hidden;'>
+    <a-scene
+        embedded
+        arjs='sourceType: webcam; trackingMethod: best; debugUIEnabled: true;'
+        renderer='logarithmicDepthBuffer: true;'
+        vr-mode-ui='enabled: false'>
+
+        <a-assets>
+             <img id="testLogoAsset" src="images/logo.jpg" crossOrigin="anonymous">
+        </a-assets>
+
+        <a-image
+            id="test-image"
+            src="#testLogoAsset"
+            position="0 1.2 -2"
+            width="1"
+            height="1">
+        </a-image>
+
+        <a-text
+            id="message-text"
+            value=""
+            position="0 1.95 -2"
+            align="center"
+            color="yellow"
+            width="2"
+            visible="false">
+        </a-text>
+
+        <a-camera raycaster="objects: #test-image;" cursor="rayOrigin: mouse; fuse: false;"></a-camera>
+
+    </a-scene>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const sceneEl = document.querySelector('a-scene');
+            const testImage = document.getElementById('test-image');
+            const messageText = document.getElementById('message-text');
+
+            sceneEl.addEventListener('loaded', () => {
+                console.log("AR Click Test Scene loaded.");
+
+                // Refresh raycaster after a delay
+                setTimeout(() => {
+                    const cameraEl = sceneEl.camera.el; // More direct way to get camera entity
+                    if (cameraEl) {
+                        const raycasterComponent = cameraEl.components.raycaster;
+                        if (raycasterComponent) {
+                            raycasterComponent.refreshObjects();
+                            console.log("Test Raycaster objects refreshed after delay.");
+                        } else {
+                            console.warn("Test Raycaster component not found on camera element.");
+                        }
+                    } else {
+                        console.warn("Test Camera element not found for raycaster refresh.");
+                    }
+                }, 2000); // 2-second delay
+
+                if (testImage && messageText) {
+                    testImage.addEventListener('click', () => {
+                        console.log("Test image clicked!");
+                        messageText.setAttribute('value', 'hello');
+                        messageText.setAttribute('visible', 'true');
+
+                        // Optional: Hide message again after a few seconds
+                        setTimeout(() => {
+                            messageText.setAttribute('visible', 'false');
+                        }, 3000);
+                    });
+                } else {
+                    if (!testImage) console.error("#test-image not found");
+                    if (!messageText) console.error("#message-text not found");
+                }
+            });
+        });
+    </script>
+</body>
+</html>
