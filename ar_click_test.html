@@ -26,25 +26,25 @@
              <img id="testLogoAsset" src="images/logo.jpg" crossOrigin="anonymous">
         </a-assets>
 
-        <a-camera raycaster="objects: #test-image;" cursor="rayOrigin: mouse; fuse: false;">
-            <a-image
-                id="test-image"
-                src="#testLogoAsset"
-                position="0 0 -2"
-                width="1"
-                height="1">
-            </a-image>
+        <a-image
+            id="test-image"
+            src="#testLogoAsset"
+            position="0 1.2 -2"
+            width="1"
+            height="1">
+        </a-image>
 
-            <a-text
-                id="message-text"
-                value=""
-                position="0 0.5 -2"
-                align="center"
-                color="yellow"
-                width="2"
-                visible="false">
-            </a-text>
-        </a-camera>
+        <a-text
+            id="message-text"
+            value=""
+            position="0 1.95 -2"
+            align="center"
+            color="yellow"
+            width="2"
+            visible="false">
+        </a-text>
+
+        <a-camera raycaster="objects: #test-image;" cursor="rayOrigin: mouse; fuse: false;"></a-camera>
 
     </a-scene>
 
@@ -57,22 +57,7 @@
             sceneEl.addEventListener('loaded', () => {
                 console.log("AR Click Test Scene loaded.");
 
-                // Refresh raycaster after a delay
-                setTimeout(() => {
-                    const cameraEl = sceneEl.camera.el; // More direct way to get camera entity
-                    if (cameraEl) {
-                        const raycasterComponent = cameraEl.components.raycaster;
-                        if (raycasterComponent) {
-                            raycasterComponent.refreshObjects();
-                            console.log("Test Raycaster objects refreshed after delay.");
-                        } else {
-                            console.warn("Test Raycaster component not found on camera element.");
-                        }
-                    } else {
-                        console.warn("Test Camera element not found for raycaster refresh.");
-                    }
-                }, 2000); // 2-second delay
-
+                // Click listener for testImage (remains the same)
                 if (testImage && messageText) {
                     testImage.addEventListener('click', () => {
                         console.log("Test image clicked!");
@@ -87,6 +72,28 @@
                 } else {
                     if (!testImage) console.error("#test-image not found");
                     if (!messageText) console.error("#message-text not found");
+                }
+            });
+
+            sceneEl.addEventListener('arjs-video-loaded', () => {
+                console.log("arjs-video-loaded event fired.");
+                if (testImage && messageText) {
+                    testImage.setAttribute('position', { x: 0, y: 1.2, z: -2 });
+                    messageText.setAttribute('position', { x: 0, y: 1.95, z: -2 });
+                    // console.log("Image and text positions reset via arjs-video-loaded."); // Combined below
+                }
+
+                const cameraEl = sceneEl.camera.el;
+                if (cameraEl) {
+                    const raycasterComponent = cameraEl.components.raycaster;
+                    if (raycasterComponent) {
+                        raycasterComponent.refreshObjects();
+                        console.log("Positions reset and raycaster refreshed after arjs-video-loaded.");
+                    } else {
+                        console.warn("Raycaster component not found on camera for arjs-video-loaded refresh.");
+                    }
+                } else {
+                    console.warn("Camera element not found for arjs-video-loaded refresh.");
                 }
             });
         });
