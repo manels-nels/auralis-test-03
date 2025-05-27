@@ -1,9 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>MindAR Tracking Test</title>
+    <title>MindAR Click Test</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <!-- Using MindAR versions from their Quick Start Guide for stability -->
     <script src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.1.4/dist/mindar-image.prod.js"></script>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.1.4/dist/mindar-image-aframe.prod.js"></script>
@@ -13,70 +12,88 @@
 </head>
 <body>
     <!-- 
-        USER TESTING INSTRUCTIONS:
-        For this test, please use the MindAR "card" image as your AR target. 
-        Display this image on another screen or print it:
+        IMPORTANT USER NOTE: 
+        The 'imageTargetSrc' below uses a default pre-compiled target from MindAR examples.
+        To use your own image (e.g., images/logo.jpg) as the AR marker, you must:
+        1. Compile your image using the MindAR online compiler: 
+           https://hiukim.github.io/mindar-image-compiler/
+        2. Upload the generated .mind file to your repository (e.g., into an 'assets' or 'targets' folder).
+        3. Replace the 'imageTargetSrc' path below with the path to your .mind file.
+        For this test, please use the image corresponding to the default target:
         https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.1.4/examples/image-tracking/assets/card-example/card.png
-        (It's an image of a playing card).
-
-        The `imageTargetSrc` below points to the pre-compiled '.mind' file for this card.
-        If this test is successful, we will then move to using your own images as targets.
+        (This is a playing card image - the 'card.mind' asset).
     -->
     <a-scene 
-        mindar-image="imageTargetSrc: https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.1.4/examples/image-tracking/assets/card-example/card.mind; autoStart: true; uiScanning: yes; uiLoading: yes; filterMinCF:0.001; filterBeta: 0.01;" 
+        mindar-image="imageTargetSrc: https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.1.4/examples/image-tracking/assets/card-example/card.mind; autoStart: true; uiScanning: yes; uiLoading: yes;" 
         color-space="sRGB" 
         renderer="colorManagement: true, physicallyCorrectLights" 
         vr-mode-ui="enabled: false" 
-        device-orientation-permission-ui="enabled: false"
-        embedded> <!-- Added embedded for typical web page integration -->
+        device-orientation-permission-ui="enabled: false">
 
       <a-assets>
-        <!-- Using user's logo.jpg as a texture to display on the target -->
         <img id="userLogoTexture" src="images/logo.jpg" crossOrigin="anonymous">
       </a-assets>
 
-      <!-- Camera setup for MindAR -->
       <a-camera 
         position="0 0 0" 
-        look-controls="enabled: false">
+        look-controls="enabled: false" 
+        cursor="rayOrigin: mouse; fuse: false;" 
+        raycaster="objects: .clickable; far: 30;">
       </a-camera>
 
       <!-- This entity becomes active when the target (card.mind) is detected -->
       <a-entity mindar-image-target="targetIndex: 0">
         <!-- This plane will display the user's logo.jpg texture -->
+        <!-- It's positioned at the center of the target, scaled to roughly match a card aspect ratio -->
         <a-plane 
+            class="clickable"
             src="#userLogoTexture" 
             position="0 0 0" 
-            height="0.7"  <!-- Adjusted to better match typical playing card aspect ratio if width is 0.5 -->
+            height="0.7" 
             width="0.5" 
             rotation="0 0 0">
         </a-plane>
+
+        <a-text 
+            id="mindarMessageText"
+            value="hello from MindAR" 
+            color="yellow"
+            align="center"
+            position="0 0.5 0" <!-- Slightly above the plane -->
+            width="2"
+            visible="false">
+        </a-text>
       </a-entity>
     </a-scene>
 
     <script>
       document.addEventListener('DOMContentLoaded', () => {
-        const sceneEl = document.querySelector('a-scene');
-        const targetEntity = document.querySelector('[mindar-image-target]');
+        const clickablePlane = document.querySelector('.clickable');
+        const messageText = document.getElementById('mindarMessageText');
 
-        if (sceneEl) {
-            sceneEl.addEventListener('arReady', () => {
-                console.log("MindAR scene is ready");
-            });
-            sceneEl.addEventListener('arError', (error) => {
-                console.error("MindAR scene error:", error);
-            });
+        if (clickablePlane && messageText) {
+          clickablePlane.addEventListener('click', (event) => {
+            console.log('Clickable plane hit with MindAR!');
+            messageText.setAttribute('visible', 'true');
+            // Optional: Hide message again after a few seconds
+            setTimeout(() => {
+              messageText.setAttribute('visible', 'false');
+            }, 3000);
+          });
+        } else {
+          if (!clickablePlane) console.error(".clickable element not found");
+          if (!messageText) console.error("#mindarMessageText element not found");
         }
-        
+
+        // Optional: Listen for target found/lost events for debugging
+        const targetEntity = document.querySelector('[mindar-image-target]');
         if (targetEntity) {
             targetEntity.addEventListener('targetFound', event => {
-                console.log("MindAR Target Found (card.png should be visible)");
+                console.log("MindAR Target Found");
             });
             targetEntity.addEventListener('targetLost', event => {
                 console.log("MindAR Target Lost");
             });
-        } else {
-            console.error("MindAR target entity not found. Check selector '[mindar-image-target]'.");
         }
       });
     </script>
