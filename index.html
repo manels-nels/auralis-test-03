@@ -106,59 +106,62 @@
             console.error("MindAR target entity not found. Check selector '[mindar-image-target]'.");
         }
 
-        // Add new mousedown listener for manual raycaster check
-        // Ensure canvas is ready before adding listener, or use sceneEl as fallback for listener.
-        // A-Frame scenes usually have a canvas attached.
-        if (sceneEl.canvas) {
-            sceneEl.canvas.addEventListener('mousedown', (event) => {
-                console.log('Canvas mousedown event detected.');
+        sceneEl.addEventListener('loaded', () => {
+            console.log("MindAR Scene loaded event fired."); // Changed log message
 
-                if (!clickablePlane) {
-                    console.error(".clickable plane not found for click check.");
-                    return;
-                }
-                if (!messageText) {
-                    console.error("#mindarMessageText not found for click check.");
-                    return;
-                }
+            // NEW: Attach mousedown listener here, after scene is loaded
+            if (sceneEl.canvas) {
+                sceneEl.canvas.addEventListener('mousedown', (event) => {
+                    console.log('Canvas mousedown event detected.');
 
-                const cameraEl = sceneEl.camera && sceneEl.camera.el;
-                if (!cameraEl) {
-                    console.error("Camera element not found.");
-                    return;
-                }
+                    // These variables (clickablePlane, messageText, sceneEl) are accessible
+                    // here due to JavaScript closures, as they are defined in the outer
+                    // DOMContentLoaded scope.
 
-                const raycasterComponent = cameraEl.components.raycaster;
-                if (!raycasterComponent) {
-                    console.error("Raycaster component not found on camera.");
-                    return;
-                }
-
-                // Force refresh of collidable objects
-                raycasterComponent.refreshObjects();
-
-                const intersectedEls = raycasterComponent.intersectedEls;
-
-                if (intersectedEls.includes(clickablePlane)) {
-                    console.log('Manual raycaster check: Hit .clickable plane!');
-                    messageText.setAttribute('visible', 'true');
-                    setTimeout(() => {
-                        messageText.setAttribute('visible', 'false');
-                    }, 3000);
-                } else {
-                    if (intersectedEls.length > 0) {
-                        console.log('Manual raycaster check: Clicked, but target not in list. Intersected IDs:', intersectedEls.map(el => el.id || el.tagName));
-                    } else {
-                        console.log('Manual raycaster check: Clicked, but no A-Frame raycaster intersection.');
+                    if (!clickablePlane) {
+                        console.error(".clickable plane not found for click check.");
+                        return;
                     }
-                }
-            });
-        } else {
-            console.error("sceneEl.canvas not found, cannot attach mousedown listener for manual raycast check.");
-            // As an alternative, could try adding to sceneEl itself, though canvas is more direct for mouse events.
-            // sceneEl.addEventListener('mousedown', callback); 
-        }
-      });
+                    if (!messageText) {
+                        console.error("#mindarMessageText not found for click check.");
+                        return;
+                    }
+
+                    const cameraEl = sceneEl.camera && sceneEl.camera.el;
+                    if (!cameraEl) {
+                        console.error("Camera element not found.");
+                        return;
+                    }
+
+                    const raycasterComponent = cameraEl.components.raycaster;
+                    if (!raycasterComponent) {
+                        console.error("Raycaster component not found on camera.");
+                        return;
+                    }
+
+                    raycasterComponent.refreshObjects();
+                    const intersectedEls = raycasterComponent.intersectedEls;
+
+                    if (intersectedEls.includes(clickablePlane)) {
+                        console.log('Manual raycaster check: Hit .clickable plane!');
+                        messageText.setAttribute('visible', 'true');
+                        setTimeout(() => {
+                            messageText.setAttribute('visible', 'false');
+                        }, 3000);
+                    } else {
+                        if (intersectedEls.length > 0) {
+                            console.log('Manual raycaster check: Clicked, but target not in list. Intersected IDs:', intersectedEls.map(el => el.id || el.tagName));
+                        } else {
+                            console.log('Manual raycaster check: Clicked, but no A-Frame raycaster intersection.');
+                        }
+                    }
+                });
+                console.log("Mousedown listener attached to scene canvas."); // New log message
+            } else {
+                console.error("sceneEl.canvas not found when trying to attach mousedown listener inside scene 'loaded' event.");
+            }
+        }); // End of sceneEl.addEventListener('loaded')
+      }); // End of DOMContentLoaded
     </script>
 </body>
 </html>
