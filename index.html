@@ -1,160 +1,101 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>AR Click Test</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.0/aframe/build/aframe-ar.min.js"></script>
+    <title>MindAR Click Test</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.1.4/dist/mindar-image.prod.js"></script>
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.1.4/dist/mindar-image-aframe.prod.js"></script>
     <style>
         body { margin: 0; overflow: hidden; }
-        #message-text {
-            font-family: sans-serif;
-            text-align: center;
-            color: white;
-        }
     </style>
 </head>
-<body style='margin : 0px; overflow: hidden;'>
-    <a-scene
-        embedded
-        arjs='sourceType: webcam; trackingMethod: best; debugUIEnabled: true;'
-        renderer='logarithmicDepthBuffer: true;'
-        vr-mode-ui='enabled: false'>
+<body>
+    <!-- 
+        IMPORTANT USER NOTE: 
+        The 'imageTargetSrc' below uses a default pre-compiled target from MindAR examples.
+        To use your own image (e.g., images/logo.jpg) as the AR marker, you must:
+        1. Compile your image using the MindAR online compiler: 
+           https://hiukim.github.io/mindar-image-compiler/
+        2. Upload the generated .mind file to your repository (e.g., into an 'assets' or 'targets' folder).
+        3. Replace the 'imageTargetSrc' path below with the path to your .mind file.
+        For this test, please use the image corresponding to the default target:
+        https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.1.4/examples/image-tracking/assets/card-example/card.png
+        (This is a playing card image - the 'card.mind' asset).
+    -->
+    <a-scene 
+        mindar-image="imageTargetSrc: https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.1.4/examples/image-tracking/assets/card-example/card.mind; autoStart: true; uiScanning: yes; uiLoading: yes;" 
+        color-space="sRGB" 
+        renderer="colorManagement: true, physicallyCorrectLights" 
+        vr-mode-ui="enabled: false" 
+        device-orientation-permission-ui="enabled: false">
 
-        <a-assets>
-             <img id="testLogoAsset" src="images/logo.jpg" crossOrigin="anonymous">
-        </a-assets>
+      <a-assets>
+        <img id="userLogoTexture" src="images/logo.jpg" crossOrigin="anonymous">
+      </a-assets>
 
-        <a-image
-            id="test-image"
-            src="#testLogoAsset"
-            position="0 1.2 -2"
-            width="1"
-            height="1">
-        </a-image>
+      <a-camera 
+        position="0 0 0" 
+        look-controls="enabled: false" 
+        cursor="rayOrigin: mouse; fuse: false;" 
+        raycaster="objects: .clickable; far: 30;">
+      </a-camera>
 
-        <a-text
-            id="message-text"
-            value=""
-            position="0 1.95 -2"
-            align="center"
+      <!-- This entity becomes active when the target (card.mind) is detected -->
+      <a-entity mindar-image-target="targetIndex: 0">
+        <!-- This plane will display the user's logo.jpg texture -->
+        <!-- It's positioned at the center of the target, scaled to roughly match a card aspect ratio -->
+        <a-plane 
+            class="clickable"
+            src="#userLogoTexture" 
+            position="0 0 0" 
+            height="0.7" 
+            width="0.5" 
+            rotation="0 0 0">
+        </a-plane>
+
+        <a-text 
+            id="mindarMessageText"
+            value="hello from MindAR" 
             color="yellow"
+            align="center"
+            position="0 0.5 0" <!-- Slightly above the plane -->
             width="2"
             visible="false">
         </a-text>
-
-        <a-camera></a-camera>
-
+      </a-entity>
     </a-scene>
 
     <script>
-   document.addEventListener('DOMContentLoaded', () => {
-       const sceneEl = document.querySelector('a-scene');
-       const testImageEntity = document.getElementById('test-image');
-       const messageTextEntity = document.getElementById('message-text');
-       
-       let threeCamera;
-       let threeTestImageObject3D;
-       const raycaster = new THREE.Raycaster(); // Create raycaster once
-       const ndcVector = new THREE.Vector2();   // Create NDC vector once
+      document.addEventListener('DOMContentLoaded', () => {
+        const clickablePlane = document.querySelector('.clickable');
+        const messageText = document.getElementById('mindarMessageText');
 
-       sceneEl.addEventListener('loaded', () => {
-           console.log("AR Click Test Scene loaded.");
-           // It's generally safer to get the Three.js camera after A-Frame scene is fully loaded
-           // and AR.js might have initialized or modified it.
-           // However, AR.js might replace the camera, so getting it in arjs-video-loaded is safer.
-           // NO MORE testImage.addEventListener('click', ...) HERE
-       });
+        if (clickablePlane && messageText) {
+          clickablePlane.addEventListener('click', (event) => {
+            console.log('Clickable plane hit with MindAR!');
+            messageText.setAttribute('visible', 'true');
+            // Optional: Hide message again after a few seconds
+            setTimeout(() => {
+              messageText.setAttribute('visible', 'false');
+            }, 3000);
+          });
+        } else {
+          if (!clickablePlane) console.error(".clickable element not found");
+          if (!messageText) console.error("#mindarMessageText element not found");
+        }
 
-       sceneEl.addEventListener('arjs-video-loaded', () => {
-           console.log("arjs-video-loaded event fired.");
-           
-           if (testImageEntity) {
-               testImageEntity.setAttribute('position', { x: 0, y: 1.2, z: -2 });
-               // Ensure the THREE.Object3D is available
-               if (testImageEntity.object3D) {
-                   threeTestImageObject3D = testImageEntity.object3D;
-                   console.log("Three.js object for test-image captured.");
-               } else {
-                   // Fallback if object3D not ready, might need to wait for entity's 'loaded' event
-                   testImageEntity.addEventListener('loaded', () => {
-                       threeTestImageObject3D = testImageEntity.object3D;
-                       console.log("Three.js object for test-image captured after entity load.");
-                   });
-               }
-           }
-           if (messageTextEntity) {
-               messageTextEntity.setAttribute('position', { x: 0, y: 1.95, z: -2 });
-           }
-           console.log("Image and text positions reset via arjs-video-loaded.");
-
-           // Get the THREE.Camera used by A-Frame/AR.js
-           // sceneEl.camera is the A-Frame entity. sceneEl.camera.el.object3D is the camera group.
-           // The actual perspective camera is usually a child of that.
-           // Or, if AR.js uses its own, it might be elsewhere.
-           // A safer bet for the default A-Frame camera component:
-           if (sceneEl.camera && sceneEl.camera.el && sceneEl.camera.el.components.camera) {
-                threeCamera = sceneEl.camera.el.components.camera.camera;
-                console.log("Three.js camera captured.");
-           } else {
-               console.error("Could not get Three.js camera from A-Frame camera component.");
-               return;
-           }
-           
-           // Canvas sync (previous attempt, keep it for now)
-           console.log("Attempting to synchronize A-Frame canvas size...");
-           const canvas = sceneEl.canvas;
-           if (canvas) {
-               canvas.style.width = '100%';
-               canvas.style.height = '100%';
-           }
-           sceneEl.resize(); 
-           console.log("sceneEl.resize() called.");
-           // No A-Frame raycaster to refresh anymore.
-       });
-
-       // Add touch event listener to the scene's canvas
-       if (sceneEl.canvas) {
-           sceneEl.canvas.addEventListener('touchstart', (event) => {
-               event.preventDefault(); // Prevent scrolling/other default actions
-
-               if (!threeCamera || !threeTestImageObject3D) {
-                   console.warn("Camera or target object not ready for raycasting.");
-                   return;
-               }
-
-               const touch = event.touches[0];
-               const rect = sceneEl.canvas.getBoundingClientRect();
-
-               const x = (touch.clientX - rect.left) / rect.width;
-               const y = (touch.clientY - rect.top) / rect.height;
-
-               ndcVector.x = x * 2 - 1;
-               ndcVector.y = -y * 2 + 1;
-
-               raycaster.setFromCamera(ndcVector, threeCamera);
-               const intersects = raycaster.intersectObject(threeTestImageObject3D, true);
-
-               if (intersects.length > 0) {
-                   console.log("Manual Raycast: Hit the test image!");
-                   if (messageTextEntity) {
-                       messageTextEntity.setAttribute('value', 'hello (manual)');
-                       messageTextEntity.setAttribute('visible', 'true');
-                       setTimeout(() => {
-                           messageTextEntity.setAttribute('visible', 'false');
-                       }, 3000);
-                   }
-               } else {
-                   console.log("Manual Raycast: No hit.");
-                   // Optionally, hide message if no hit, or let it timeout
-               }
-           }, false); // Use capture phase: false
-       } else {
-           console.error("A-Frame canvas not found to attach touch listener.");
-       }
-       
-   });
-   </script>
+        // Optional: Listen for target found/lost events for debugging
+        const targetEntity = document.querySelector('[mindar-image-target]');
+        if (targetEntity) {
+            targetEntity.addEventListener('targetFound', event => {
+                console.log("MindAR Target Found");
+            });
+            targetEntity.addEventListener('targetLost', event => {
+                console.log("MindAR Target Lost");
+            });
+        }
+      });
+    </script>
 </body>
 </html>
