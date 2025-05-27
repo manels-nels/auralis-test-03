@@ -95,6 +95,29 @@
                 } else {
                     console.warn("Camera element not found for arjs-video-loaded refresh.");
                 }
+
+                // ADD NEW CODE BELOW THIS LINE
+                console.log("Attempting to synchronize A-Frame canvas size...");
+                const canvas = sceneEl.canvas;
+                if (canvas) {
+                    canvas.style.width = '100%';
+                    canvas.style.height = '100%';
+                }
+                sceneEl.resize(); // This should update the renderer and camera projection
+                console.log("sceneEl.resize() called.");
+
+                const cameraElAfterResize = sceneEl.camera.el; // Re-get, just in case
+                if (cameraElAfterResize) {
+                    const raycasterComponent = cameraElAfterResize.components.raycaster;
+                    if (raycasterComponent) {
+                        raycasterComponent.refreshObjects();
+                        console.log("Raycaster objects refreshed AGAIN after scene resize.");
+                    } else {
+                        console.warn("Raycaster component not found for final refresh.");
+                    }
+                } else {
+                    console.warn("Camera element not found for final raycaster refresh.");
+                }
             });
         });
     </script>
