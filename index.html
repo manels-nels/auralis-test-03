@@ -49,8 +49,8 @@
             class="clickable"
             src="#userLogoTexture" 
             position="0 0 0" 
-            height="0.7" 
-            width="0.5" 
+            height="0.6" 
+            width="0.6" 
             rotation="0 0 0">
         </a-plane>
 
@@ -69,7 +69,13 @@
     <script>
       document.addEventListener('DOMContentLoaded', () => {
         const clickablePlane = document.querySelector('.clickable');
-        const messageText = document.getElementById('mindarMessageText');
+        const messageText = document.getElementById('mindarMessageText'); // Already declared here
+
+        // Explicitly hide text on load
+        if (messageText) {
+            messageText.setAttribute('visible', 'false');
+            console.log('Explicitly set mindarMessageText to invisible on load.');
+        }
 
         if (clickablePlane && messageText) {
           clickablePlane.addEventListener('click', (event) => {
