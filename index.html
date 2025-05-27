@@ -1,472 +1,110 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>AURALIS Experience </title> <!-- Titre mis à jour -->
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta name="description" content="A-Frame + AR.js example with clickable images and a sound toggle button."> <!-- Description mise à jour -->
-
-    <!-- A-Frame Core -->
+    <title>MindAR Click Test</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/dist/mindar-image.prod.js"></script>
     <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
-    <!-- AR.js for A-Frame -->
-    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.0/aframe/build/aframe-ar.min.js"></script>
-
+    <script src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/dist/mindar-image-aframe.prod.js"></script>
     <style>
-        
-                /* --- NOUVEAU : Style pour l'écran de chargement initial --- */
-        #initial-loader {
-            position: fixed; /* Reste fixe même si la page défile (peu probable ici) */
+        body { margin: 0; overflow: hidden; }
+        /* Make canvas fill the screen */
+        a-scene {
+            width: 100vw;
+            height: 100vh;
+            display: block;
+            position: absolute;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #1a1a2a; /* Fond sombre, cohérent avec tes panneaux */
-            z-index: 10000; /* Au-dessus de tout, y compris le loader AR.js */
-            display: flex; /* Utilise flexbox pour centrer */
-            justify-content: center;
-            align-items: center;
-            flex-direction: column; /* <-- AJOUT ICI: pour empiler spinner et texte */
-            color: white;
-            font-size: 1.5em;
-            font-family: sans-serif;
-            text-align: center;
-            line-height: 1.4; /* Espacement pour le texte sur deux lignes */
-            /* Transitions pour un fondu enchaîné (optionnel) */
-            opacity: 1;
-            transition: opacity 0.7s ease-out;
-        }
-        /* --- Fin Style chargement initial --- */
-
-        /* --- AJOUT DEBUT : Style et animation pour le spinner --- */
-    .loader-spinner {
-        border: 5px solid rgba(255, 255, 255, 0.3); /* Bordure grise semi-transparente */
-        border-top-color: #FFFFFF; /* Couleur blanche pour la partie qui tourne */
-        border-radius: 50%; /* Pour le rendre circulaire */
-        width: 50px;  /* Taille du spinner */
-        height: 50px; /* Taille du spinner */
-        margin-bottom: 25px; /* Espace entre le spinner et le texte */
-        animation: spin 1s linear infinite; /* Applique l'animation */
-    }
-
-    @keyframes spin {
-        from {
-            transform: rotate(0deg);
-        }
-        to {
-            transform: rotate(360deg);
-        }
-    }
-    /* --- AJOUT FIN --- */
-        
-        /* Style pour le corps et le message pop-up */
-        body { margin: 0; overflow: hidden; font-family: sans-serif; }
-
-
-          
-        
-    
-
-        
-            /* REMPLACER l'ancien #message-popup par celui-ci */
-    #message-popup {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        /* Début: centrage et état initial (caché et légèrement réduit) */
-        transform: translate(-50%, -50%) scale(0.8);
-        opacity: 0;
-        visibility: hidden; /* Cache complètement et empêche les interactions */
-        /* Fin: état initial */
-        z-index: 10001; /* Assure qu'il est au-dessus */
-        background-color: rgba(30, 30, 50, 0.85); /* Fond un peu plus stylé */
-        color: white;
-        padding: 20px 30px; /* Padding un peu plus large */
-        border-radius: 8px;  /* Arrondi un peu plus marqué */
-        text-align: left;
-        font-size: 1.1em;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Police plus moderne */
-        cursor: pointer;
-        width: 90%;
-        box-sizing: border-box;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.4); /* Ombre portée */
-        /* Définition de la transition pour l'animation */
-        transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out, visibility 0s linear 0.3s;
-        /* Note: La transition sur visibility est décalée pour qu'elle devienne visible seulement quand l'opacité augmente */
-        /* --- AJOUTS POUR LE SCROLLING --- */
-        max-height: 75vh;       /* Limite la hauteur à 75% de la hauteur de la fenêtre */
-        overflow-y: auto;       /* Ajoute une barre de défilement vertical SI nécessaire */
-        /* --- FIN AJOUTS --- */
-    }
-    /* --- Fin du remplacement #message-popup --- */
-
-
-            /* --- AJOUT : Nouvelle classe pour l'état visible du popup --- */
-    #message-popup.visible {
-        opacity: 1;
-        visibility: visible;
-        transform: translate(-50%, -50%) scale(1); /* Retour à l'échelle normale */
-        /* Inverser le délai de la transition visibility pour la disparition */
-        transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out, visibility 0s linear 0s;
-    }
-    /* --- FIN AJOUT --- */
-        
-        /* NOUVEAU: Style pour le bouton Son */
-        #sound-toggle-button {
-            position: absolute;
-            bottom: 20px; /* Position en bas */
-            left: 20px;   /* Position à gauche */
-            z-index: 9;   /* Légèrement sous le popup mais au-dessus de la scène */
-            padding: 10px 15px;
-            font-size: 1em;
-            font-family: sans-serif;
-            color: #333;
-            background-color: rgba(255, 255, 255, 0.8);
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            cursor: pointer;
-            display: none; /* Caché par défaut, affiché via JS */
-        }
-        #sound-toggle-button:hover {
-            background-color: rgba(255, 255, 255, 1);
         }
     </style>
 </head>
+<body>
+    <!-- 
+        IMPORTANT USER NOTE: 
+        The 'imageTargetSrc' below uses a default pre-compiled target from MindAR examples.
+        To use your own image (e.g., images/logo.jpg) as the AR marker, you must:
+        1. Compile your image using the MindAR online compiler: 
+           https://hiukim.github.io/mindar-image-compiler/
+        2. Upload the generated .mind file to your repository (e.g., into an 'assets' or 'targets' folder).
+        3. Replace the 'imageTargetSrc' path below with the path to your .mind file.
+        For this test, please use the image corresponding to the default target:
+        https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.1.4/examples/image-tracking/assets/card-example/card.png
+        (This is a playing card image - the 'card.mind' asset).
+    -->
+    <a-scene 
+        mindar-image="imageTargetSrc: https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.1.4/examples/image-tracking/assets/card-example/card.mind; autoStart: true; uiScanning: yes; uiLoading: yes;" 
+        color-space="sRGB" 
+        renderer="colorManagement: true, physicallyCorrectLights" 
+        vr-mode-ui="enabled: false" 
+        device-orientation-permission-ui="enabled: false">
 
-<body style='margin : 0px; overflow: hidden;'>
+      <a-assets>
+        <img id="userLogoTexture" src="images/logo.jpg" crossOrigin="anonymous">
+      </a-assets>
 
-    <!-- --- NOUVEAU : Écran de chargement initial --- -->
-    <div id="initial-loader">
+      <a-camera 
+        position="0 0 0" 
+        look-controls="enabled: false" 
+        cursor="rayOrigin: mouse; fuse: false;" 
+        raycaster="objects: .clickable; far: 30;">
+      </a-camera>
 
-        <!-- AJOUT DEBUT: Élément pour le spinner -->
-    <div class="loader-spinner"></div>
-    <!-- AJOUT FIN -->
-        <div>Auralis experience Loading,<br>be patient...</div>
-    </div>
-    <!-- --- Fin Écran de chargement initial --- -->
+      <!-- This entity becomes active when the target (card.mind) is detected -->
+      <a-entity mindar-image-target="targetIndex: 0">
+        <!-- This plane will display the user's logo.jpg texture -->
+        <!-- It's positioned at the center of the target, scaled to roughly match a card aspect ratio -->
+        <a-plane 
+            class="clickable"
+            src="#userLogoTexture" 
+            position="0 0 0" 
+            height="0.7" 
+            width="0.5" 
+            rotation="0 0 0">
+        </a-plane>
 
-    <!-- Div HTML pour afficher le message (initialement cachée) -->
-    <div id="message-popup"></div>
-
-    <!-- NOUVEAU: Bouton pour contrôler le son du logo -->
-    <button id="sound-toggle-button">Play Sound</button>
-
-    <!-- Scène A-Frame AR -->
-    <a-scene
-        id="ar-scene"
-        embedded
-        arjs='sourceType: webcam; trackingMethod: best; debugUIEnabled: false;'
-        renderer='logarithmicDepthBuffer: true;'
-        vr-mode-ui='enabled: false'>
-
-        <!-- Assets : Précharger les images ET le son -->
-        <a-assets timeout="30000">
-             <!-- Assure-toi que les chemins vers tes images sont corrects -->
-             <img id="logoAsset" src="images/logo.jpg" crossOrigin="anonymous">
-             <img id="wangMengAsset" src="images/wang_meng.jpg" crossOrigin="anonymous">
-            <img id="yumiaoAsset" src="images/yu_miao.jpg" crossOrigin="anonymous">
-             <img id="manelsAsset" src="images/manels.jpg" crossOrigin="anonymous">
-             <img id="stageWideAsset" src="images/stage_wide.jpg" crossOrigin="anonymous">
-             <img id="stageduoBlueAsset" src="images/stage_duo_blue.jpg" crossOrigin="anonymous">
-            <img id="stageduoDarkAsset" src="images/stage_duo_dark.jpg" crossOrigin="anonymous">
-             <!-- Assure-toi que le chemin vers ton audio est correct -->
-             <audio id="logoAudio" src="audio/auralis.mp3" preload="auto" crossOrigin="anonymous"></audio>
-
-            <a-asset-item id="jellyfishModel" src="models/meduse.glb" crossOrigin="anonymous"></a-asset-item>
-        </a-assets>
-
-        <!-- L'image cliquable en RA (logo) AVEC SON (sans autoplay) -->
-        <a-image
-            id="clickable-logo"
-            src="#logoAsset"
-            position="0 1.5 -2.7"  
-            width="1"
-            height="1"           
-            data-interactive
-            sound="src: #logoAudio; loop: true; volume: 0.8; positional: true" <!-- AUTOPLAY SUPPRIMÉ -->
-            >
-        </a-image>
-
-        <!-- La deuxième image cliquable (wangmeng) SANS SON -->
-        <a-image
-            id="clickable-wangmeng"
-            src="#wangMengAsset"
-            position="1.5 1.5 -2.5" 
-            width="1"
-            height="1.2"           
-            data-interactive
-            >
-        </a-image>
-
-        <a-image
-            id="clickable-yumiao"
-            src="#yumiaoAsset"
-            position="-1.5 1.5 -3" 
-            width="1.5"
-            height="1"           
-            data-interactive
-            >
-        </a-image>
-
-        <a-image
-            id="clickable-manels"
-            src="#manelsAsset"
-            position="1.5 3 -3.2" 
-            width="1"
-            height="1.25"           
-            data-interactive
-            >
-        </a-image>
-
-        <a-image
-            id="clickable-stagewide"
-            src="#stageWideAsset"
-            position="-1.5 0 -2.8" 
+        <a-text 
+            id="mindarMessageText"
+            value="hello from MindAR" 
+            color="yellow"
+            align="center"
+            position="0 0.5 0" <!-- Slightly above the plane -->
             width="2"
-            height="1.1"           
-            data-interactive
-            >
-        </a-image>
-
-        <a-image
-            id="clickable-stageduoblue"
-            src="#stageduoBlueAsset"
-            position="0 3 -3" 
-            width="1.8"
-            height="1.1"           
-            data-interactive
-            >
-        </a-image>
-
-        <a-image
-            id="clickable-stageduodark"
-            src="#stageduoDarkAsset"
-            position="1 0 -2.5" 
-            width="1.8"
-            height="1.1"           
-            data-interactive
-            >
-        </a-image>
-
-        <!-- Méduse 3D Animée -->
-        <a-gltf-model id="jellyfish"
-                      src="#jellyfishModel"
-                      position="-1 2 -2" scale="0.3 0.3 0.3" rotation="0 0 0"
-                      animation__pos="property: position; from: -1 2 -2; to: 1 1.2 -1.5; dir: alternate; dur: 12000; easing: easeInOutSine; loop: true;"
-                      animation__rot="property: rotation; to: 0 360 0; dur: 20000; easing: linear; loop: true;"
-                      animation-mixer="clip: *; loop: repeat">
-        </a-gltf-model>
-
-
-        <!-- Méduse 3D Animée -->
-        <a-gltf-model id="jellyfish"
-                      src="#jellyfishModel"
-                      position="-1 2 -5" scale="0.2 0.2 0.2" rotation="0 0 0"
-                      animation__pos="property: position; from: 1 2 -4; to: -1 -1.2 -4; dir: alternate; dur: 18000; easing: easeInOutSine; loop: true;"
-                      animation__rot="property: rotation; to: 0 360 0; dur: 20000; easing: linear; loop: true;"
-                      animation-mixer="clip: *; loop: repeat">
-        </a-gltf-model>
-        
-        <!-- Caméra avec raycaster pour détecter les clics -->
-        <a-camera
-            cursor="rayOrigin: mouse; fuse: false;"
-            raycaster="objects: [data-interactive];" /* Ne tester que les objets avec data-interactive */
-            >
-        </a-camera>
-
+            visible="false">
+        </a-text>
+      </a-entity>
     </a-scene>
 
-    <!-- Script pour gérer le clic ET le son -->
     <script>
-        // Fonction pour activer/désactiver le son du logo
-        function toggleLogoSound() {
-            const logoElement = document.getElementById('clickable-logo'); // L'élément a-image
-            const soundButton = document.getElementById('sound-toggle-button');
+      document.addEventListener('DOMContentLoaded', () => {
+        const clickablePlane = document.querySelector('.clickable');
+        const messageText = document.getElementById('mindarMessageText');
 
-            if (!logoElement || !soundButton) {
-                console.error("Logo element or sound button not found.");
-                return;
-            }
-            // Accéder au composant son attaché à l'élément
-            const soundComponent = logoElement.components.sound;
-            if (!soundComponent) {
-                 console.error("Sound component not found on logo element.");
-                 return;
-            }
-
-            // Gérer le contexte audio pour mobile (important au premier clic)
-            const sceneEl = document.querySelector('a-scene');
-            const audioContext = sceneEl?.audioListener?.context;
-            if (audioContext && audioContext.state === 'suspended') {
-                console.log("AudioContext suspended, resuming...");
-                audioContext.resume().catch(e => console.error("Error resuming audio context", e));
-            }
-
-            // Basculer Play/Pause
-            if (soundComponent.isPlaying) {
-                console.log("Pausing logo sound.");
-                soundComponent.pauseSound();
-                soundButton.textContent = "Play Sound";
-            } else {
-                console.log("Playing logo sound.");
-                soundComponent.playSound();
-                soundButton.textContent = "Pause Sound";
-            }
+        if (clickablePlane && messageText) {
+          clickablePlane.addEventListener('click', (event) => {
+            console.log('Clickable plane hit with MindAR!');
+            messageText.setAttribute('visible', 'true');
+            // Optional: Hide message again after a few seconds
+            setTimeout(() => {
+              messageText.setAttribute('visible', 'false');
+            }, 3000);
+          });
+        } else {
+          if (!clickablePlane) console.error(".clickable element not found");
+          if (!messageText) console.error("#mindarMessageText element not found");
         }
 
-        // Attendre que la scène soit chargée pour être sûr que les éléments existent
-        document.addEventListener('DOMContentLoaded', () => {
-            const sceneEl = document.querySelector('a-scene');
-
-            sceneEl.addEventListener('loaded', () => {
-                console.log("A-Frame scene loaded.");
-
-
-
-                                // --- DEBUT AJOUT : Cacher l'écran de chargement initial ---
-                const initialLoader = document.getElementById('initial-loader');
-                if (initialLoader) {
-                    console.log("Hiding initial page loader.");
-                    // Option 1: Cacher directement
-                    // initialLoader.style.display = 'none';
-
-                    // Option 2: Fondu enchaîné (plus joli si la transition CSS est définie)
-                    initialLoader.style.opacity = '0';
-                    // Attendre la fin de la transition avant de supprimer/cacher complètement
-                    setTimeout(() => {
-                        initialLoader.style.display = 'none';
-                    }, 700); // Doit correspondre à la durée de la transition CSS (0.7s = 700ms)
-
-                } else {
-                    console.warn("Initial loader element not found!");
-                }
-                // --- FIN AJOUT ---
-
-                // --- DEBUT AJOUT : Rafraîchir le raycaster après un délai ---
-                setTimeout(() => {
-                    const cameraEl = document.querySelector('a-camera');
-                    if (cameraEl) {
-                        const raycasterComponent = cameraEl.components.raycaster;
-                        if (raycasterComponent) {
-                            raycasterComponent.refreshObjects();
-                            console.log("Raycaster objects refreshed after delay.");
-                        } else {
-                            console.warn("Raycaster component not found on camera element.");
-                        }
-                    } else {
-                        console.warn("Camera element not found for raycaster refresh.");
-                    }
-                }, 2000);
-                // --- FIN AJOUT ---
-
-                // Le reste du code de l'écouteur 'loaded' suit ici...
-                // (Récupérer les éléments, ajouter les listeners, activer bouton son, créer méduses)
-
-                
-
-                // Récupérer tous les éléments nécessaires
-                const clickableLogo = document.getElementById('clickable-logo');
-                const clickableWangMeng = document.getElementById('clickable-wangmeng');
-                const messagePopup = document.getElementById('message-popup');
-                const soundButton = document.getElementById('sound-toggle-button'); // Aussi besoin ici pour la vérification
-
-                // Vérification de l'existence des éléments pour les clics image/popup
-                if (clickableLogo && clickableWangMeng && messagePopup) {
-                    console.log("Logo, WangMeng, and popup elements found for click listeners.");
-
-                    
-                                                        // Écouteur pour le clic sur l'image logo -> bonjour
-                                   // MODIFIER cet écouteur pour le clic sur l'image logo -> effet machine à écrire
-                    clickableLogo.addEventListener('click', () => {
-                        console.log("Click detected on the logo image! Starting typing effect...");
-                        const messagePopup = document.getElementById('message-popup'); // Récupère le popup ici
-                        const fullText = "Imagine a space where sound moves like liquid, where music is not confined to speakers but swirls around you, weaving an intricate web of vibration and light. Here the past and the Future collide, ancient strings resonate against modern frequencies, and the visual pulse in perfect harmony with a never-shifting soundscape, Welcome to AURALIS";
-                        let charIndex = 0; // Index pour suivre la lettre actuelle
-                        const typingSpeed = 70; // Délai en ms entre chaque lettre (ajuste si besoin)
-
-                        if (messagePopup) {
-                            // 1. Arrêter tout intervalle précédent et vider le texte
-                            if (window.typingIntervalId) {
-                                clearInterval(window.typingIntervalId);
-                            }
-                            messagePopup.textContent = ''; // Vide le texte
-                            messagePopup.scrollTop = 0; // Remet le scroll au début si nécessaire
-
-                            // 2. Afficher le conteneur (avec l'animation CSS)
-                            messagePopup.classList.add('visible');
-
-                            // 3. Démarrer le nouvel intervalle pour ajouter les lettres
-                            window.typingIntervalId = setInterval(() => {
-                                if (charIndex < fullText.length) {
-                                    messagePopup.textContent += fullText.charAt(charIndex);
-                                    charIndex++;
-                                    // Optionnel: Scroller vers le bas pendant la frappe si le texte dépasse
-                                    messagePopup.scrollTop = messagePopup.scrollHeight;
-                                } else {
-                                    clearInterval(window.typingIntervalId);
-                                    window.typingIntervalId = null;
-                                    console.log("Typing effect finished.");
-                                }
-                            }, typingSpeed);
-
-                        } else {
-                            console.error("Message popup element (#message-popup) not found!");
-                        }
-                    });
-                    // --- Fin de la modification de l'écouteur du logo ---
-
-                    // Écouteur pour le clic sur l'image wangmeng -> bye (INCHANGÉ)
-                    clickableWangMeng.addEventListener('click', () => {
-                        console.log("Click detected on the Wang Meng image!");
-                        // AJOUT : Arrêter la frappe du logo si elle est en cours
-                        if (window.typingIntervalId) {
-                           clearInterval(window.typingIntervalId);
-                           window.typingIntervalId = null;
-                           console.log("Typing effect interrupted by clicking other image.");
-                        }
-                        messagePopup.textContent = "bye";
-                        messagePopup.classList.add('visible'); // Afficher le popup pour 'bye'
-                    });
-
-                    // MODIFIER cet écouteur pour le clic sur la div pop-up
-                    messagePopup.addEventListener('click', () => {
-                        // AJOUT DEBUT: Arrêter la frappe si elle est en cours
-                        if (window.typingIntervalId) {
-                            clearInterval(window.typingIntervalId);
-                            window.typingIntervalId = null;
-                            console.log("Typing effect interrupted by closing popup.");
-                        }
-                        // AJOUT FIN
-
-                        console.log("Popup clicked, hiding.");
-                        messagePopup.classList.remove('visible'); // Retire la classe pour animer la disparition (INCHANGÉ)
-                    });
-                    // --- Fin de la modification de l'écouteur du popup ---
-
-                     console.log("Click listeners added for both images and popup.");
-
-                } else {
-                    // Log d'erreur détaillé (INCHANGÉ)
-                    if (!clickableLogo) console.error("Clickable logo element (#clickable-logo) not found!");
-                    if (!clickableWangMeng) console.error("Clickable Wang Meng element (#clickable-wangmeng) not found!");
-                    if (!messagePopup) console.error("Message popup element (#message-popup) not found!");
-                }
-
-                 
-
-                // Activer le bouton Son (vérification séparée car il dépend juste du logo - INCHANGÉ)
-                const logoElementExists = document.getElementById('clickable-logo');
-                if (soundButton && logoElementExists) {
-                    console.log("Making sound toggle button visible and attaching listener.");
-                    soundButton.style.display = 'block'; // Rendre le bouton visible
-                    soundButton.addEventListener('click', toggleLogoSound); // Attacher la fonction de contrôle
-                } else {
-                    if (!soundButton) console.error("Sound toggle button element not found!");
-                    if (!logoElementExists) console.error("Logo element not found, cannot activate sound button!");
-                }
-
-            }); // Fin de sceneEl.addEventListener('loaded')
-        }); // Fin de document.addEventListener('DOMContentLoaded')
+        // Optional: Listen for target found/lost events for debugging
+        const targetEntity = document.querySelector('[mindar-image-target]');
+        if (targetEntity) {
+            targetEntity.addEventListener('targetFound', event => {
+                console.log("MindAR Target Found");
+            });
+            targetEntity.addEventListener('targetLost', event => {
+                console.log("MindAR Target Lost");
+            });
+        }
+      });
     </script>
-
 </body>
 </html>
