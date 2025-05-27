@@ -67,34 +67,31 @@
     </a-scene>
 
     <script>
-      document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => {
+    const sceneEl = document.querySelector('a-scene');
+
+    if (!sceneEl) {
+        console.error('CRITICAL: MindAR scene element (<a-scene>) not found in DOM! Cannot proceed.');
+        return; // Stop execution if scene isn't found
+    }
+
+    sceneEl.addEventListener('loaded', () => {
+        console.log("MindAR Scene loaded event fired. All initializations will occur now.");
+
+        // All element queries and event listener attachments are now INSIDE 'loaded'
         const clickablePlane = document.querySelector('.clickable');
-        const messageText = document.getElementById('mindarMessageText'); // Already declared here
+        const messageText = document.getElementById('mindarMessageText');
+        const targetEntity = document.querySelector('[mindar-image-target]');
 
         // Explicitly hide text on load
         if (messageText) {
             messageText.setAttribute('visible', 'false');
-            console.log('Explicitly set mindarMessageText to invisible on load.');
+            console.log('Explicitly set mindarMessageText to invisible on load (inside scene loaded).');
         } else {
-            console.error("#mindarMessageText element not found for initial hide.");
+            console.error("#mindarMessageText element not found (inside scene loaded).");
         }
 
-        // if (clickablePlane && messageText) {
-        //   clickablePlane.addEventListener('click', (event) => {
-        //     console.log('Clickable plane hit with MindAR!');
-        //     messageText.setAttribute('visible', 'true');
-        //     // Optional: Hide message again after a few seconds
-        //     setTimeout(() => {
-        //       messageText.setAttribute('visible', 'false');
-        //     }, 3000);
-        //   });
-        // } else {
-        //   if (!clickablePlane) console.error(".clickable element not found");
-        //   if (!messageText) console.error("#mindarMessageText element not found");
-        // }
-
-        // Optional: Listen for target found/lost events for debugging
-        const targetEntity = document.querySelector('[mindar-image-target]');
+        // Target found/lost listeners
         if (targetEntity) {
             targetEntity.addEventListener('targetFound', event => {
                 console.log("MindAR Target Found");
@@ -103,65 +100,58 @@
                 console.log("MindAR Target Lost");
             });
         } else {
-            console.error("MindAR target entity not found. Check selector '[mindar-image-target]'.");
+            console.error("MindAR target entity not found. Check selector '[mindar-image-target]' (inside scene loaded).");
         }
 
-        sceneEl.addEventListener('loaded', () => {
-            console.log("MindAR Scene loaded event fired."); // Changed log message
+        // Mousedown listener for manual raycaster check
+        if (sceneEl.canvas) { // Canvas should definitely be ready here
+            sceneEl.canvas.addEventListener('mousedown', (event) => {
+                console.log('Canvas mousedown event detected.');
 
-            // NEW: Attach mousedown listener here, after scene is loaded
-            if (sceneEl.canvas) {
-                sceneEl.canvas.addEventListener('mousedown', (event) => {
-                    console.log('Canvas mousedown event detected.');
+                if (!clickablePlane) {
+                    console.error(".clickable plane not found for click check (inside mousedown).");
+                    return;
+                }
+                if (!messageText) {
+                    console.error("#mindarMessageText not found for click check (inside mousedown).");
+                    return;
+                }
 
-                    // These variables (clickablePlane, messageText, sceneEl) are accessible
-                    // here due to JavaScript closures, as they are defined in the outer
-                    // DOMContentLoaded scope.
+                const cameraEl = sceneEl.camera && sceneEl.camera.el;
+                if (!cameraEl) {
+                    console.error("Camera element not found (inside mousedown).");
+                    return;
+                }
 
-                    if (!clickablePlane) {
-                        console.error(".clickable plane not found for click check.");
-                        return;
-                    }
-                    if (!messageText) {
-                        console.error("#mindarMessageText not found for click check.");
-                        return;
-                    }
+                const raycasterComponent = cameraEl.components.raycaster;
+                if (!raycasterComponent) {
+                    console.error("Raycaster component not found on camera (inside mousedown).");
+                    return;
+                }
 
-                    const cameraEl = sceneEl.camera && sceneEl.camera.el;
-                    if (!cameraEl) {
-                        console.error("Camera element not found.");
-                        return;
-                    }
+                raycasterComponent.refreshObjects();
+                const intersectedEls = raycasterComponent.intersectedEls;
 
-                    const raycasterComponent = cameraEl.components.raycaster;
-                    if (!raycasterComponent) {
-                        console.error("Raycaster component not found on camera.");
-                        return;
-                    }
-
-                    raycasterComponent.refreshObjects();
-                    const intersectedEls = raycasterComponent.intersectedEls;
-
-                    if (intersectedEls.includes(clickablePlane)) {
-                        console.log('Manual raycaster check: Hit .clickable plane!');
-                        messageText.setAttribute('visible', 'true');
-                        setTimeout(() => {
-                            messageText.setAttribute('visible', 'false');
-                        }, 3000);
+                if (intersectedEls.includes(clickablePlane)) {
+                    console.log('Manual raycaster check: Hit .clickable plane!');
+                    messageText.setAttribute('visible', 'true');
+                    setTimeout(() => {
+                        messageText.setAttribute('visible', 'false');
+                    }, 3000);
+                } else {
+                    if (intersectedEls.length > 0) {
+                        console.log('Manual raycaster check: Clicked, but target not in list. Intersected details:', intersectedEls.map(el => ({id: el.id, tagName: el.tagName, classList: Array.from(el.classList) }) ));
                     } else {
-                        if (intersectedEls.length > 0) {
-                            console.log('Manual raycaster check: Clicked, but target not in list. Intersected IDs:', intersectedEls.map(el => el.id || el.tagName));
-                        } else {
-                            console.log('Manual raycaster check: Clicked, but no A-Frame raycaster intersection.');
-                        }
+                        console.log('Manual raycaster check: Clicked, but no A-Frame raycaster intersection.');
                     }
-                });
-                console.log("Mousedown listener attached to scene canvas."); // New log message
-            } else {
-                console.error("sceneEl.canvas not found when trying to attach mousedown listener inside scene 'loaded' event.");
-            }
-        }); // End of sceneEl.addEventListener('loaded')
-      }); // End of DOMContentLoaded
+                }
+            });
+            console.log("Mousedown listener attached to scene canvas (inside scene loaded).");
+        } else {
+            console.error("sceneEl.canvas not found when trying to attach mousedown listener (inside scene loaded).");
+        }
+    }); // End of sceneEl.addEventListener('loaded')
+}); // End of DOMContentLoaded
     </script>
 </body>
 </html>
