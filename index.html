@@ -341,6 +341,23 @@
                 }
                 // --- FIN AJOUT ---
 
+                // --- DEBUT AJOUT : Rafraîchir le raycaster après un délai ---
+                setTimeout(() => {
+                    const cameraEl = document.querySelector('a-camera');
+                    if (cameraEl) {
+                        const raycasterComponent = cameraEl.components.raycaster;
+                        if (raycasterComponent) {
+                            raycasterComponent.refreshObjects();
+                            console.log("Raycaster objects refreshed after delay.");
+                        } else {
+                            console.warn("Raycaster component not found on camera element.");
+                        }
+                    } else {
+                        console.warn("Camera element not found for raycaster refresh.");
+                    }
+                }, 2000);
+                // --- FIN AJOUT ---
+
                 // Le reste du code de l'écouteur 'loaded' suit ici...
                 // (Récupérer les éléments, ajouter les listeners, activer bouton son, créer méduses)
 
